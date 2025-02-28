@@ -16,16 +16,6 @@ interface MinimalAgent {
   score: number;
   avatarUrl?: string;
   city?: string;
-  followersCount?: number;
-  likesCount?: number;
-  retweetsCount?: number;
-  repliesCount?: number;
-  rank?: number;
-  walletAddress?: string;
-  walletBalance?: string;
-  mastodonBio?: string;
-  bioUpdatedAt?: string;
-  ubiClaimedAt?: string;
 }
 
 // Cache control with improved API usage protection and memory optimization
@@ -114,12 +104,7 @@ export async function getLiveLeaderboardData() {
           mastodonUsername: entry.mastodonUsername,
           score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
           avatarUrl: entry.avatarURL || entry.avatarUrl,
-          city: entry.city,
-          followersCount: entry.followersCount || 0,
-          likesCount: entry.likesCount || 0,
-          retweetsCount: entry.retweetsCount || 0,
-          repliesCount: entry.repliesCount || 0,
-          rank: index + 1 // Set rank based on position
+          city: entry.city
         }));
       } catch (parseError) {
         console.error("Error parsing array format:", parseError);
@@ -135,17 +120,7 @@ export async function getLiveLeaderboardData() {
         mastodonUsername: entry.mastodonUsername,
         score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
         avatarUrl: entry.avatarUrl || entry.avatarURL,
-        city: entry.city,
-        followersCount: entry.followersCount || 0,
-        likesCount: entry.likesCount || 0,
-        retweetsCount: entry.retweetsCount || 0,
-        repliesCount: entry.repliesCount || 0,
-        rank: index + 1, // Set rank based on position
-        walletAddress: entry.walletAddress || null,
-        walletBalance: entry.walletBalance || null,
-        mastodonBio: entry.mastodonBio || null,
-        bioUpdatedAt: entry.bioUpdatedAt || null,
-        ubiClaimedAt: entry.ubiClaimedAt || null
+        city: entry.city
       }));
     }
     
@@ -230,17 +205,8 @@ export async function getLiveAgentDetail(username: string) {
           });
           
           if (detailsResponse.data) {
-            console.log(`Raw agent details for ${username}:`, JSON.stringify(detailsResponse.data).substring(0, 300) + "...");
-            
-            // Try parsing with validation but don't fail if it doesn't work
-            let agentDetails;
-            try {
-              agentDetails = agentDetailsSchema.parse(detailsResponse.data);
-            } catch (parseError) {
-              console.error(`Schema validation error for agent ${username}:`, parseError);
-              // If validation fails, just use the raw data
-              agentDetails = detailsResponse.data;
-            }
+            // Parse and validate the data
+            const agentDetails = agentDetailsSchema.parse(detailsResponse.data);
             
             // Extract tweets if available
             const tweets = detailsResponse.data.tweets || [];
@@ -250,7 +216,7 @@ export async function getLiveAgentDetail(username: string) {
               ...cachedAgent,
               mastodonBio: agentDetails.mastodonBio || cachedAgent.mastodonBio,
               walletAddress: agentDetails.walletAddress || cachedAgent.walletAddress,
-              walletBalance: agentDetails.walletBalance || cachedAgent.walletBalance, 
+              walletBalance: agentDetails.walletBalance || cachedAgent.walletBalance,
               bioUpdatedAt: agentDetails.bioUpdatedAt ? new Date(agentDetails.bioUpdatedAt) : cachedAgent.bioUpdatedAt,
               ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : cachedAgent.ubiClaimedAt,
               tweets: tweets
@@ -285,17 +251,7 @@ export async function getLiveAgentDetail(username: string) {
     });
     
     if (response.data) {
-      console.log(`Raw full agent details for ${username}:`, JSON.stringify(response.data).substring(0, 300) + "...");
-      
-      // Try parsing with validation but don't fail if it doesn't work
-      let agentDetails;
-      try {
-        agentDetails = agentDetailsSchema.parse(response.data);
-      } catch (parseError) {
-        console.error(`Schema validation error for full agent ${username}:`, parseError);
-        // If validation fails, just use the raw data
-        agentDetails = response.data;
-      }
+      const agentDetails = agentDetailsSchema.parse(response.data);
       
       // Extract tweets if available
       const tweets = response.data.tweets || [];
@@ -307,7 +263,7 @@ export async function getLiveAgentDetail(username: string) {
         mastodonUsername: username,
         score: agentDetails.score || 0,
         prevScore: null,
-        avatarUrl: response.data.avatarUrl || null, // Use response data directly
+        avatarUrl: agentDetails.avatarUrl || null,
         city: agentDetails.city || null,
         likesCount: agentDetails.likesCount || null,
         followersCount: agentDetails.followersCount || null,
