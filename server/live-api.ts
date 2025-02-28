@@ -230,8 +230,17 @@ export async function getLiveAgentDetail(username: string) {
           });
           
           if (detailsResponse.data) {
-            // Parse and validate the data
-            const agentDetails = agentDetailsSchema.parse(detailsResponse.data);
+            console.log(`Raw agent details for ${username}:`, JSON.stringify(detailsResponse.data).substring(0, 300) + "...");
+            
+            // Try parsing with validation but don't fail if it doesn't work
+            let agentDetails;
+            try {
+              agentDetails = agentDetailsSchema.parse(detailsResponse.data);
+            } catch (parseError) {
+              console.error(`Schema validation error for agent ${username}:`, parseError);
+              // If validation fails, just use the raw data
+              agentDetails = detailsResponse.data;
+            }
             
             // Extract tweets if available
             const tweets = detailsResponse.data.tweets || [];
@@ -241,7 +250,7 @@ export async function getLiveAgentDetail(username: string) {
               ...cachedAgent,
               mastodonBio: agentDetails.mastodonBio || cachedAgent.mastodonBio,
               walletAddress: agentDetails.walletAddress || cachedAgent.walletAddress,
-              walletBalance: agentDetails.walletBalance || cachedAgent.walletBalance,
+              walletBalance: agentDetails.walletBalance || cachedAgent.walletBalance, 
               bioUpdatedAt: agentDetails.bioUpdatedAt ? new Date(agentDetails.bioUpdatedAt) : cachedAgent.bioUpdatedAt,
               ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : cachedAgent.ubiClaimedAt,
               tweets: tweets
@@ -276,7 +285,17 @@ export async function getLiveAgentDetail(username: string) {
     });
     
     if (response.data) {
-      const agentDetails = agentDetailsSchema.parse(response.data);
+      console.log(`Raw full agent details for ${username}:`, JSON.stringify(response.data).substring(0, 300) + "...");
+      
+      // Try parsing with validation but don't fail if it doesn't work
+      let agentDetails;
+      try {
+        agentDetails = agentDetailsSchema.parse(response.data);
+      } catch (parseError) {
+        console.error(`Schema validation error for full agent ${username}:`, parseError);
+        // If validation fails, just use the raw data
+        agentDetails = response.data;
+      }
       
       // Extract tweets if available
       const tweets = response.data.tweets || [];
