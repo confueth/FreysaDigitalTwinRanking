@@ -125,6 +125,8 @@ export const agentDetailsSchema = z.object({
   walletBalance: z.string().nullish(),
   score: z.number(),
   city: z.string().nullish(),
+  avatarUrl: z.string().nullish(),
+  avatarURL: z.string().nullish(), // Support both field naming conventions
   ubiClaimedAt: z.string().or(z.date()).nullish(),
   bioUpdatedAt: z.string().or(z.date()).nullish(),
   tweets: z.array(
