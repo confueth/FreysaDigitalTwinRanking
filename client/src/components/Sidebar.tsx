@@ -3,9 +3,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Search } from 'lucide-react';
+import { Search, FilterX, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { AgentFilters } from '@/types/agent';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SidebarProps {
   filters: AgentFilters;
@@ -25,6 +26,9 @@ export default function Sidebar({
   const [maxScore, setMaxScore] = useState<string>(filters.maxScore?.toString() || '');
   const [city, setCity] = useState<string>(filters.city || 'all');
   const [sortBy, setSortBy] = useState<string>(filters.sortBy || 'score');
+  const [filtersVisible, setFiltersVisible] = useState(false);
+  
+  const isMobile = useIsMobile();
 
   // Handle search input
   const handleSearch = () => {
@@ -46,6 +50,10 @@ export default function Sidebar({
       city: city === 'all' ? undefined : city,
       sortBy: sortBy as AgentFilters['sortBy']
     });
+    
+    if (isMobile) {
+      setFiltersVisible(false);
+    }
   };
   
   // Handle resetting all filters
@@ -66,37 +74,91 @@ export default function Sidebar({
       sortBy: 'score',
       page: 1
     });
+    
+    if (isMobile) {
+      setFiltersVisible(false);
+    }
   };
 
-
+  // Toggle filters visibility on mobile
+  const toggleFilters = () => {
+    setFiltersVisible(!filtersVisible);
+  };
 
   return (
-    <aside className="w-full md:w-64 bg-gray-900 border-r border-gray-800 p-4 md:h-[calc(100vh-64px)] md:overflow-y-auto">
-
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Search</h2>
-        <div className="relative mb-4">
-          <Input
-            id="searchInput"
-            placeholder="Username or city..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            className="w-full bg-gray-800 border border-gray-700 text-white"
-          />
-          <Button 
-            id="searchButton"
-            variant="ghost"
+    <aside className={`w-full md:w-64 bg-gray-900 border-b md:border-b-0 md:border-r border-gray-800 p-4 md:h-[calc(100vh-64px)] md:sticky md:top-16 md:overflow-y-auto`}>
+      {/* Mobile search and filter toggle */}
+      <div className="flex flex-col md:hidden mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="relative flex-grow">
+            <Input
+              id="mobileSearchInput"
+              placeholder="Search..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="w-full bg-gray-800 border border-gray-700 text-white pr-10"
+            />
+            <Button 
+              id="mobileSearchButton"
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              onClick={handleSearch}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <Button
+            variant="outline"
             size="icon"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-            onClick={handleSearch}
+            className="bg-gray-800 border-gray-700 text-white h-10 w-10 min-w-10"
+            onClick={toggleFilters}
           >
-            <Search className="h-5 w-5" />
+            {filtersVisible ? <ChevronUp className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
           </Button>
+        </div>
+        
+        {/* Active filter summary */}
+        {!filtersVisible && (
+          <div className="flex items-center text-xs text-gray-400 flex-wrap gap-1">
+            {filters.city && <span className="bg-gray-800 px-2 py-1 rounded-full">City: {filters.city}</span>}
+            {filters.minScore && <span className="bg-gray-800 px-2 py-1 rounded-full">Min Score: {filters.minScore}</span>}
+            {filters.maxScore && <span className="bg-gray-800 px-2 py-1 rounded-full">Max Score: {filters.maxScore}</span>}
+            {filters.sortBy && <span className="bg-gray-800 px-2 py-1 rounded-full">Sort: {filters.sortBy.replace('_', ' ')}</span>}
+          </div>
+        )}
+      </div>
+      
+      {/* Desktop search and filters - always visible */}
+      <div className="hidden md:block">
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">Search</h2>
+          <div className="relative mb-4">
+            <Input
+              id="searchInput"
+              placeholder="Username or city..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="w-full bg-gray-800 border border-gray-700 text-white"
+            />
+            <Button 
+              id="searchButton"
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              onClick={handleSearch}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="mb-6">
+      {/* Filter controls - conditionally visible on mobile */}
+      <div className={`${isMobile && !filtersVisible ? 'hidden' : 'block'} mb-6`}>
         <h2 className="text-lg font-semibold mb-2">Filters</h2>
         
         <div className="mb-4">
@@ -165,7 +227,7 @@ export default function Sidebar({
             onClick={handleResetFilters}
             variant="destructive"
           >
-            Reset Filters
+            Reset
           </Button>
         </div>
       </div>

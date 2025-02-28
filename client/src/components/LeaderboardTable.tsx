@@ -1,4 +1,4 @@
-import { Eye } from 'lucide-react';
+import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -17,6 +17,7 @@ import {
   getChangeValue 
 } from '@/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LeaderboardTableProps {
   agents: Agent[];
@@ -39,6 +40,7 @@ export default function LeaderboardTable({
 }: LeaderboardTableProps) {
   // Calculate total pages
   const totalPages = Math.ceil(totalAgents / pageSize);
+  const isMobile = useIsMobile();
 
   if (isLoading) {
     return (
@@ -50,10 +52,10 @@ export default function LeaderboardTable({
                 <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rank</TableHead>
                 <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Agent</TableHead>
                 <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Score</TableHead>
-                <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">City</TableHead>
-                <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Followers</TableHead>
-                <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Likes</TableHead>
-                <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Retweets</TableHead>
+                <TableHead className="hidden md:table-cell text-left text-xs font-medium text-gray-400 uppercase tracking-wider">City</TableHead>
+                <TableHead className="hidden md:table-cell text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Followers</TableHead>
+                <TableHead className="hidden md:table-cell text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Likes</TableHead>
+                <TableHead className="hidden md:table-cell text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Retweets</TableHead>
                 <TableHead className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -68,10 +70,10 @@ export default function LeaderboardTable({
                     </div>
                   </TableCell>
                   <TableCell><Skeleton className="h-5 w-16 bg-gray-700" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-20 bg-gray-700" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-12 bg-gray-700" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-12 bg-gray-700" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-12 bg-gray-700" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-20 bg-gray-700" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-12 bg-gray-700" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-12 bg-gray-700" /></TableCell>
+                  <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-12 bg-gray-700" /></TableCell>
                   <TableCell className="text-right">
                     <Skeleton className="h-8 w-8 ml-auto bg-gray-700 rounded-full" />
                   </TableCell>
@@ -84,6 +86,122 @@ export default function LeaderboardTable({
     );
   }
 
+  // Responsive column rendering
+  const renderMobileTableRow = (agent: Agent) => (
+    <TableRow 
+      key={agent.id} 
+      className="hover:bg-gray-700 cursor-pointer"
+      onClick={() => onAgentSelect(agent.mastodonUsername)}
+    >
+      <TableCell className="px-2 py-3 whitespace-nowrap">
+        <div className="flex items-center">
+          <span className="text-base font-semibold">{agent.rank}</span>
+          {agent.prevRank && agent.rank !== agent.prevRank && (
+            <span className={`ml-1 text-xs ${getRankChangeClass(agent.rank, agent.prevRank)}`}>
+              {agent.prevRank > agent.rank ? `+${agent.prevRank - agent.rank}` : `${agent.prevRank - agent.rank}`}
+            </span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="px-2 py-3 whitespace-nowrap">
+        <div className="flex items-center">
+          <img 
+            className="h-7 w-7 rounded-full"
+            src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
+            alt={`${agent.mastodonUsername} avatar`}
+          />
+          <div className="ml-2">
+            <div className="text-xs font-medium">@{agent.mastodonUsername.length > 12 ? 
+              `${agent.mastodonUsername.substring(0, 10)}...` : agent.mastodonUsername}</div>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell className="px-2 py-3 whitespace-nowrap">
+        <div className="text-xs font-semibold">{formatCompactNumber(agent.score)}</div>
+        <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
+          {agent.prevScore ? (agent.score > agent.prevScore ? '↑' : '↓') : ''}
+        </div>
+      </TableCell>
+      <TableCell className="px-2 py-3 whitespace-nowrap text-right">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-primary hover:text-primary-dark p-1 h-7 w-7"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAgentSelect(agent.mastodonUsername);
+          }}
+        >
+          <Eye className="h-4 w-4" />
+          <span className="sr-only">View</span>
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+
+  const renderDesktopTableRow = (agent: Agent) => (
+    <TableRow 
+      key={agent.id} 
+      className="hover:bg-gray-700 cursor-pointer"
+      onClick={() => onAgentSelect(agent.mastodonUsername)}
+    >
+      <TableCell className="px-4 py-3 whitespace-nowrap">
+        <div className="flex items-center">
+          <span className="text-lg font-semibold">{agent.rank}</span>
+          {agent.prevRank && agent.rank !== agent.prevRank && (
+            <span className={`ml-1 text-xs ${getRankChangeClass(agent.rank, agent.prevRank)}`}>
+              {agent.prevRank > agent.rank ? `+${agent.prevRank - agent.rank}` : `${agent.prevRank - agent.rank}`}
+            </span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="px-4 py-3 whitespace-nowrap">
+        <div className="flex items-center">
+          <img 
+            className="h-8 w-8 rounded-full"
+            src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
+            alt={`${agent.mastodonUsername} avatar`}
+          />
+          <div className="ml-3">
+            <div className="text-sm font-medium">@{agent.mastodonUsername}</div>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell className="px-4 py-3 whitespace-nowrap">
+        <div className="text-sm font-semibold">{formatNumber(agent.score)}</div>
+        <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
+          {getChangeValue(agent.score, agent.prevScore)}
+        </div>
+      </TableCell>
+      <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+        <div className="text-sm">{agent.city || '-'}</div>
+      </TableCell>
+      <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+        <div className="text-sm">{formatCompactNumber(agent.followersCount)}</div>
+      </TableCell>
+      <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+        <div className="text-sm">{formatCompactNumber(agent.likesCount)}</div>
+      </TableCell>
+      <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+        <div className="text-sm">{formatCompactNumber(agent.retweetsCount)}</div>
+      </TableCell>
+      <TableCell className="px-4 py-3 whitespace-nowrap text-right">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-primary hover:text-primary-dark"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAgentSelect(agent.mastodonUsername);
+          }}
+        >
+          <Eye className="h-5 w-5" />
+          <span className="sr-only">View</span>
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 mb-6">
       <div className="overflow-x-auto">
@@ -93,100 +211,49 @@ export default function LeaderboardTable({
               <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rank</TableHead>
               <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Agent</TableHead>
               <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Score</TableHead>
-              <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">City</TableHead>
-              <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Followers</TableHead>
-              <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Likes</TableHead>
-              <TableHead className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Retweets</TableHead>
+              <TableHead className="hidden md:table-cell text-left text-xs font-medium text-gray-400 uppercase tracking-wider">City</TableHead>
+              <TableHead className="hidden md:table-cell text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Followers</TableHead>
+              <TableHead className="hidden md:table-cell text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Likes</TableHead>
+              <TableHead className="hidden md:table-cell text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Retweets</TableHead>
               <TableHead className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-700">
             {agents.map((agent) => (
-              <TableRow 
-                key={agent.id} 
-                className="hover:bg-gray-700 cursor-pointer"
-                onClick={() => onAgentSelect(agent.mastodonUsername)}
-              >
-                <TableCell className="px-4 py-3 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <span className="text-lg font-semibold">{agent.rank}</span>
-                    {agent.prevRank && agent.rank !== agent.prevRank && (
-                      <span className={`ml-1 text-xs ${getRankChangeClass(agent.rank, agent.prevRank)}`}>
-                        {agent.prevRank > agent.rank ? `+${agent.prevRank - agent.rank}` : `${agent.prevRank - agent.rank}`}
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <img 
-                      className="h-8 w-8 rounded-full"
-                      src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
-                      alt={`${agent.mastodonUsername} avatar`}
-                    />
-                    <div className="ml-3">
-                      <div className="text-sm font-medium">@{agent.mastodonUsername}</div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm font-semibold">{formatNumber(agent.score)}</div>
-                  <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-                    {getChangeValue(agent.score, agent.prevScore)}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm">{agent.city || '-'}</div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm">{formatCompactNumber(agent.followersCount)}</div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm">{formatCompactNumber(agent.likesCount)}</div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm">{formatCompactNumber(agent.retweetsCount)}</div>
-                </TableCell>
-                <TableCell className="px-4 py-3 whitespace-nowrap text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-primary hover:text-primary-dark"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAgentSelect(agent.mastodonUsername);
-                    }}
-                  >
-                    <Eye className="h-5 w-5" />
-                    <span className="sr-only">View</span>
-                  </Button>
-                </TableCell>
-              </TableRow>
+              isMobile ? renderMobileTableRow(agent) : renderDesktopTableRow(agent)
             ))}
           </TableBody>
         </Table>
       </div>
       <div className="bg-gray-900 px-4 py-3 flex items-center justify-between">
-        <div className="flex-1 flex justify-between sm:hidden">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage <= 1}
-            onClick={() => onPageChange(currentPage - 1)}
-            className="relative inline-flex items-center px-4 py-2 border border-gray-700 text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700"
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage >= totalPages}
-            onClick={() => onPageChange(currentPage + 1)}
-            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-700 text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700"
-          >
-            Next
-          </Button>
+        {/* Mobile pagination */}
+        <div className="flex-1 flex justify-between items-center sm:hidden">
+          <div className="text-xs text-gray-400 mr-2">
+            Page {currentPage} of {totalPages}
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage <= 1}
+              onClick={() => onPageChange(currentPage - 1)}
+              className="p-0 w-8 h-8 border border-gray-700 text-sm rounded-md text-white bg-gray-800 hover:bg-gray-700"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage >= totalPages}
+              onClick={() => onPageChange(currentPage + 1)}
+              className="p-0 w-8 h-8 border border-gray-700 text-sm rounded-md text-white bg-gray-800 hover:bg-gray-700"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+        
+        {/* Desktop pagination */}
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-gray-400">
@@ -205,9 +272,7 @@ export default function LeaderboardTable({
                 className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-700 bg-gray-800 text-sm font-medium text-gray-400 hover:bg-gray-700"
               >
                 <span className="sr-only">Previous</span>
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
+                <ChevronLeft className="h-4 w-4" />
               </Button>
               
               {Array.from({ length: Math.min(5, totalPages) }).map((_, index) => {
@@ -255,9 +320,7 @@ export default function LeaderboardTable({
                 className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-700 bg-gray-800 text-sm font-medium text-gray-400 hover:bg-gray-700"
               >
                 <span className="sr-only">Next</span>
-                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </nav>
           </div>

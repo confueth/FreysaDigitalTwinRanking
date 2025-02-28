@@ -21,13 +21,10 @@ export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
 
   React.useEffect(() => {
-    // Create a memoized onChange handler with debounce
-    const onChange = React.useCallback(
-      debounce(() => {
-        setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-      }, 150),
-      []
-    );
+    // Create a debounced onChange handler
+    const onChange = debounce(() => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    }, 150);
 
     // Use matchMedia for better performance
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
