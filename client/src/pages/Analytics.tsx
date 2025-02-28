@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import { Home } from 'lucide-react';
+import { Home, RefreshCw, Loader2 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
-import { Agent } from '@/types/agent';
+import { Agent, Snapshot } from '@/types/agent';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Select,
   SelectContent,
@@ -36,6 +38,52 @@ export default function Analytics({}: AnalyticsProps) {
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [metric, setMetric] = useState<'score' | 'followers' | 'likes' | 'retweets'>('score');
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  // Fetch snapshots for historical trends
+  const { 
+    data: snapshots, 
+    isLoading: isLoadingSnapshots,
+    refetch: refetchSnapshots
+  } = useQuery({
+    queryKey: ['/api/snapshots'],
+    queryFn: async () => {
+      const response = await fetch('/api/snapshots');
+      if (!response.ok) throw new Error('Failed to fetch snapshots');
+      return response.json();
+    }
+  });
+  
+  // Create snapshot mutation
+  const createSnapshotMutation = useMutation({
+    mutationFn: async () => {
+      const description = `Manual snapshot - ${new Date().toLocaleString()}`;
+      return apiRequest('/api/snapshots', {
+        method: 'POST',
+        body: JSON.stringify({ description }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Snapshot created",
+        description: "A new snapshot of the leaderboard has been created successfully.",
+      });
+      // Invalidate snapshots query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['/api/snapshots'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error creating snapshot",
+        description: "There was an error creating the snapshot. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Snapshot creation error:", error);
+    }
+  });
   
   // Fetch top agents for selection
   const { data: topAgents, isLoading: isLoadingTopAgents } = useQuery({
@@ -389,17 +437,122 @@ export default function Analytics({}: AnalyticsProps) {
         </TabsContent>
         
         <TabsContent value="trends" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Trend Analysis</CardTitle>
-              <CardDescription>
-                Coming soon: Advanced trend analysis and predictions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[400px] flex items-center justify-center">
-              <p className="text-gray-400">This feature is under development</p>
-            </CardContent>
-          </Card>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-medium">Snapshot Management</h3>
+            <Button 
+              onClick={() => createSnapshotMutation.mutate()}
+              disabled={createSnapshotMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {createSnapshotMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Snapshot...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Create Snapshot
+                </>
+              )}
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-1">
+              <CardHeader>
+                <CardTitle>About Snapshots</CardTitle>
+                <CardDescription>
+                  Capture the current state of the leaderboard
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-400 mb-4">
+                  Snapshots are point-in-time captures of the leaderboard data. Creating regular snapshots 
+                  helps track changes over time and provides historical data for analysis.
+                </p>
+                <div className="space-y-4">
+                  <div className="flex flex-col space-y-2">
+                    <Label>Automatic Snapshots</Label>
+                    <div className="text-sm text-gray-400">
+                      <p>Daily snapshots are automatically created at midnight UTC</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col space-y-2">
+                    <Label>Manual Snapshots</Label>
+                    <div className="text-sm text-gray-400">
+                      <p>Create a snapshot whenever you want to record the current state</p>
+                    </div>
+                    <Button 
+                      onClick={() => createSnapshotMutation.mutate()}
+                      disabled={createSnapshotMutation.isPending}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      {createSnapshotMutation.isPending ? 'Creating...' : 'Create Snapshot Now'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="md:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div>
+                  <CardTitle>Historical Snapshots</CardTitle>
+                  <CardDescription>
+                    View and analyze past snapshots
+                  </CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => refetchSnapshots()}
+                  disabled={isLoadingSnapshots}
+                >
+                  {isLoadingSnapshots ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSnapshots ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : snapshots && snapshots.length > 0 ? (
+                  <div className="relative h-[400px] overflow-auto">
+                    <table className="w-full table-auto">
+                      <thead className="sticky top-0 bg-gray-900">
+                        <tr className="border-b">
+                          <th className="p-2 text-left">ID</th>
+                          <th className="p-2 text-left">Date</th>
+                          <th className="p-2 text-left">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {snapshots.map((snapshot: Snapshot) => (
+                          <tr key={snapshot.id} className="border-b border-gray-800 hover:bg-gray-800">
+                            <td className="p-2">{snapshot.id}</td>
+                            <td className="p-2">{formatDate(snapshot.timestamp)}</td>
+                            <td className="p-2">{snapshot.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="h-[400px] flex items-center justify-center">
+                    <p className="text-gray-400">No snapshots available. Create one to get started!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
