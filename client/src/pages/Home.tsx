@@ -36,7 +36,7 @@ export default function Home() {
     description: "Live Data"
   };
 
-  // Query agents with filters
+  // Query agents with filters - optimized with caching strategy
   const { 
     data: agents, 
     isLoading: agentsLoading,
@@ -44,22 +44,32 @@ export default function Home() {
   } = useQuery({
     queryKey: [
       `/api/snapshots/${selectedSnapshot}/agents`, 
-      filters
+      // Only include filter parameters that affect the server request
+      // Client-side filtering is used for performance
+      { 
+        limit: 1000 // Get a larger batch once to reduce API calls
+      }
     ],
     enabled: !!selectedSnapshot,
     queryFn: async ({ queryKey }) => {
-      // Extract the base URL and filters from the query key
-      const [baseUrl, filterParams] = queryKey;
+      const [baseUrl] = queryKey;
       
-      // Build query string from filters
-      const params = new URLSearchParams();
-      Object.entries(filterParams as Record<string, any>).forEach(([key, value]) => {
-        if (value !== undefined) {
-          params.append(key, String(value));
+      // Check if we have data in sessionStorage cache
+      const cacheKey = `leaderboard_data_${selectedSnapshot}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      
+      // Use cache if it's available and less than 10 minutes old
+      if (cachedData && cacheTime) {
+        const cacheAge = Date.now() - parseInt(cacheTime, 10);
+        if (cacheAge < 10 * 60 * 1000) { // 10 minutes
+          console.log('Using cached leaderboard data');
+          return JSON.parse(cachedData);
         }
-      });
+      }
       
-      const response = await fetch(`${baseUrl}?${params.toString()}`, {
+      console.log('Fetching fresh leaderboard data');
+      const response = await fetch(`${baseUrl}?limit=1000`, {
         credentials: 'include',
       });
       
@@ -67,21 +77,35 @@ export default function Home() {
         throw new Error('Failed to fetch agents');
       }
       
-      return response.json();
-    }
+      const data = await response.json();
+      
+      // Cache the results
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+        sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+      } catch (e) {
+        console.warn('Failed to cache leaderboard data', e);
+      }
+      
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in memory longer
   });
 
-  // Query stats for the selected snapshot
+  // Query stats for the selected snapshot - optimized with longer cache time
   const { data: stats } = useQuery({
     queryKey: [`/api/snapshots/${selectedSnapshot}/stats`],
     enabled: !!selectedSnapshot,
-    staleTime: 60000 // 1 minute
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce repeated fetches
+    gcTime: 10 * 60 * 1000, // Keep in memory longer
   });
 
-  // Query cities for filter dropdown
+  // Query cities for filter dropdown - optimized with memory cache
   const { data: cities } = useQuery({
     queryKey: ['/api/cities'],
-    staleTime: 300000 // 5 minutes
+    staleTime: 60 * 60 * 1000, // 1 hour - cities change very rarely
+    gcTime: 120 * 60 * 1000 // 2 hours
   });
 
   // Handle view change
