@@ -4,7 +4,7 @@ import {
   type LeaderboardEntry, type AgentDetails, type User, type InsertUser
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, asc, desc, sql } from "drizzle-orm";
+import { eq, and, asc, desc, sql, lt, lte, gte, or, like } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 // modify the interface with any CRUD methods
