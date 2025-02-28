@@ -528,7 +528,7 @@ export default function Analytics({}: AnalyticsProps) {
                   <div className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
-                        data={snapshots.map(snapshot => ({
+                        data={snapshots.map((snapshot: Snapshot) => ({
                           timestamp: formatDate(snapshot.timestamp),
                           date: new Date(snapshot.timestamp),
                           globalValue: Math.floor(Math.random() * 5000) + 1000
