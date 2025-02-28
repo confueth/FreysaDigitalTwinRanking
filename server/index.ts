@@ -83,6 +83,14 @@ app.use((req, res, next) => {
     } catch (error) {
       console.error("Error importing CSV data on startup:", error);
     }
+    
+    // Initialize the scheduler
+    try {
+      initializeScheduler();
+      console.log("Task scheduler initialized successfully");
+    } catch (error) {
+      console.error("Error initializing task scheduler:", error);
+    }
   }, 5000); // Wait 5 seconds before importing
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
