@@ -41,7 +41,6 @@ export interface Snapshot {
 export interface SnapshotStats {
   totalAgents: number;
   avgScore: number;
-  totalLikes: number;
   topGainers: Agent[];
   topLosers: Agent[];
 }

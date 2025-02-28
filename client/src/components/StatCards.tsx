@@ -1,6 +1,6 @@
-import { Users, BarChart2, Heart, Clock } from 'lucide-react';
+import { Users, BarChart2, Clock } from 'lucide-react';
 import { SnapshotStats } from '@/types/agent';
-import { formatNumber, formatCompactNumber, formatRelativeTime } from '@/utils/formatters';
+import { formatNumber, formatRelativeTime } from '@/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface StatCardsProps {
@@ -12,8 +12,7 @@ interface StatCardsProps {
 export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Skeleton className="h-24 bg-gray-800 rounded-lg" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <Skeleton className="h-24 bg-gray-800 rounded-lg" />
         <Skeleton className="h-24 bg-gray-800 rounded-lg" />
         <Skeleton className="h-24 bg-gray-800 rounded-lg" />
@@ -22,7 +21,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
       <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
         <div className="flex justify-between items-start">
           <div>
@@ -50,21 +49,6 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
         </div>
         <div className="mt-2 flex items-center text-xs">
           <span className="text-gray-400">Average score across all agents</span>
-        </div>
-      </div>
-      
-      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-gray-400 text-sm">Total Likes</p>
-            <h3 className="text-2xl font-bold" id="totalLikes">{formatCompactNumber(stats?.totalLikes || 0)}</h3>
-          </div>
-          <div className="rounded-full bg-red-500 bg-opacity-20 p-2">
-            <Heart className="h-5 w-5 text-red-500" />
-          </div>
-        </div>
-        <div className="mt-2 flex items-center text-xs">
-          <span className="text-gray-400">Combined likes across all agents</span>
         </div>
       </div>
       
