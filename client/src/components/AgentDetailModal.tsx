@@ -48,24 +48,39 @@ interface ExternalAgentData {
   tweets?: TweetData[];
 }
 
-// Simple but effective LRU (Least Recently Used) cache implementation
+/**
+ * Simple but effective LRU (Least Recently Used) cache implementation
+ * Optimized for agent data storage with automatic cleanup when capacity is reached
+ */
 class LRUCache<K, V> {
   private capacity: number;
   private cache: Map<K, V>;
   private order: K[];
 
+  /**
+   * Creates a new LRU Cache with the specified capacity
+   * @param capacity Maximum number of items to store in the cache
+   */
   constructor(capacity: number) {
     this.capacity = capacity;
     this.cache = new Map<K, V>();
     this.order = [];
   }
 
-  // Check if key exists in cache
+  /**
+   * Check if a key exists in the cache
+   * @param key The key to check
+   * @returns True if the key exists in the cache, false otherwise
+   */
   has(key: K): boolean {
     return this.cache.has(key);
   }
   
-  // Get item and move to most recently used position
+  /**
+   * Get an item from the cache and mark it as recently used
+   * @param key The key to retrieve
+   * @returns The value associated with the key, or undefined if not found
+   */
   get(key: K): V | undefined {
     if (!this.cache.has(key)) return undefined;
     
@@ -76,7 +91,12 @@ class LRUCache<K, V> {
     return this.cache.get(key);
   }
 
-  // Add or update item
+  /**
+   * Add or update an item in the cache
+   * If the cache is at capacity, the least recently used item will be removed
+   * @param key The key to set or update
+   * @param value The value to associate with the key
+   */
   set(key: K, value: V): void {
     // If key exists, update and move to most recently used
     if (this.cache.has(key)) {
@@ -99,7 +119,11 @@ class LRUCache<K, V> {
     this.order.push(key);
   }
 
-  // Delete an item from cache
+  /**
+   * Delete an item from the cache
+   * @param key The key to delete
+   * @returns True if the item was found and deleted, false otherwise
+   */
   delete(key: K): boolean {
     if (!this.cache.has(key)) return false;
     
@@ -107,12 +131,17 @@ class LRUCache<K, V> {
     return this.cache.delete(key);
   }
   
-  // Get cache size
+  /**
+   * Get the current number of items in the cache
+   * @returns The number of items currently in the cache
+   */
   get size(): number {
     return this.cache.size;
   }
   
-  // Clear the cache
+  /**
+   * Clear all items from the cache
+   */
   clear(): void {
     this.cache.clear();
     this.order = [];
