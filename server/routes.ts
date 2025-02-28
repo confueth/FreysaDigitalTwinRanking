@@ -224,6 +224,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message || "Failed to import all CSV files" });
     }
   });
+  
+  // Delete a snapshot
+  app.delete("/api/snapshots/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid snapshot ID" });
+      }
+      
+      const success = await storage.deleteSnapshot(id);
+      if (!success) {
+        return res.status(404).json({ error: "Snapshot not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting snapshot:", error);
+      res.status(500).json({ error: error.message || "Failed to delete snapshot" });
+    }
+  });
 
   // Schedule automatic snapshots every hour
   setupAutomaticSnapshots();

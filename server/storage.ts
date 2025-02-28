@@ -12,6 +12,7 @@ export interface IStorage {
   getSnapshots(): Promise<Snapshot[]>;
   getLatestSnapshot(): Promise<Snapshot | undefined>;
   getSnapshot(id: number): Promise<Snapshot | undefined>;
+  deleteSnapshot(id: number): Promise<boolean>;
   
   // Agent operations
   createAgent(agent: InsertAgent): Promise<Agent>;
@@ -90,6 +91,19 @@ export class MemStorage implements IStorage {
 
   async getSnapshot(id: number): Promise<Snapshot | undefined> {
     return this.snapshotsData.get(id);
+  }
+  
+  async deleteSnapshot(id: number): Promise<boolean> {
+    // Get all agents for this snapshot
+    const agents = await this.getAgents(id);
+    
+    // Delete all agents for this snapshot
+    for (const agent of agents) {
+      this.agentsData.delete(agent.id);
+    }
+    
+    // Delete the snapshot
+    return this.snapshotsData.delete(id);
   }
 
   async createAgent(agent: InsertAgent): Promise<Agent> {
