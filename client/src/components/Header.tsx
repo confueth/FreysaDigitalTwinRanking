@@ -24,16 +24,25 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
     <header className="bg-gray-900 border-b border-gray-800">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow">
-            <img 
-              src="/images/profile-freysa-original.jpg" 
-              alt="Freysa" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
-            Freysa Game Leaderboard
-          </h1>
+          <a 
+            href="https://www.freysa.ai/digital-twin" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center space-x-3 hover:opacity-90 transition-opacity"
+            title="Visit Freysa Digital Twin website"
+          >
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow">
+              <img 
+                src="/images/profile-freysa-original.jpg" 
+                alt="Freysa" 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
+              Freysa Digital Twin Leaderboard
+            </h1>
+          </a>
         </div>
         
         <div className="flex items-center">

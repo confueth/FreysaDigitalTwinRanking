@@ -10,10 +10,12 @@ const AGENT_DETAILS_API = "https://digital-clone-production.onrender.com/digital
 // Cache control with improved API usage protection
 let cachedLeaderboardData: Agent[] | null = null;
 let cachedCities: string[] | null = null;
+let cachedAgentDetails: Map<string, {data: any, timestamp: number}> = new Map();
 let lastFetchTime = 0;
 let fetchInProgress = false;
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes cache - longer to avoid unnecessary API calls
 const FORCE_REFRESH_TTL = 3 * 60 * 60 * 1000; // Force refresh after 3 hours
+const AGENT_DETAILS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes for individual agent details
 const REQUEST_THROTTLE = 10 * 1000; // Min time between API calls (10 seconds)
 
 /**
@@ -175,35 +177,62 @@ export async function getLiveLeaderboardData() {
  */
 export async function getLiveAgentDetail(username: string) {
   try {
-    // Try to get agent from cache first
+    const now = Date.now();
+    
+    // Check if we have a cached agent detail
+    const normalizedUsername = username.toLowerCase();
+    const cachedDetail = cachedAgentDetails.get(normalizedUsername);
+    
+    // Return from cache if still valid
+    if (cachedDetail && (now - cachedDetail.timestamp < AGENT_DETAILS_CACHE_TTL)) {
+      console.log(`Using cached agent detail for ${username}`);
+      return cachedDetail.data;
+    }
+    
+    // Try to get basic agent info from leaderboard cache first
     if (cachedLeaderboardData) {
       const cachedAgent = cachedLeaderboardData.find(
-        a => a.mastodonUsername.toLowerCase() === username.toLowerCase()
+        a => a.mastodonUsername.toLowerCase() === normalizedUsername
       );
       
       if (cachedAgent) {
         // Try to get additional details from the API
         try {
+          console.log(`Fetching enriched agent details for ${username}`);
           const detailsResponse = await axios.get(`${AGENT_DETAILS_API}${username}`, {
             headers: { 
               'Accept': 'application/json',
+              'User-Agent': 'Freysa-Leaderboard/1.0',
               'Cache-Control': 'no-cache'
             },
             timeout: 10000 // 10 second timeout
           });
           
           if (detailsResponse.data) {
+            // Parse and validate the data
             const agentDetails = agentDetailsSchema.parse(detailsResponse.data);
             
+            // Extract tweets if available
+            const tweets = detailsResponse.data.tweets || [];
+            
             // Merge with cached basic data
-            return {
+            const enrichedAgent = {
               ...cachedAgent,
               mastodonBio: agentDetails.mastodonBio || cachedAgent.mastodonBio,
               walletAddress: agentDetails.walletAddress || cachedAgent.walletAddress,
               walletBalance: agentDetails.walletBalance || cachedAgent.walletBalance,
               bioUpdatedAt: agentDetails.bioUpdatedAt ? new Date(agentDetails.bioUpdatedAt) : cachedAgent.bioUpdatedAt,
-              ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : cachedAgent.ubiClaimedAt
+              ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : cachedAgent.ubiClaimedAt,
+              tweets: tweets
             };
+            
+            // Cache the enriched agent
+            cachedAgentDetails.set(normalizedUsername, {
+              data: enrichedAgent,
+              timestamp: now
+            });
+            
+            return enrichedAgent;
           }
         } catch (detailsError) {
           console.error(`Error fetching details for ${username}:`, detailsError);
@@ -215,9 +244,11 @@ export async function getLiveAgentDetail(username: string) {
     }
     
     // If not in cache, try to fetch directly from agent detail API
+    console.log(`Fetching full agent details for ${username}`);
     const response = await axios.get(`${AGENT_DETAILS_API}${username}`, {
       headers: { 
         'Accept': 'application/json',
+        'User-Agent': 'Freysa-Leaderboard/1.0',
         'Cache-Control': 'no-cache'
       },
       timeout: 10000 // 10 second timeout
@@ -226,8 +257,11 @@ export async function getLiveAgentDetail(username: string) {
     if (response.data) {
       const agentDetails = agentDetailsSchema.parse(response.data);
       
+      // Extract tweets if available
+      const tweets = response.data.tweets || [];
+      
       // Create an agent with the details
-      return {
+      const fullAgent = {
         id: 0,
         snapshotId: 0,
         mastodonUsername: username,
@@ -238,15 +272,24 @@ export async function getLiveAgentDetail(username: string) {
         likesCount: agentDetails.likesCount || null,
         followersCount: agentDetails.followersCount || null,
         retweetsCount: agentDetails.retweetsCount || null,
-        repliesCount: null,
+        repliesCount: agentDetails.repliesCount || null,
         rank: 0,
         prevRank: null,
         walletAddress: agentDetails.walletAddress || null,
         walletBalance: agentDetails.walletBalance || null,
         mastodonBio: agentDetails.mastodonBio || null,
         bioUpdatedAt: agentDetails.bioUpdatedAt ? new Date(agentDetails.bioUpdatedAt) : null,
-        ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : null
-      } as Agent;
+        ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : null,
+        tweets: tweets
+      } as Agent & { tweets: any[] };
+      
+      // Cache the agent details
+      cachedAgentDetails.set(normalizedUsername, {
+        data: fullAgent,
+        timestamp: Date.now()
+      });
+      
+      return fullAgent;
     }
     
     throw new Error("Agent not found");
