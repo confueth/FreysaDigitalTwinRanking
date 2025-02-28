@@ -77,7 +77,7 @@ export default function Sidebar({
                 }`}
                 onClick={() => onSnapshotChange(snapshot.id)}
               >
-                <span>{formatDate(snapshot.timestamp)}</span>
+                <span>{snapshot.description || formatDate(snapshot.timestamp)}</span>
                 {snapshot.id === snapshots[0].id && (
                   <span className="text-xs px-2 py-0.5 bg-primary rounded-full">Latest</span>
                 )}
