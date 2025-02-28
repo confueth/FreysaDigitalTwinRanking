@@ -8,7 +8,7 @@ import LeaderboardCards from '@/components/LeaderboardCards';
 import LeaderboardTimeline from '@/components/LeaderboardTimeline';
 import StatCards from '@/components/StatCards';
 import AgentDetailModal from '@/components/AgentDetailModal';
-import { Agent, AgentFilters, Snapshot } from '@/types/agent';
+import { Agent, AgentFilters, Snapshot, SnapshotStats } from '@/types/agent';
 import { formatDate } from '@/utils/formatters';
 import { applyAllFilters } from '@/utils/FilterUtils';
 
@@ -41,7 +41,7 @@ export default function Home() {
     data: agents, 
     isLoading: agentsLoading,
     refetch: refetchAgents
-  } = useQuery({
+  } = useQuery<Agent[]>({
     queryKey: [
       `/api/snapshots/${selectedSnapshot}/agents`, 
       // Only include filter parameters that affect the server request
@@ -64,7 +64,7 @@ export default function Home() {
         const cacheAge = Date.now() - parseInt(cacheTime, 10);
         if (cacheAge < 10 * 60 * 1000) { // 10 minutes
           console.log('Using cached leaderboard data');
-          return JSON.parse(cachedData);
+          return JSON.parse(cachedData) as Agent[];
         }
       }
       
@@ -87,14 +87,14 @@ export default function Home() {
         console.warn('Failed to cache leaderboard data', e);
       }
       
-      return data;
+      return data as Agent[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in memory longer
   });
 
   // Query stats for the selected snapshot - optimized with longer cache time
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<SnapshotStats | undefined>({
     queryKey: [`/api/snapshots/${selectedSnapshot}/stats`],
     enabled: !!selectedSnapshot,
     staleTime: 5 * 60 * 1000, // 5 minutes - reduce repeated fetches
@@ -102,7 +102,7 @@ export default function Home() {
   });
 
   // Query cities for filter dropdown - optimized with memory cache
-  const { data: cities } = useQuery({
+  const { data: cities } = useQuery<string[]>({
     queryKey: ['/api/cities'],
     staleTime: 60 * 60 * 1000, // 1 hour - cities change very rarely
     gcTime: 120 * 60 * 1000 // 2 hours
@@ -235,62 +235,127 @@ export default function Home() {
         onViewChange={handleViewChange}
       />
       
-      <main className="flex-grow flex flex-col md:flex-row">
-        <Sidebar 
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          cities={cities || []}
-          isLoading={snapshotLoading}
-        />
-        
-        <div className="flex-grow p-4 overflow-auto">
-          <StatCards 
-            stats={stats} 
-            snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
-            isLoading={!stats}
+      <main className="flex flex-col">
+        {/* Desktop layout */}
+        <div className="hidden md:flex flex-row">
+          <Sidebar 
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            cities={cities || []}
+            isLoading={snapshotLoading}
           />
           
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-            <h2 className="text-xl font-bold">{viewTitle}</h2>
-            <div className="flex space-x-2">
-              <span className="text-gray-400">
-                {agents ? 
-                  `Showing ${displayAgents.length} of ${stats?.totalAgents || totalAgentsCount} Digital Twins` : 
-                  'Loading...'}
-              </span>
-            </div>
-          </div>
-          
-          {selectedView === 'table' && (
-            <LeaderboardTable 
-              agents={displayAgents}
-              onAgentSelect={handleAgentSelect}
-              currentPage={filters.page || 1}
-              onPageChange={handlePageChange}
-              totalAgents={totalAgentsCount}
-              pageSize={filters.limit || 50}
-              isLoading={agentsLoading}
-            />
-          )}
-          
-          {selectedView === 'cards' && (
-            <LeaderboardCards 
-              agents={displayAgents}
-              onAgentSelect={handleAgentSelect}
-              currentPage={filters.page || 1}
-              onPageChange={handlePageChange}
-              totalAgents={totalAgentsCount}
-              pageSize={filters.limit || 50}
-              isLoading={agentsLoading}
-            />
-          )}
-          
-          {selectedView === 'timeline' && (
-            <LeaderboardTimeline 
+          <div className="flex-grow p-4 overflow-auto">
+            <StatCards 
               stats={stats} 
-              isLoading={!stats || agentsLoading}
+              snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
+              isLoading={!stats}
             />
-          )}
+            
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+              <h2 className="text-xl font-bold">{viewTitle}</h2>
+              <div className="flex space-x-2">
+                <span className="text-gray-400 text-sm">
+                  {agents ? 
+                    `Showing ${displayAgents.length} of ${stats?.totalAgents || totalAgentsCount} Digital Twins` : 
+                    'Loading...'}
+                </span>
+              </div>
+            </div>
+            
+            {selectedView === 'table' && (
+              <LeaderboardTable 
+                agents={displayAgents}
+                onAgentSelect={handleAgentSelect}
+                currentPage={filters.page || 1}
+                onPageChange={handlePageChange}
+                totalAgents={totalAgentsCount}
+                pageSize={filters.limit || 50}
+                isLoading={agentsLoading}
+              />
+            )}
+            
+            {selectedView === 'cards' && (
+              <LeaderboardCards 
+                agents={displayAgents}
+                onAgentSelect={handleAgentSelect}
+                currentPage={filters.page || 1}
+                onPageChange={handlePageChange}
+                totalAgents={totalAgentsCount}
+                pageSize={filters.limit || 50}
+                isLoading={agentsLoading}
+              />
+            )}
+            
+            {selectedView === 'timeline' && (
+              <LeaderboardTimeline 
+                stats={stats} 
+                isLoading={!stats || agentsLoading}
+              />
+            )}
+          </div>
+        </div>
+        
+        {/* Mobile layout */}
+        <div className="md:hidden flex flex-col">
+          <Sidebar 
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            cities={cities || []}
+            isLoading={snapshotLoading}
+          />
+          
+          <div className="p-3">
+            <StatCards 
+              stats={stats} 
+              snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
+              isLoading={!stats}
+            />
+            
+            <div className="flex flex-col justify-between items-start mb-3 gap-1">
+              <h2 className="text-lg font-bold">{viewTitle}</h2>
+              <div>
+                <span className="text-gray-400 text-xs">
+                  {agents ? 
+                    `Showing ${displayAgents.length} of ${stats?.totalAgents || totalAgentsCount} Digital Twins` : 
+                    'Loading...'}
+                </span>
+              </div>
+            </div>
+            
+            {selectedView === 'table' && (
+              <div className="overflow-x-auto -mx-3">
+                <LeaderboardTable 
+                  agents={displayAgents}
+                  onAgentSelect={handleAgentSelect}
+                  currentPage={filters.page || 1}
+                  onPageChange={handlePageChange}
+                  totalAgents={totalAgentsCount}
+                  pageSize={filters.limit || 50}
+                  isLoading={agentsLoading}
+                />
+              </div>
+            )}
+            
+            {selectedView === 'cards' && (
+              <LeaderboardCards 
+                agents={displayAgents}
+                onAgentSelect={handleAgentSelect}
+                currentPage={filters.page || 1}
+                onPageChange={handlePageChange}
+                totalAgents={totalAgentsCount}
+                pageSize={filters.limit || 50}
+                isLoading={agentsLoading}
+              />
+            )}
+            
+            {selectedView === 'timeline' && (
+              <LeaderboardTimeline 
+                stats={stats} 
+                isLoading={!stats || agentsLoading}
+              />
+            )}
+          </div>
         </div>
       </main>
       
