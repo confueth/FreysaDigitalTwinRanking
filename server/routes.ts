@@ -261,16 +261,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Backward compatibility endpoints
+  // Snapshot endpoints
+  
+  // Get all snapshots
+  app.get("/api/snapshots", async (req: Request, res: Response) => {
+    try {
+      const snapshots = await storage.getSnapshots();
+      res.json(snapshots);
+    } catch (error) {
+      console.error("Error fetching snapshots:", error);
+      res.status(500).json({ error: "Failed to fetch snapshots" });
+    }
+  });
+  
+  // Create a new snapshot (admin only)
+  app.post("/api/snapshots", async (req: Request, res: Response) => {
+    // Check if user is logged in and is an admin
+    if (!req.session?.userId || !req.session?.isAdmin) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    try {
+      const { description } = req.body;
+      const snapshot = await storage.createSnapshot({
+        timestamp: new Date(),
+        description: description || null,
+        createdBy: req.session.userId
+      });
+      
+      res.json(snapshot);
+    } catch (error) {
+      console.error("Error creating snapshot:", error);
+      res.status(500).json({ error: "Failed to create snapshot" });
+    }
+  });
+  
+  // Delete a snapshot (admin only)
+  app.delete("/api/snapshots/:id", async (req: Request, res: Response) => {
+    // Check if user is logged in and is an admin
+    if (!req.session?.userId || !req.session?.isAdmin) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSnapshot(id);
+      
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Snapshot not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting snapshot:", error);
+      res.status(500).json({ error: "Failed to delete snapshot" });
+    }
+  });
   
   // Snapshot latest - for backwards compatibility
   app.get("/api/snapshots/latest", async (req: Request, res: Response) => {
-    const snapshot = {
-      id: 1,
-      timestamp: new Date().toISOString(),
-      description: "Live Data"
-    };
-    res.json(snapshot);
+    try {
+      const snapshot = await storage.getLatestSnapshot();
+      if (snapshot) {
+        res.json(snapshot);
+      } else {
+        // If no snapshot exists, return a mock snapshot for compatibility
+        res.json({
+          id: 1,
+          timestamp: new Date().toISOString(),
+          description: "Live Data"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching latest snapshot:", error);
+      // Fall back to mock data on error
+      res.json({
+        id: 1,
+        timestamp: new Date().toISOString(),
+        description: "Live Data"
+      });
+    }
   });
   
   // Get stats for a snapshot - for backwards compatibility
