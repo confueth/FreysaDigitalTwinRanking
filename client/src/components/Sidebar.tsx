@@ -91,16 +91,19 @@ export default function Sidebar({
               <SelectValue placeholder="Select a snapshot" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
-              {snapshots.map((snapshot) => (
-                <SelectItem key={snapshot.id} value={snapshot.id.toString()}>
-                  <div className="flex items-center justify-between w-full">
-                    <span>{formatSnapshotName(snapshot)}</span>
-                    {snapshot.id === snapshots[0].id && (
-                      <span className="text-xs px-2 py-0.5 bg-primary rounded-full ml-2">Latest</span>
-                    )}
-                  </div>
-                </SelectItem>
-              ))}
+              {/* Sort snapshots by timestamp, newest first */}
+              {[...snapshots]
+                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                .map((snapshot) => (
+                  <SelectItem key={snapshot.id} value={snapshot.id.toString()}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{formatSnapshotName(snapshot)}</span>
+                      {snapshot.id === snapshots[0].id && (
+                        <span className="text-xs px-2 py-0.5 bg-primary rounded-full ml-2">Latest</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         ) : (
