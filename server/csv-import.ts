@@ -149,7 +149,7 @@ export async function importAllCSVFiles(storage: IStorage): Promise<void> {
     try {
       const date = extractDateFromFilename(file);
       const description = date 
-        ? `Historical data from ${date.toLocaleDateString()}` 
+        ? `Leaderboard Snapshot - ${date.toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}` 
         : `Import from ${path.basename(file)}`;
       
       await importLeaderboardFromCSV(storage, file, description, date || undefined);
