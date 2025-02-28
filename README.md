@@ -1,3 +1,4 @@
+
 # Freysa Game Leaderboard Dashboard
 
 ![Freysa Logo](attached_assets/profile-freysa-original.jpg)
@@ -61,6 +62,15 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - ✅ **Performance**: Optimized data fetching with caching to reduce API calls
 - ✅ **Resilience**: Added fallback mechanisms for API failures
 - ✅ **Schema Flexibility**: Updated Zod schemas to better match API response variability
+- ✅ **City Statistics**: Added comprehensive city-based analytics with color-coded visualizations
+- ✅ **Enhanced Timeline Views**: Implemented score change tracking over time
+- ✅ **Relative Time Formatting**: Added human-readable time displays for snapshots
+- ✅ **Rank Change Indicators**: Visual cues for player rank movements
+- ✅ **Automated Enrichment**: Background processing of detailed player information
+- ✅ **Responsive Design**: Improved mobile and tablet experiences
+- ✅ **Dark Mode Support**: Enhanced UI with consistent dark theme
+- ✅ **Error Boundary Implementation**: Graceful handling of runtime exceptions
+- ✅ **Optimized Rendering**: Reduced unnecessary component re-renders
 
 ## Architecture
 
@@ -80,6 +90,7 @@ The application follows a modern web application pattern with these key componen
    - `client/src/pages`: Contains the main application pages
    - `client/src/components`: Reusable UI components
    - `client/src/hooks`: Custom React hooks for shared functionality
+   - `client/src/utils`: Utility functions for data formatting and processing
 
 ## Project Timeline
 
@@ -90,12 +101,15 @@ The application follows a modern web application pattern with these key componen
 - **Profile Enhancements**: Added detailed player profile information
 - **Performance Optimization**: Improved caching and data fetching
 - **Error Resilience**: Added graceful error handling throughout
+- **Analytics Dashboard**: Added comprehensive statistical analysis
+- **City Filtering**: Enhanced location-based data exploration
+- **Mobile Responsiveness**: Improved cross-device compatibility
 
 ## Future Improvements
 
 Potential areas for future enhancement:
 
-- Mobile-responsive design optimization
+- Enhanced mobile-responsive design optimization
 - Advanced analytics with trend visualization
 - Player performance predictions
 - Social engagement tracking
@@ -103,6 +117,8 @@ Potential areas for future enhancement:
 - Extended historical data analysis
 - Advanced filtering options
 - Customizable dashboard views
+- User authentication and personalized views
+- Export functionality for data analysis
 
 ## Getting Started
 
@@ -121,7 +137,7 @@ Potential areas for future enhancement:
 │       ├── hooks        # Custom React hooks
 │       ├── lib          # Utility functions
 │       ├── pages        # Application pages
-│       └── types        # TypeScript type definitions
+│       └── utils        # Helper utilities
 ├── data                 # CSV and data files
 ├── scripts              # Utility scripts
 ├── server               # Backend Express server
