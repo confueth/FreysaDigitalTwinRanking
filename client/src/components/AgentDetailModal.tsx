@@ -180,7 +180,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-gray-800 border border-gray-700 text-white p-0 max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto rounded-lg">
+      <DialogContent className="bg-gray-800 border border-gray-700 text-white p-0 w-[calc(100vw-16px)] sm:w-auto max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto rounded-lg">
         <DialogTitle className="sr-only">Agent Details for {username}</DialogTitle>
         <DialogDescription className="sr-only">
           Detailed information about this agent including stats and recent activity
@@ -307,8 +307,8 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                     {agent.tweets.slice(0, 10).map((tweet: TweetData) => (
                       <div key={tweet.id} className="bg-gray-900 rounded-lg p-3 sm:p-4">
                         <p className="mb-2 text-sm sm:text-base">{formatTweetContent(tweet.content)}</p>
-                        <div className="flex justify-between text-xs sm:text-sm text-gray-400">
-                          <span className="truncate max-w-[120px] sm:max-w-full">{formatDate(tweet.timestamp)}</span>
+                        <div className="flex flex-col sm:flex-row sm:justify-between text-xs sm:text-sm text-gray-400">
+                          <span className="mb-2 sm:mb-0">{formatDate(tweet.timestamp)}</span>
                           <div className="flex space-x-3 sm:space-x-4">
                             <div className="flex items-center">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
