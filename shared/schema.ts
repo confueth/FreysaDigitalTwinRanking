@@ -24,9 +24,13 @@ export const snapshots = pgTable("snapshots", {
   description: text("description"),
 });
 
-export const insertSnapshotSchema = createInsertSchema(snapshots).pick({
-  description: true,
-});
+export const insertSnapshotSchema = createInsertSchema(snapshots)
+  .pick({
+    description: true,
+  })
+  .extend({
+    description: z.string().nullish().optional(),
+  });
 
 export type InsertSnapshot = z.infer<typeof insertSnapshotSchema>;
 export type Snapshot = typeof snapshots.$inferSelect;
@@ -53,9 +57,25 @@ export const agents = pgTable("agents", {
   ubiClaimedAt: timestamp("ubi_claimed_at"),
 });
 
-export const insertAgentSchema = createInsertSchema(agents).omit({
-  id: true,
-});
+export const insertAgentSchema = createInsertSchema(agents)
+  .omit({
+    id: true,
+  })
+  .extend({
+    prevScore: z.number().nullish().optional(),
+    avatarUrl: z.string().nullish().optional(),
+    city: z.string().nullish().optional(),
+    likesCount: z.number().nullish().optional(),
+    followersCount: z.number().nullish().optional(),
+    retweetsCount: z.number().nullish().optional(),
+    repliesCount: z.number().nullish().optional(),
+    prevRank: z.number().nullish().optional(),
+    walletAddress: z.string().nullish().optional(),
+    walletBalance: z.string().nullish().optional(),
+    mastodonBio: z.string().nullish().optional(),
+    bioUpdatedAt: z.date().nullish().optional(),
+    ubiClaimedAt: z.date().nullish().optional(),
+  });
 
 export type InsertAgent = z.infer<typeof insertAgentSchema>;
 export type Agent = typeof agents.$inferSelect;
@@ -70,9 +90,14 @@ export const tweets = pgTable("tweets", {
   retweetsCount: integer("retweets_count").notNull().default(0),
 });
 
-export const insertTweetSchema = createInsertSchema(tweets).omit({
-  id: true,
-});
+export const insertTweetSchema = createInsertSchema(tweets)
+  .omit({
+    id: true,
+  })
+  .extend({
+    likesCount: z.number().default(0),
+    retweetsCount: z.number().default(0)
+  });
 
 export type InsertTweet = z.infer<typeof insertTweetSchema>;
 export type Tweet = typeof tweets.$inferSelect;
@@ -81,26 +106,27 @@ export type Tweet = typeof tweets.$inferSelect;
 export const leaderboardEntrySchema = z.object({
   mastodonUsername: z.string(),
   score: z.number(),
-  avatarURL: z.string().optional(),
-  city: z.string().optional(),
-  likesCount: z.number().optional(),
-  followersCount: z.number().optional(),
-  retweetsCount: z.number().optional(),
+  avatarURL: z.string().nullish(),
+  city: z.string().nullish(),
+  likesCount: z.number().nullish(),
+  followersCount: z.number().nullish(),
+  retweetsCount: z.number().nullish(),
+  rank: z.number().optional(),
 });
 
 export const agentDetailsSchema = z.object({
   mastodonUsername: z.string(),
-  mastodonBio: z.string().optional(),
-  walletAddress: z.string().optional(),
-  likesCount: z.number().optional(),
-  followersCount: z.number().optional(),
-  retweetsCount: z.number().optional(),
-  repliesCount: z.number().optional(),
-  walletBalance: z.string().optional(),
+  mastodonBio: z.string().nullish(),
+  walletAddress: z.string().nullish(),
+  likesCount: z.number().nullish(),
+  followersCount: z.number().nullish(),
+  retweetsCount: z.number().nullish(),
+  repliesCount: z.number().nullish(),
+  walletBalance: z.string().nullish(),
   score: z.number(),
-  city: z.string().optional(),
-  ubiClaimedAt: z.string().optional(),
-  bioUpdatedAt: z.string().optional(),
+  city: z.string().nullish(),
+  ubiClaimedAt: z.string().or(z.date()).nullish(),
+  bioUpdatedAt: z.string().or(z.date()).nullish(),
   tweets: z.array(
     z.object({
       content: z.string(),
