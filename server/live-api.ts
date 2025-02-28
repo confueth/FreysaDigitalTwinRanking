@@ -16,6 +16,20 @@ interface MinimalAgent {
   score: number;
   avatarUrl?: string;
   city?: string;
+  // Additional fields to prevent type errors
+  mastodonBio?: string;
+  walletAddress?: string;
+  walletBalance?: string;
+  bioUpdatedAt?: Date;
+  ubiClaimedAt?: Date;
+  likesCount?: number;
+  followersCount?: number;
+  retweetsCount?: number;
+  repliesCount?: number;
+  snapshotId?: number;
+  prevScore?: number | null;
+  rank?: number;
+  prevRank?: number | null;
 }
 
 // Cache control with improved API usage protection and memory optimization
@@ -24,10 +38,10 @@ let cachedCities: Set<string> | null = null; // Using Set for better performance
 let cachedAgentDetails: Map<string, {data: any, timestamp: number}> = new Map();
 let lastFetchTime = 0;
 let fetchInProgress = false;
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes cache - longer to avoid unnecessary API calls
-const FORCE_REFRESH_TTL = 3 * 60 * 60 * 1000; // Force refresh after 3 hours
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes cache - reduced to get fresh data more often
+const FORCE_REFRESH_TTL = 60 * 60 * 1000; // Force refresh after 1 hour
 const AGENT_DETAILS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes for individual agent details
-const REQUEST_THROTTLE = 10 * 1000; // Min time between API calls (10 seconds)
+const REQUEST_THROTTLE = 5 * 1000; // Min time between API calls (5 seconds)
 const MAX_AGENT_CACHE_SIZE = 100; // Maximum number of agent details to cache
 
 /**
@@ -104,7 +118,14 @@ export async function getLiveLeaderboardData() {
           mastodonUsername: entry.mastodonUsername,
           score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
           avatarUrl: entry.avatarURL || entry.avatarUrl,
-          city: entry.city
+          city: entry.city,
+          snapshotId: 1, // Default for live data
+          likesCount: entry.likesCount || 0,
+          followersCount: entry.followersCount || 0,
+          retweetsCount: entry.retweetsCount || 0,
+          rank: index + 1,
+          prevRank: null,
+          prevScore: null
         }));
       } catch (parseError) {
         console.error("Error parsing array format:", parseError);
@@ -120,7 +141,14 @@ export async function getLiveLeaderboardData() {
         mastodonUsername: entry.mastodonUsername,
         score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
         avatarUrl: entry.avatarUrl || entry.avatarURL,
-        city: entry.city
+        city: entry.city,
+        snapshotId: 1, // Default for live data
+        likesCount: entry.likesCount || 0,
+        followersCount: entry.followersCount || 0,
+        retweetsCount: entry.retweetsCount || 0,
+        rank: index + 1,
+        prevRank: null,
+        prevScore: null
       }));
     }
     
@@ -132,8 +160,17 @@ export async function getLiveLeaderboardData() {
     cachedLeaderboardData = agentData;
     lastFetchTime = now;
     
+    // Log for debugging purposes
+    console.log(`Processed ${agentData.length} agents. Sample: ${JSON.stringify(agentData.slice(0, 2))}`);
+    
     // Update cities cache 
     updateCachedCities(agentData);
+    
+    // Reset the cache every hour
+    setTimeout(() => {
+      console.log("Clearing leaderboard cache for fresh data");
+      cachedLeaderboardData = null;
+    }, 60 * 60 * 1000);
     
     return agentData;
   } catch (apiError: any) {
@@ -298,7 +335,7 @@ export async function getLiveAgentDetail(username: string) {
 /**
  * Filter agents based on provided criteria
  */
-export function filterAgents(agents: Agent[], filters: {
+export function filterAgents(agents: Agent[] | MinimalAgent[], filters: {
   search?: string;
   minScore?: number;
   maxScore?: number;
