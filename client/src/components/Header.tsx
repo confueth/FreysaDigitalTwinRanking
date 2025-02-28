@@ -57,6 +57,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <span>Analytics</span>
             </Button>
           </Link>
+          
           <a 
             href="https://freysa.ai/digital-twin?ref=Navali" 
             target="_blank" 

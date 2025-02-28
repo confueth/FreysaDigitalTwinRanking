@@ -1,32 +1,12 @@
 import express, { type Request, Response, NextFunction } from "express";
-import session from "express-session";
-import pgSession from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { importAllCSVFiles } from "./csv-import";
 import { storage } from "./storage";
-import { pool } from "./db";
-import { initializeScheduler } from "./scheduler";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Setup session
-const PgStore = pgSession(session);
-app.use(session({
-  store: new PgStore({
-    pool,
-    tableName: 'sessions'
-  }),
-  secret: process.env.SESSION_SECRET || 'freysa-leaderboard-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -36,12 +16,7 @@ app.use((req, res, next) => {
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
-    try {
-      return originalResJson.apply(res, [bodyJson, ...args]);
-    } catch (err) {
-      console.error("Error in json response:", err);
-      return res;
-    }
+    return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
   res.on("finish", () => {
@@ -49,15 +24,11 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        try {
-          logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-          if (logLine.length > 80) {
-            logLine = logLine.slice(0, 79) + "…";
-          }
-        } catch (err) {
-          console.error("Error stringifying response:", err);
-          logLine += " :: [Complex object]";
-        }
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      }
+
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "…";
       }
 
       log(logLine);
@@ -83,24 +54,14 @@ app.use((req, res, next) => {
     } catch (error) {
       console.error("Error importing CSV data on startup:", error);
     }
-    
-    // Initialize the scheduler
-    try {
-      initializeScheduler();
-      console.log("Task scheduler initialized successfully");
-    } catch (error) {
-      console.error("Error initializing task scheduler:", error);
-    }
   }, 5000); // Wait 5 seconds before importing
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    if (!res.headersSent) {
-      res.status(status).json({ message });
-    }
-    console.error(err);
+    res.status(status).json({ message });
+    throw err;
   });
 
   // importantly only setup vite in development and after
