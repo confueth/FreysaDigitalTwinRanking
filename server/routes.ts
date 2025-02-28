@@ -257,16 +257,12 @@ async function takeSnapshot(description: string): Promise<any> {
   try {
     console.log("Starting snapshot process with description:", description);
     
-    // Create a new snapshot with formatted date and time
+    // Create a new snapshot with ISO format date and time (timezone neutral)
     const now = new Date();
-    const formattedDate = now.toLocaleDateString('en-US', {
-      month: 'long', 
-      day: 'numeric', 
-      year: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric'
-    });
-    const snapshotDescription = `Live Snapshot - ${formattedDate}`;
+    // Store the date in neutral ISO format, and let the client format it
+    // This ensures the timestamps will display in the user's local timezone
+    const formattedDate = now.toISOString();
+    const snapshotDescription = description || `Live Snapshot - ${now.toLocaleString()}`;
     
     const snapshot = await storage.createSnapshot({ description: snapshotDescription });
     console.log("Created snapshot with ID:", snapshot.id);
@@ -414,14 +410,8 @@ function setupAutomaticSnapshots() {
       
       // Create a new snapshot with data from the API
       const now = new Date();
-      const formattedDate = now.toLocaleDateString('en-US', {
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric'
-      });
-      await takeSnapshot(`Hourly Snapshot - ${formattedDate}`);
+      // Use timestamp to allow client-side timezone conversion
+      await takeSnapshot(`Hourly Snapshot - ${now.toISOString()}`);
       console.log("Automatic snapshot completed successfully");
     } catch (error) {
       console.error("Automatic snapshot failed:", error);
@@ -434,14 +424,8 @@ function setupAutomaticSnapshots() {
       if ((await storage.getSnapshots()).length === 0) {
         console.log("Taking initial snapshot...");
         const now = new Date();
-        const formattedDate = now.toLocaleDateString('en-US', {
-          month: 'long', 
-          day: 'numeric', 
-          year: 'numeric',
-          hour: 'numeric',
-          minute: 'numeric'
-        });
-        await takeSnapshot(`Initial Snapshot - ${formattedDate}`);
+        // Use ISO format for timestamp to enable timezone conversion in client
+        await takeSnapshot(`Initial Snapshot - ${now.toISOString()}`);
         console.log("Initial snapshot completed successfully");
       }
     } catch (error) {
