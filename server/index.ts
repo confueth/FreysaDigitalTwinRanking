@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { importAllCSVFiles } from "./csv-import";
 import { storage } from "./storage";
+import { scheduleSnapshots } from "./snapshot-service";
 
 const app = express();
 app.use(express.json());
@@ -40,6 +41,9 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Set up daily snapshots
+  scheduleSnapshots(storage);
   
   // Import CSV data on startup
   setTimeout(async () => {
