@@ -30,12 +30,24 @@ export function formatDate(dateString: string | undefined): string {
   if (!dateString) return '';
   
   const date = new Date(dateString);
+  
+  // Format with time if available
+  if (date.getHours() !== 0 || date.getMinutes() !== 0) {
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+  
+  // Otherwise just return the date
   return date.toLocaleString('en-US', {
     month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
+    day: 'numeric', 
+    year: 'numeric'
   });
 }
 

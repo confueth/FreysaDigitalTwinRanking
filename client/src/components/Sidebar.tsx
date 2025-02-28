@@ -55,62 +55,59 @@ export default function Sidebar({
     });
   };
 
+  // Function to simplify snapshot names
+  const formatSnapshotName = (snapshot: Snapshot): string => {
+    if (snapshot.description) {
+      // Extract just the date part from CSV import descriptions
+      if (snapshot.description.includes('Leaderboard Snapshot')) {
+        return snapshot.description.replace('Leaderboard Snapshot - ', '');
+      }
+      // Extract just the date part from Initial/Live snapshot descriptions
+      if (snapshot.description.includes('Live Snapshot') || 
+          snapshot.description.includes('Initial Snapshot') ||
+          snapshot.description.includes('Hourly Snapshot')) {
+        const parts = snapshot.description.split(' - ');
+        if (parts.length > 1) {
+          return parts[1];
+        }
+      }
+      return snapshot.description;
+    }
+    return formatDate(snapshot.timestamp);
+  };
+
   return (
     <aside className="w-full md:w-64 bg-gray-900 border-r border-gray-800 p-4 md:h-[calc(100vh-64px)] md:overflow-y-auto">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Snapshots</h2>
-        <div className="space-y-2 max-h-40 overflow-y-auto">
-          {isLoading ? (
-            <>
-              <Skeleton className="h-10 w-full bg-gray-800" />
-              <Skeleton className="h-10 w-full bg-gray-800" />
-              <Skeleton className="h-10 w-full bg-gray-800" />
-            </>
-          ) : snapshots.length > 0 ? (
-            snapshots.map((snapshot) => (
-              <button
-                key={snapshot.id}
-                className={`w-full flex justify-between items-center px-3 py-2 text-sm rounded-lg transition-colors ${
-                  selectedSnapshot === snapshot.id
-                    ? 'bg-primary hover:bg-purple-800'
-                    : 'bg-gray-800 hover:bg-gray-700'
-                }`}
-                onClick={() => onSnapshotChange(snapshot.id)}
-              >
-                <div className="flex flex-col">
-                  <span>{snapshot.description || formatDate(snapshot.timestamp)}</span>
-                  {snapshot.id === 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Delete the initial snapshot with ID 1
-                        fetch(`/api/snapshots/${snapshot.id}`, {
-                          method: 'DELETE',
-                        })
-                          .then(response => response.json())
-                          .then(() => {
-                            // Refresh the page after deletion
-                            window.location.reload();
-                          })
-                          .catch(error => console.error('Error deleting snapshot:', error));
-                      }}
-                      className="text-xs text-red-500 hover:text-red-300 mt-1"
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
-                {snapshot.id === snapshots[0].id && (
-                  <span className="text-xs px-2 py-0.5 bg-primary rounded-full">Latest</span>
-                )}
-              </button>
-            ))
-          ) : (
-            <div className="text-center py-2 text-gray-400">
-              No snapshots available
-            </div>
-          )}
-        </div>
+        <h2 className="text-lg font-semibold mb-2">Snapshot</h2>
+        {isLoading ? (
+          <Skeleton className="h-10 w-full bg-gray-800" />
+        ) : snapshots.length > 0 ? (
+          <Select 
+            value={selectedSnapshot?.toString()} 
+            onValueChange={(value) => onSnapshotChange(parseInt(value))}
+          >
+            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
+              <SelectValue placeholder="Select a snapshot" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700 text-white">
+              {snapshots.map((snapshot) => (
+                <SelectItem key={snapshot.id} value={snapshot.id.toString()}>
+                  <div className="flex items-center justify-between w-full">
+                    <span>{formatSnapshotName(snapshot)}</span>
+                    {snapshot.id === snapshots[0].id && (
+                      <span className="text-xs px-2 py-0.5 bg-primary rounded-full ml-2">Latest</span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="text-center py-2 text-gray-400">
+            No snapshots available
+          </div>
+        )}
       </div>
 
       <div className="mb-6">
