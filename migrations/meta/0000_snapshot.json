@@ -1,0 +1,324 @@
+{
+  "id": "160bf71f-d0a9-4c00-8cd0-3a4740792a72",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.agents": {
+      "name": "agents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "snapshot_id": {
+          "name": "snapshot_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mastodon_username": {
+          "name": "mastodon_username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "score": {
+          "name": "score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prev_score": {
+          "name": "prev_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "likes_count": {
+          "name": "likes_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followers_count": {
+          "name": "followers_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retweets_count": {
+          "name": "retweets_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replies_count": {
+          "name": "replies_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rank": {
+          "name": "rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prev_rank": {
+          "name": "prev_rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wallet_address": {
+          "name": "wallet_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wallet_balance": {
+          "name": "wallet_balance",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mastodon_bio": {
+          "name": "mastodon_bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bio_updated_at": {
+          "name": "bio_updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ubi_claimed_at": {
+          "name": "ubi_claimed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "agents_snapshot_id_snapshots_id_fk": {
+          "name": "agents_snapshot_id_snapshots_id_fk",
+          "tableFrom": "agents",
+          "tableTo": "snapshots",
+          "columnsFrom": [
+            "snapshot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.snapshots": {
+      "name": "snapshots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "snapshots_created_by_users_id_fk": {
+          "name": "snapshots_created_by_users_id_fk",
+          "tableFrom": "snapshots",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tweets": {
+      "name": "tweets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "agent_id": {
+          "name": "agent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "likes_count": {
+          "name": "likes_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "retweets_count": {
+          "name": "retweets_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tweets_agent_id_agents_id_fk": {
+          "name": "tweets_agent_id_agents_id_fk",
+          "tableFrom": "tweets",
+          "tableTo": "agents",
+          "columnsFrom": [
+            "agent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_admin": {
+          "name": "is_admin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_username_unique": {
+          "name": "users_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
