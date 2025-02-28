@@ -1,12 +1,18 @@
 import { 
-  agents, snapshots, tweets, type Agent, type InsertAgent, 
+  agents, snapshots, tweets, users, type Agent, type InsertAgent, 
   type Snapshot, type InsertSnapshot, type Tweet, type InsertTweet,
-  type LeaderboardEntry, type AgentDetails 
+  type LeaderboardEntry, type AgentDetails, type User, type InsertUser
 } from "@shared/schema";
 
 // modify the interface with any CRUD methods
 // you might need
 export interface IStorage {
+  // User operations
+  createUser(insertUser: InsertUser): Promise<User>;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  verifyAdminCredentials(username: string, password: string): Promise<boolean>;
+  
   // Snapshot operations
   createSnapshot(snapshot: InsertSnapshot): Promise<Snapshot>;
   getSnapshots(): Promise<Snapshot[]>;
@@ -55,17 +61,55 @@ export class MemStorage implements IStorage {
   private agentsData: Map<number, Agent>;
   private snapshotsData: Map<number, Snapshot>;
   private tweetsData: Map<number, Tweet>;
+  private usersData: Map<number, User>;
   private agentIdCounter: number;
   private snapshotIdCounter: number;
   private tweetIdCounter: number;
+  private userIdCounter: number;
 
   constructor() {
     this.agentsData = new Map();
     this.snapshotsData = new Map();
     this.tweetsData = new Map();
+    this.usersData = new Map();
     this.agentIdCounter = 1;
     this.snapshotIdCounter = 1;
     this.tweetIdCounter = 1;
+    this.userIdCounter = 1;
+  }
+  
+  // User operations
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = this.userIdCounter++;
+    const newUser: User = {
+      ...insertUser,
+      id,
+      createdAt: new Date(),
+      isAdmin: insertUser.isAdmin || false,
+    };
+    this.usersData.set(id, newUser);
+    return newUser;
+  }
+  
+  async getUser(id: number): Promise<User | undefined> {
+    return this.usersData.get(id);
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.usersData.values()).find(
+      user => user.username === username
+    );
+  }
+  
+  async verifyAdminCredentials(username: string, password: string): Promise<boolean> {
+    const user = await this.getUserByUsername(username);
+    if (!user || !user.isAdmin) {
+      return false;
+    }
+    
+    // In memory implementation we just compare passwords directly
+    // In real implementation we would use bcrypt.compare
+    return user.password === password;
   }
 
   async createSnapshot(snapshot: InsertSnapshot): Promise<Snapshot> {
@@ -355,4 +399,437 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { db } from "./db";
+import { eq, desc, and, or, like, lt, gt, gte, lte, isNull, asc, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
+
+/**
+ * Database Storage Implementation
+ * Uses PostgreSQL for data persistence
+ */
+export class DatabaseStorage implements IStorage {
+  
+  // User operations
+  async createUser(insertUser: InsertUser): Promise<User> {
+    // Hash the password before storing
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+    
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...insertUser,
+        password: hashedPassword
+      })
+      .returning();
+    
+    return user;
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, id));
+    
+    return user || undefined;
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username));
+    
+    return user || undefined;
+  }
+
+  async verifyAdminCredentials(username: string, password: string): Promise<boolean> {
+    const user = await this.getUserByUsername(username);
+    
+    if (!user || !user.isAdmin) {
+      return false;
+    }
+    
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    return passwordMatch;
+  }
+  
+  // Snapshot operations
+  async createSnapshot(snapshot: InsertSnapshot): Promise<Snapshot> {
+    const [newSnapshot] = await db
+      .insert(snapshots)
+      .values(snapshot)
+      .returning();
+    
+    return newSnapshot;
+  }
+  
+  async getSnapshots(): Promise<Snapshot[]> {
+    return db
+      .select()
+      .from(snapshots)
+      .orderBy(desc(snapshots.timestamp));
+  }
+  
+  async getLatestSnapshot(): Promise<Snapshot | undefined> {
+    const [snapshot] = await db
+      .select()
+      .from(snapshots)
+      .orderBy(desc(snapshots.timestamp))
+      .limit(1);
+    
+    return snapshot || undefined;
+  }
+  
+  async getSnapshot(id: number): Promise<Snapshot | undefined> {
+    const [snapshot] = await db
+      .select()
+      .from(snapshots)
+      .where(eq(snapshots.id, id));
+    
+    return snapshot || undefined;
+  }
+  
+  async deleteSnapshot(id: number): Promise<boolean> {
+    // Thanks to cascade delete, this will also delete all agents and tweets
+    const result = await db
+      .delete(snapshots)
+      .where(eq(snapshots.id, id))
+      .returning({ id: snapshots.id });
+    
+    return result.length > 0;
+  }
+  
+  // Agent operations
+  async createAgent(agent: InsertAgent): Promise<Agent> {
+    const [newAgent] = await db
+      .insert(agents)
+      .values(agent)
+      .returning();
+    
+    return newAgent;
+  }
+  
+  async getAgents(snapshotId: number, filters: AgentFilters = {}): Promise<Agent[]> {
+    let query = db
+      .select()
+      .from(agents)
+      .where(eq(agents.snapshotId, snapshotId));
+    
+    // Apply search filter
+    if (filters.search) {
+      query = query.where(
+        or(
+          like(agents.mastodonUsername, `%${filters.search}%`),
+          like(agents.city || '', `%${filters.search}%`),
+          like(agents.mastodonBio || '', `%${filters.search}%`)
+        )
+      );
+    }
+    
+    // Apply score range filter
+    if (filters.minScore !== undefined) {
+      query = query.where(gte(agents.score, filters.minScore));
+    }
+    
+    if (filters.maxScore !== undefined) {
+      query = query.where(lte(agents.score, filters.maxScore));
+    }
+    
+    // Apply city filter
+    if (filters.city) {
+      query = query.where(eq(agents.city || '', filters.city));
+    }
+    
+    // Apply sorting
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case 'score_asc':
+          query = query.orderBy(asc(agents.score));
+          break;
+        case 'score':
+          query = query.orderBy(desc(agents.score));
+          break;
+        case 'followers':
+          query = query.orderBy(desc(agents.followersCount || 0));
+          break;
+        case 'likes':
+          query = query.orderBy(desc(agents.likesCount || 0));
+          break;
+        case 'retweets':
+          query = query.orderBy(desc(agents.retweetsCount || 0));
+          break;
+      }
+    } else {
+      // Default sort by score
+      query = query.orderBy(desc(agents.score));
+    }
+    
+    // Apply pagination
+    const page = filters.page || 1;
+    const limit = filters.limit || 50;
+    const offset = (page - 1) * limit;
+    
+    return query.limit(limit).offset(offset);
+  }
+  
+  async getLatestAgents(filters: AgentFilters = {}): Promise<Agent[]> {
+    const latestSnapshot = await this.getLatestSnapshot();
+    if (!latestSnapshot) {
+      return [];
+    }
+    
+    return this.getAgents(latestSnapshot.id, filters);
+  }
+  
+  async getAgent(snapshotId: number, mastodonUsername: string): Promise<Agent | undefined> {
+    const [agent] = await db
+      .select()
+      .from(agents)
+      .where(
+        and(
+          eq(agents.snapshotId, snapshotId),
+          eq(agents.mastodonUsername, mastodonUsername)
+        )
+      );
+    
+    return agent || undefined;
+  }
+  
+  async getAgentHistory(mastodonUsername: string): Promise<Agent[]> {
+    // Get all snapshots of a specific agent, ordered by timestamp
+    return db
+      .select({
+        ...agents,
+        timestamp: snapshots.timestamp
+      })
+      .from(agents)
+      .innerJoin(snapshots, eq(agents.snapshotId, snapshots.id))
+      .where(eq(agents.mastodonUsername, mastodonUsername))
+      .orderBy(desc(snapshots.timestamp));
+  }
+  
+  // Tweet operations
+  async createTweet(tweet: InsertTweet): Promise<Tweet> {
+    const [newTweet] = await db
+      .insert(tweets)
+      .values(tweet)
+      .returning();
+    
+    return newTweet;
+  }
+  
+  async getTweets(agentId: number): Promise<Tweet[]> {
+    return db
+      .select()
+      .from(tweets)
+      .where(eq(tweets.agentId, agentId))
+      .orderBy(desc(tweets.timestamp));
+  }
+  
+  // Stats operations
+  async getSnapshotStats(snapshotId: number): Promise<SnapshotStats> {
+    // Get total agents
+    const [{ count: totalAgents }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(agents)
+      .where(eq(agents.snapshotId, snapshotId));
+    
+    // Get average score
+    const [{ avg: avgScore }] = await db
+      .select({ avg: sql<number>`avg(${agents.score})` })
+      .from(agents)
+      .where(eq(agents.snapshotId, snapshotId));
+    
+    // Get sum of likes
+    const [{ sum: totalLikes }] = await db
+      .select({ sum: sql<number>`sum(${agents.likesCount})` })
+      .from(agents)
+      .where(eq(agents.snapshotId, snapshotId));
+    
+    // Get previous snapshot for comparison
+    const snapshot = await this.getSnapshot(snapshotId);
+    if (!snapshot) {
+      return {
+        totalAgents: 0,
+        avgScore: 0,
+        totalLikes: 0,
+        topGainers: [],
+        topLosers: []
+      };
+    }
+    
+    // Get previous snapshot
+    const [prevSnapshot] = await db
+      .select()
+      .from(snapshots)
+      .where(lt(snapshots.timestamp, snapshot.timestamp))
+      .orderBy(desc(snapshots.timestamp))
+      .limit(1);
+    
+    // Get top gainers and losers
+    const topGainers: Agent[] = [];
+    const topLosers: Agent[] = [];
+    
+    if (prevSnapshot) {
+      // Find agents with the biggest score changes
+      const agentsWithChanges = await db
+        .select({
+          ...agents,
+          prevScore: db
+            .select({ score: agents.score })
+            .from(agents)
+            .where(
+              and(
+                eq(agents.snapshotId, prevSnapshot.id),
+                eq(agents.mastodonUsername, agents.mastodonUsername)
+              )
+            )
+            .as('prev_agent')
+        })
+        .from(agents)
+        .where(eq(agents.snapshotId, snapshotId))
+        .orderBy(desc(sql`${agents.score} - COALESCE(prev_agent.score, 0)`))
+        .limit(10);
+      
+      // Add top gainers (already sorted by gain)
+      for (const agent of agentsWithChanges.slice(0, 5)) {
+        if (agent.prevScore && agent.score > agent.prevScore) {
+          topGainers.push(agent);
+        }
+      }
+      
+      // Find top losers
+      const topLosersData = await db
+        .select({
+          ...agents,
+          prevScore: db
+            .select({ score: agents.score })
+            .from(agents)
+            .where(
+              and(
+                eq(agents.snapshotId, prevSnapshot.id),
+                eq(agents.mastodonUsername, agents.mastodonUsername)
+              )
+            )
+            .as('prev_agent')
+        })
+        .from(agents)
+        .where(eq(agents.snapshotId, snapshotId))
+        .orderBy(asc(sql`${agents.score} - COALESCE(prev_agent.score, 0)`))
+        .limit(5);
+      
+      for (const agent of topLosersData) {
+        if (agent.prevScore && agent.score < agent.prevScore) {
+          topLosers.push(agent);
+        }
+      }
+    }
+    
+    return {
+      totalAgents: totalAgents || 0,
+      avgScore: Math.round(avgScore || 0),
+      totalLikes: totalLikes || 0,
+      topGainers,
+      topLosers
+    };
+  }
+  
+  // Data import operations
+  async importLeaderboardData(entries: LeaderboardEntry[], snapshotId: number): Promise<void> {
+    // Get the previous snapshot to calculate previous ranks and scores
+    const [prevSnapshot] = await db
+      .select()
+      .from(snapshots)
+      .where(lt(snapshots.id, snapshotId))
+      .orderBy(desc(snapshots.timestamp))
+      .limit(1);
+    
+    // Import each entry
+    let rank = 1;
+    for (const entry of entries) {
+      let prevScore = null;
+      let prevRank = null;
+      
+      // Find previous data for this agent if available
+      if (prevSnapshot) {
+        const [prevAgent] = await db
+          .select()
+          .from(agents)
+          .where(
+            and(
+              eq(agents.snapshotId, prevSnapshot.id),
+              eq(agents.mastodonUsername, entry.mastodonUsername)
+            )
+          );
+        
+        if (prevAgent) {
+          prevScore = prevAgent.score;
+          prevRank = prevAgent.rank;
+        }
+      }
+      
+      // Create agent entry
+      await this.createAgent({
+        snapshotId,
+        mastodonUsername: entry.mastodonUsername,
+        score: entry.score,
+        avatarUrl: entry.avatarURL || null,
+        city: entry.city || null,
+        likesCount: entry.likesCount || null,
+        followersCount: entry.followersCount || null,
+        retweetsCount: entry.retweetsCount || null,
+        rank,
+        prevRank,
+        prevScore
+      });
+      
+      rank++;
+    }
+  }
+  
+  async importAgentDetails(username: string, details: AgentDetails, snapshotId: number): Promise<void> {
+    // Update the agent with additional details
+    const [agent] = await db
+      .select()
+      .from(agents)
+      .where(
+        and(
+          eq(agents.snapshotId, snapshotId),
+          eq(agents.mastodonUsername, username)
+        )
+      );
+    
+    if (!agent) {
+      return;
+    }
+    
+    // Update with new details
+    await db
+      .update(agents)
+      .set({
+        mastodonBio: details.mastodonBio || null,
+        walletAddress: details.walletAddress || null,
+        walletBalance: details.walletBalance || null,
+        bioUpdatedAt: details.bioUpdatedAt ? new Date(details.bioUpdatedAt) : null,
+        ubiClaimedAt: details.ubiClaimedAt ? new Date(details.ubiClaimedAt) : null
+      })
+      .where(eq(agents.id, agent.id));
+    
+    // Import tweets if available
+    if (details.tweets && details.tweets.length > 0) {
+      for (const tweet of details.tweets) {
+        await this.createTweet({
+          agentId: agent.id,
+          content: tweet.content,
+          timestamp: new Date(tweet.timestamp),
+          likesCount: tweet.likesCount || 0,
+          retweetsCount: tweet.retweetsCount || 0
+        });
+      }
+    }
+  }
+}
+
+// Use DatabaseStorage instead of MemStorage
+export const storage = new DatabaseStorage();
