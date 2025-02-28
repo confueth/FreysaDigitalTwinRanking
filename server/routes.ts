@@ -5,6 +5,9 @@ import axios from "axios";
 import { z } from "zod";
 import { leaderboardEntrySchema, agentDetailsSchema, insertSnapshotSchema } from "@shared/schema";
 import cron from "node-cron";
+import path from 'path';
+import fs from 'fs';
+import { importLeaderboardFromCSV, importAllCSVFiles, listAvailableCSVFiles } from './csv-import';
 
 // API endpoints
 const LEADERBOARD_API = "https://digital-clone-production.onrender.com/digital-clones/leaderboards?full=true";
@@ -173,6 +176,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error taking snapshot:", error);
       res.status(500).json({ error: "Failed to take snapshot" });
+    }
+  });
+  
+  // Import leaderboard data from CSV
+  app.post("/api/import/csv", async (req: Request, res: Response) => {
+    try {
+      const { filePath, description, dateString } = req.body;
+      
+      if (!filePath) {
+        return res.status(400).json({ error: "File path is required" });
+      }
+      
+      const overrideDate = dateString ? new Date(dateString) : undefined;
+      const snapshotId = await importLeaderboardFromCSV(
+        storage, 
+        filePath, 
+        description || `CSV Import - ${path.basename(filePath)}`,
+        overrideDate
+      );
+      
+      res.json({ success: true, snapshotId });
+    } catch (error: any) {
+      console.error("Error importing CSV:", error);
+      res.status(500).json({ error: error.message || "Failed to import CSV" });
+    }
+  });
+  
+  // List available CSV files in the data directory
+  app.get("/api/import/csv/available", async (req: Request, res: Response) => {
+    try {
+      const files = listAvailableCSVFiles();
+      res.json(files);
+    } catch (error: any) {
+      console.error("Error listing CSV files:", error);
+      res.status(500).json({ error: error.message || "Failed to list CSV files" });
+    }
+  });
+  
+  // Import all available CSV files
+  app.post("/api/import/csv/all", async (req: Request, res: Response) => {
+    try {
+      await importAllCSVFiles(storage);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error importing all CSV files:", error);
+      res.status(500).json({ error: error.message || "Failed to import all CSV files" });
     }
   });
 
