@@ -47,6 +47,16 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         </div>
         
         <div className="flex items-center gap-4">
+          <a 
+            href="https://freysa.ai/digital-twin?ref=Navali" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-sm px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
+            title="Create your own Digital Twin with referral"
+          >
+            Create your Digital Twin
+          </a>
+          
           <Link to="/analytics">
             <Button 
               variant="outline" 
@@ -57,16 +67,6 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <span>Analytics</span>
             </Button>
           </Link>
-          
-          <a 
-            href="https://freysa.ai/digital-twin?ref=Navali" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-sm px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
-            title="Create your own Digital Twin with referral"
-          >
-            Create your Digital Twin
-          </a>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
