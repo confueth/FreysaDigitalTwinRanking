@@ -24,25 +24,18 @@ export default function Home() {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [showAgentModal, setShowAgentModal] = useState(false);
 
-  // Query snapshots
-  const { data: snapshots, isLoading: snapshotsLoading } = useQuery({
-    queryKey: ['/api/snapshots'],
-    staleTime: 60000 // 1 minute
-  });
-
-  // Query latest snapshot if none selected
-  const { data: latestSnapshot } = useQuery({
+  // Only query latest snapshot - remove snapshots selection from UI
+  const { data: latestSnapshot, isLoading: snapshotLoading } = useQuery({
     queryKey: ['/api/snapshots/latest'],
-    enabled: !selectedSnapshot,
     staleTime: 60000 // 1 minute
   });
 
-  // Set the initial snapshot ID when data is loaded
+  // Set the snapshot ID when latest data is loaded
   useEffect(() => {
-    if (!selectedSnapshot && latestSnapshot) {
+    if (latestSnapshot) {
       setSelectedSnapshot(latestSnapshot.id);
     }
-  }, [selectedSnapshot, latestSnapshot]);
+  }, [latestSnapshot]);
 
   // Query agents with filters
   const { 
@@ -119,8 +112,8 @@ export default function Home() {
     setSelectedAgent(null);
   };
 
-  // Get current snapshot from list
-  const currentSnapshot = snapshots?.find((s: Snapshot) => s.id === selectedSnapshot);
+  // Get current snapshot (now always using the latest)
+  const currentSnapshot = latestSnapshot;
   
   // Handle pagination
   const handlePageChange = (page: number) => {
@@ -157,13 +150,10 @@ export default function Home() {
       
       <main className="flex-grow flex flex-col md:flex-row">
         <Sidebar 
-          snapshots={snapshots || []} 
-          selectedSnapshot={selectedSnapshot}
-          onSnapshotChange={handleSnapshotChange}
           filters={filters}
           onFilterChange={handleFilterChange}
           cities={cities || []}
-          isLoading={snapshotsLoading}
+          isLoading={snapshotLoading}
         />
         
         <div className="flex-grow p-4 overflow-auto">
