@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
@@ -45,25 +45,59 @@ interface ExternalAgentData {
   }[];
 }
 
+// Cache for agent details to reduce memory usage
+const agentCache = new Map<string, ExternalAgentData>();
+const MAX_CACHE_ENTRIES = 10;
+
 export default function AgentDetailModal({ username, isOpen, onClose }: AgentDetailModalProps) {
   const { toast } = useToast();
   const [useExternalApi, setUseExternalApi] = useState(true);
 
-  // Query agent details from internal API first
+  // Clean up cache when it gets too large
+  useEffect(() => {
+    if (agentCache.size > MAX_CACHE_ENTRIES) {
+      // Remove oldest entry (first key in map)
+      const firstKey = agentCache.keys().next().value;
+      agentCache.delete(firstKey);
+    }
+  }, []);
+
+  // Query agent details from internal API first - optimized with longer cache times
   const { data: internalAgent, isLoading: isInternalLoading, error: internalError } = useQuery({
     queryKey: [`/api/agents/${username}`],
     enabled: isOpen && !useExternalApi,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
   
-  // Use external API to get fresh data directly from Digital Clone API
+  // Use external API to get fresh data directly from Digital Clone API - with caching
   const { data: externalAgent, isLoading: isExternalLoading, error: externalError } = useQuery({
     queryKey: [`direct-agent-${username}`],
     queryFn: async () => {
       try {
+        // Check if we have a cached version first
+        if (agentCache.has(username)) {
+          console.log(`Using cached data for agent ${username}`);
+          return agentCache.get(username);
+        }
+        
+        console.log(`Fetching fresh data for agent ${username}`);
         const response = await axios.get<ExternalAgentData>(
           `https://digital-clone-production.onrender.com/digital-clones/clones/${username}`
         );
-        return response.data;
+        
+        // Cache the response
+        const data = response.data;
+        
+        // Only keep the most recent 10 tweets to reduce memory usage
+        if (data.tweets && data.tweets.length > 10) {
+          data.tweets = data.tweets.slice(0, 10);
+        }
+        
+        // Store in cache
+        agentCache.set(username, data);
+        
+        return data;
       } catch (error) {
         console.error("Failed to fetch from external API, falling back to internal data", error);
         setUseExternalApi(false);
@@ -71,7 +105,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
       }
     },
     enabled: isOpen && useExternalApi,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
   });
   
@@ -79,26 +113,38 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
   const isLoading = useExternalApi ? isExternalLoading : isInternalLoading;
   const error = useExternalApi ? externalError : internalError;
 
-  // Format wallet balance to 3 decimal places if available
-  const formattedWalletBalance = agent?.walletBalance ? 
-    parseFloat(agent.walletBalance).toFixed(3) : 
-    undefined;
+  // Format wallet balance to 3 decimal places if available - memoized to avoid recalculation
+  const formattedWalletBalance = useMemo(() => 
+    agent?.walletBalance ? parseFloat(agent.walletBalance).toFixed(3) : undefined,
+  [agent?.walletBalance]);
     
-  // Clean HTML from tweet content
-  const formatTweetContent = (content: string): string => {
-    // Remove HTML tags while preserving text
+  // Clean HTML from tweet content - memoized function for improved performance
+  const formatTweetContent = useCallback((content: string): string => {
+    // Check if the content is empty or too long
+    if (!content || content.length > 5000) {
+      return content?.substring(0, 280) || '';
+    }
+    
+    // Remove HTML tags while preserving text - optimized regex
     const withoutTags = content.replace(/<[^>]*>/g, ' ').trim();
-    // Remove excess whitespace
+    
+    // Remove excess whitespace with a single pass
     const cleanedContent = withoutTags.replace(/\s+/g, ' ');
-    // Unescape HTML entities
+    
+    // Unescape common HTML entities in a single pass
     return cleanedContent
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#039;/g, "'")
-      .replace(/&nbsp;/g, ' ');
-  };
+      .replace(/&(amp|lt|gt|quot|#039|nbsp);/g, match => {
+        switch(match) {
+          case '&amp;': return '&';
+          case '&lt;': return '<';
+          case '&gt;': return '>';
+          case '&quot;': return '"';
+          case '&#039;': return "'";
+          case '&nbsp;': return ' ';
+          default: return match;
+        }
+      });
+  }, []);
 
   // Handle error
   useEffect(() => {

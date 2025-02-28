@@ -7,9 +7,20 @@ import type { Agent, LeaderboardEntry, AgentDetails } from "@shared/schema";
 const LEADERBOARD_API = "https://digital-clone-production.onrender.com/digital-clones/leaderboards?full=true";
 const AGENT_DETAILS_API = "https://digital-clone-production.onrender.com/digital-clones/clones/";
 
-// Cache control with improved API usage protection
-let cachedLeaderboardData: Agent[] | null = null;
-let cachedCities: string[] | null = null;
+// Memory-optimized cache implementation
+// Instead of storing full agent objects, we only store essential fields for the leaderboard
+// and fetch complete details only when needed
+interface MinimalAgent {
+  id: string;
+  mastodonUsername: string;
+  score: number;
+  avatarUrl?: string;
+  city?: string;
+}
+
+// Cache control with improved API usage protection and memory optimization
+let cachedLeaderboardData: MinimalAgent[] | null = null;
+let cachedCities: Set<string> | null = null; // Using Set for better performance
 let cachedAgentDetails: Map<string, {data: any, timestamp: number}> = new Map();
 let lastFetchTime = 0;
 let fetchInProgress = false;
@@ -17,9 +28,11 @@ const CACHE_TTL = 30 * 60 * 1000; // 30 minutes cache - longer to avoid unnecess
 const FORCE_REFRESH_TTL = 3 * 60 * 60 * 1000; // Force refresh after 3 hours
 const AGENT_DETAILS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes for individual agent details
 const REQUEST_THROTTLE = 10 * 1000; // Min time between API calls (10 seconds)
+const MAX_AGENT_CACHE_SIZE = 100; // Maximum number of agent details to cache
 
 /**
  * Get the live leaderboard data directly from the API
+ * This method is heavily optimized for performance and memory usage
  */
 export async function getLiveLeaderboardData() {
   const now = Date.now();
@@ -79,82 +92,50 @@ export async function getLiveLeaderboardData() {
                 "Data sample:", 
                 JSON.stringify(response.data).substring(0, 200) + "...");
     
+    // Process different response formats
+    let agentData: MinimalAgent[] = [];
+    
     if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-      // Validate and parse leaderboard data
-      console.log("Parsing leaderboard entries...");
-      const entries = z.array(leaderboardEntrySchema).parse(response.data);
-      console.log(`Successfully parsed ${entries.length} leaderboard entries`);
-      
-      // Process the raw entries into agents
-      const agents = entries.map((entry, index) => {
-        return {
-          id: index + 1, // Generate sequential IDs
-          snapshotId: 0, // Not using snapshots anymore
+      // Old format - direct array of leaderboard entries
+      try {
+        // Create minimal agents without validating entire objects to reduce memory
+        agentData = response.data.map((entry: any, index: number) => ({
+          id: String(index + 1), // Use string IDs to save memory (no need for math operations)
           mastodonUsername: entry.mastodonUsername,
-          score: entry.score,
-          prevScore: null,
-          avatarUrl: entry.avatarURL || null,
-          city: entry.city || null,
-          likesCount: entry.likesCount || null,
-          followersCount: entry.followersCount || null,
-          retweetsCount: entry.retweetsCount || null,
-          repliesCount: null,
-          rank: index + 1, // Assign rank based on position in array
-          prevRank: null,
-          walletAddress: entry.walletAddress || null,
-          walletBalance: entry.walletBalance || null,
-          mastodonBio: entry.mastodonBio || null,
-          bioUpdatedAt: entry.bioUpdatedAt ? new Date(entry.bioUpdatedAt) : null,
-          ubiClaimedAt: entry.ubiClaimedAt ? new Date(entry.ubiClaimedAt) : null
-        } as Agent;
-      });
-      
-      // Update cache
-      cachedLeaderboardData = agents;
-      lastFetchTime = now;
-      updateCachedCities(agents);
-      
-      return agents;
-    } else {
-      console.error("API returned empty data format");
-      
-      if (response.data && response.data.agents && Array.isArray(response.data.agents)) {
-        console.log("Found agents array in response, using that instead");
-        
-        // Map agents from the new format
-        const agents = response.data.agents.map((entry: any, index: number) => {
-          return {
-            id: index + 1,
-            snapshotId: 0,
-            mastodonUsername: entry.mastodonUsername,
-            score: entry.score || 0,
-            prevScore: null,
-            avatarUrl: entry.avatarUrl || null,
-            city: entry.city || null,
-            likesCount: entry.likesCount || null,
-            followersCount: entry.followersCount || null,
-            retweetsCount: entry.retweetsCount || null,
-            repliesCount: null,
-            rank: index + 1,
-            prevRank: null,
-            walletAddress: entry.walletAddress || null,
-            walletBalance: entry.walletBalance || null,
-            mastodonBio: entry.mastodonBio || null,
-            bioUpdatedAt: entry.bioUpdatedAt ? new Date(entry.bioUpdatedAt) : null,
-            ubiClaimedAt: entry.ubiClaimedAt ? new Date(entry.ubiClaimedAt) : null
-          } as Agent;
-        });
-        
-        // Update cache
-        cachedLeaderboardData = agents;
-        lastFetchTime = now;
-        updateCachedCities(agents);
-        
-        return agents;
+          score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
+          avatarUrl: entry.avatarURL || entry.avatarUrl,
+          city: entry.city
+        }));
+      } catch (parseError) {
+        console.error("Error parsing array format:", parseError);
       }
+    } 
+    else if (response.data && response.data.agents && Array.isArray(response.data.agents)) {
+      // New format - nested agents array
+      console.log("Found agents array in response, using that instead");
       
-      throw new Error("Invalid data format");
+      // Map minimal data to save memory
+      agentData = response.data.agents.map((entry: any, index: number) => ({
+        id: String(index + 1),
+        mastodonUsername: entry.mastodonUsername,
+        score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
+        avatarUrl: entry.avatarUrl || entry.avatarURL,
+        city: entry.city
+      }));
     }
+    
+    if (agentData.length === 0) {
+      throw new Error("Invalid data format or empty response");
+    }
+    
+    // Update cache with the minimal agent data
+    cachedLeaderboardData = agentData;
+    lastFetchTime = now;
+    
+    // Update cities cache 
+    updateCachedCities(agentData);
+    
+    return agentData;
   } catch (apiError: any) {
     console.error("API error during leaderboard fetch:", apiError.message);
     
@@ -169,6 +150,21 @@ export async function getLiveLeaderboardData() {
   } finally {
     // Always reset the in-progress flag
     fetchInProgress = false;
+    
+    // Memory cleanup - purge old agent detail cache entries if we have too many
+    if (cachedAgentDetails.size > MAX_AGENT_CACHE_SIZE) {
+      // Find the oldest entries to remove
+      const entries = Array.from(cachedAgentDetails.entries());
+      entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+      
+      // Remove the oldest 20% of entries
+      const removeCount = Math.floor(MAX_AGENT_CACHE_SIZE * 0.2);
+      for (let i = 0; i < removeCount && i < entries.length; i++) {
+        cachedAgentDetails.delete(entries[i][0]);
+      }
+      
+      console.log(`Purged ${removeCount} old agent cache entries to free memory`);
+    }
   }
 }
 
@@ -423,7 +419,8 @@ export async function getLiveStats() {
  */
 export function getAvailableCities() {
   if (cachedCities) {
-    return cachedCities;
+    // Convert Set to Array for API response
+    return Array.from(cachedCities);
   }
   
   return [];
@@ -432,22 +429,26 @@ export function getAvailableCities() {
 /**
  * Update the cities cache from new agent data
  */
-function updateCachedCities(agents: Agent[]) {
+function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
   // Only update if we don't already have city data or if it's been over 24 hours
   const now = Date.now();
   const ONE_DAY = 24 * 60 * 60 * 1000;
   
-  if (!cachedCities || cachedCities.length === 0 || now - lastFetchTime > ONE_DAY) {
-    const citySet = new Set<string>();
+  if (!cachedCities || cachedCities.size === 0 || now - lastFetchTime > ONE_DAY) {
+    // Initialize the Set if needed
+    if (!cachedCities) {
+      cachedCities = new Set<string>();
+    }
     
-    agents.forEach(agent => {
+    // Add new cities to the set
+    for (let i = 0; i < agents.length; i++) {
+      const agent = agents[i];
       if (agent.city) {
-        citySet.add(agent.city);
+        cachedCities.add(agent.city);
       }
-    });
+    }
     
-    cachedCities = Array.from(citySet);
-    console.log(`Updated cities cache with ${cachedCities.length} cities`);
+    console.log(`Updated cities cache with ${cachedCities.size} cities`);
   }
 }
 
