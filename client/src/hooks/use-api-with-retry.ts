@@ -113,11 +113,16 @@ export function useApiWithRetry<T>({
         onError?.(error);
         
         // Show toast notification for failures
+        // Create safe error message
+        let errorMessage = error.message;
+        if (axios.isAxiosError(err)) {
+          const responseData = axiosError.response?.data as any;
+          errorMessage = responseData?.message || error.message;
+        }
+        
         toast({
           title: "Request failed",
-          description: axios.isAxiosError(err) 
-            ? axiosError.response?.data?.message || error.message
-            : error.message,
+          description: errorMessage,
           variant: "destructive",
         });
       } finally {
@@ -163,11 +168,17 @@ export function useApiWithRetry<T>({
       setError(error);
       onError?.(error);
       
+      // Create safe error message
+      let errorMessage = error.message;
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        const responseData = axiosError.response?.data as any;
+        errorMessage = responseData?.message || error.message;
+      }
+      
       toast({
         title: "Refresh failed",
-        description: axios.isAxiosError(error) 
-          ? error.response?.data?.message || error.message 
-          : error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

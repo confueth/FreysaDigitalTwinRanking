@@ -151,11 +151,11 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
                 stroke="#9CA3AF" 
                 fontSize={12} 
                 tick={{ fill: '#9CA3AF' }}
-                tickFormatter={(value) => {
+                tickFormatter={(value: string): string => {
                   if (value === 'Unknown') return value;
                   if (isMobile) {
                     // Shorten city names on mobile
-                    return value.split('_').map(part => part.charAt(0)).join('');
+                    return value.split('_').map((part: string): string => part.charAt(0)).join('');
                   }
                   return value.replace('_', ' ');
                 }}
