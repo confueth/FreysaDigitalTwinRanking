@@ -8,6 +8,7 @@ import { Suspense, lazy } from "react";
 const NotFound = lazy(() => import("@/pages/not-found"));
 const Home = lazy(() => import("@/pages/Home"));
 const AgentDetail = lazy(() => import("@/pages/AgentDetail"));
+const Analytics = lazy(() => import("@/pages/Analytics"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -26,6 +27,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/agent/:username" component={AgentDetail} />
+          <Route path="/analytics" component={Analytics} />
           <Route component={NotFound} />
         </Switch>
       </Suspense>
