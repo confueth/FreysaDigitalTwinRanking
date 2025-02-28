@@ -255,7 +255,7 @@ export default function Home() {
             <div className="flex space-x-2">
               <span className="text-gray-400">
                 {agents ? 
-                  `Showing ${displayAgents.length} of ${stats?.totalAgents || totalAgentsCount} filtered agents` : 
+                  `Showing ${displayAgents.length} of ${stats?.totalAgents || totalAgentsCount} Digital Twins` : 
                   'Loading...'}
               </span>
             </div>
