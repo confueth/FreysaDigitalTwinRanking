@@ -38,6 +38,7 @@ let cachedCities: Set<string> | null = null; // Using Set for better performance
 let cachedAgentDetails: Map<string, {data: any, timestamp: number}> = new Map();
 let lastFetchTime = 0;
 let fetchInProgress = false;
+let initialLoadComplete = false; // Flag to check if first load has completed
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes cache - reduced to get fresh data more often
 const FORCE_REFRESH_TTL = 60 * 60 * 1000; // Force refresh after 1 hour
 const AGENT_DETAILS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes for individual agent details
@@ -51,8 +52,11 @@ const MAX_AGENT_CACHE_SIZE = 100; // Maximum number of agent details to cache
 export async function getLiveLeaderboardData() {
   const now = Date.now();
   
-  // Return cached data if within valid cache time
-  if (cachedLeaderboardData && (now - lastFetchTime < CACHE_TTL)) {
+  // On first load, always force refresh
+  if (!initialLoadComplete) {
+    console.log("First load - forcing data refresh");
+    initialLoadComplete = true;
+  } else if (cachedLeaderboardData && (now - lastFetchTime < CACHE_TTL)) {
     return cachedLeaderboardData;
   }
   
