@@ -832,4 +832,5 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Use DatabaseStorage instead of MemStorage
+// Use an instance of the DatabaseStorage as our storage implementation
 export const storage = new DatabaseStorage();
