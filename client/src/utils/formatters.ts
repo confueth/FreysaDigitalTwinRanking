@@ -24,7 +24,7 @@ export function formatCompactNumber(value: number | undefined | null): string {
 }
 
 /**
- * Format a date from string to a readable format
+ * Format a date from string to a readable format in the user's local timezone
  */
 export function formatDate(dateString: string | undefined): string {
   if (!dateString) return '';
@@ -33,18 +33,19 @@ export function formatDate(dateString: string | undefined): string {
   
   // Format with time if available
   if (date.getHours() !== 0 || date.getMinutes() !== 0) {
-    return date.toLocaleString('en-US', {
+    return date.toLocaleString(undefined, { // undefined uses the user's browser locale
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
+      timeZoneName: 'short' // Display timezone abbreviation
     });
   }
   
   // Otherwise just return the date
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(undefined, { // undefined uses the user's browser locale
     month: 'short',
     day: 'numeric', 
     year: 'numeric'
@@ -53,6 +54,8 @@ export function formatDate(dateString: string | undefined): string {
 
 /**
  * Format a timestamp to relative time (e.g. "5 minutes ago")
+ * This automatically respects the user's local timezone since
+ * it works with date objects in the user's local time
  */
 export function formatRelativeTime(dateString: string | undefined): string {
   if (!dateString) return '';
