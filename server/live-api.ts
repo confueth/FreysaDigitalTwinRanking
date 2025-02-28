@@ -7,11 +7,14 @@ import type { Agent, LeaderboardEntry, AgentDetails } from "@shared/schema";
 const LEADERBOARD_API = "https://digital-clone-production.onrender.com/digital-clones/leaderboards?full=true";
 const AGENT_DETAILS_API = "https://digital-clone-production.onrender.com/digital-clones/clones/";
 
-// Cache control
+// Cache control with improved API usage protection
 let cachedLeaderboardData: Agent[] | null = null;
 let cachedCities: string[] | null = null;
 let lastFetchTime = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+let fetchInProgress = false;
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes cache - longer to avoid unnecessary API calls
+const FORCE_REFRESH_TTL = 3 * 60 * 60 * 1000; // Force refresh after 3 hours
+const REQUEST_THROTTLE = 10 * 1000; // Min time between API calls (10 seconds)
 
 /**
  * Get the live leaderboard data directly from the API
@@ -19,10 +22,41 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
 export async function getLiveLeaderboardData() {
   const now = Date.now();
   
-  // Return cached data if valid
+  // Return cached data if within valid cache time
   if (cachedLeaderboardData && (now - lastFetchTime < CACHE_TTL)) {
     return cachedLeaderboardData;
   }
+  
+  // If a fetch is already in progress, wait and return cached data to prevent concurrent API calls
+  if (fetchInProgress) {
+    console.log("Another API fetch is already in progress, using cached data");
+    return cachedLeaderboardData || [];
+  }
+  
+  // Check if we're within throttle period (don't make API calls too close together)
+  if (cachedLeaderboardData && now - lastFetchTime < REQUEST_THROTTLE) {
+    console.log("Within API throttle period, using cached data");
+    return cachedLeaderboardData;
+  }
+  
+  // Use expired cache if we have it unless the cache is very old
+  if (cachedLeaderboardData && now - lastFetchTime < FORCE_REFRESH_TTL) {
+    // Schedule a background refresh for next request but return current cache immediately
+    setTimeout(() => {
+      if (!fetchInProgress) {
+        fetchInProgress = true;
+        getLiveLeaderboardData()
+          .finally(() => {
+            fetchInProgress = false;
+          });
+      }
+    }, 100);
+    
+    return cachedLeaderboardData;
+  }
+  
+  // Set fetch in progress flag
+  fetchInProgress = true;
   
   try {
     // Fetch fresh data from API
@@ -130,6 +164,9 @@ export async function getLiveLeaderboardData() {
     
     // If no cache exists, throw the error
     throw new Error("Failed to fetch leaderboard data and no cache available");
+  } finally {
+    // Always reset the in-progress flag
+    fetchInProgress = false;
   }
 }
 
@@ -353,15 +390,22 @@ export function getAvailableCities() {
  * Update the cities cache from new agent data
  */
 function updateCachedCities(agents: Agent[]) {
-  const citySet = new Set<string>();
+  // Only update if we don't already have city data or if it's been over 24 hours
+  const now = Date.now();
+  const ONE_DAY = 24 * 60 * 60 * 1000;
   
-  agents.forEach(agent => {
-    if (agent.city) {
-      citySet.add(agent.city);
-    }
-  });
-  
-  cachedCities = Array.from(citySet);
+  if (!cachedCities || cachedCities.length === 0 || now - lastFetchTime > ONE_DAY) {
+    const citySet = new Set<string>();
+    
+    agents.forEach(agent => {
+      if (agent.city) {
+        citySet.add(agent.city);
+      }
+    });
+    
+    cachedCities = Array.from(citySet);
+    console.log(`Updated cities cache with ${cachedCities.length} cities`);
+  }
 }
 
 // No longer needed - we're using real data only
