@@ -1,8 +1,10 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from 'path';
 import fs from 'fs';
 import { getLiveLeaderboardData, getLiveAgentDetail, filterAgents, getLiveStats, getAvailableCities } from './live-api';
+import { adminLoginSchema } from '../shared/schema';
+import { storage } from './storage';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup API routes
@@ -12,6 +14,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("API error:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Admin authentication routes
+  app.post("/api/admin/register", async (req: Request, res: Response) => {
+    try {
+      // Parse and validate the user data
+      const userData = adminLoginSchema.parse(req.body);
+      
+      // Check if a user with the same username already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+      
+      // Create the new admin user
+      const newUser = await storage.createUser({
+        username: userData.username,
+        password: userData.password,
+        isAdmin: true,
+      });
+      
+      // Return the user data (without the password)
+      const { password, ...userWithoutPassword } = newUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error creating admin user:", error);
+      res.status(400).json({ 
+        error: "Invalid user data", 
+        details: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+  
+  app.post("/api/admin/login", async (req: Request, res: Response) => {
+    try {
+      // Parse and validate the login data
+      const loginData = adminLoginSchema.parse(req.body);
+      
+      // Verify the credentials
+      const isValid = await storage.verifyAdminCredentials(
+        loginData.username,
+        loginData.password
+      );
+      
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Get the user data
+      const user = await storage.getUserByUsername(loginData.username);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Set up the session
+      if (req.session) {
+        req.session.userId = user.id;
+        req.session.isAdmin = user.isAdmin;
+      }
+      
+      // Return the user data (without the password)
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error logging in:", error);
+      res.status(400).json({ 
+        error: "Invalid login data", 
+        details: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+  
+  app.post("/api/admin/logout", (req: Request, res: Response) => {
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying session:", err);
+          return res.status(500).json({ error: "Failed to logout" });
+        }
+        res.clearCookie("connect.sid");
+        res.json({ message: "Logged out successfully" });
+      });
+    } else {
+      res.json({ message: "Not logged in" });
+    }
+  });
+  
+  app.get("/api/admin/me", (req: Request, res: Response) => {
+    if (req.session && req.session.userId) {
+      res.json({
+        userId: req.session.userId,
+        isAdmin: req.session.isAdmin || false,
+      });
+    } else {
+      res.status(401).json({ error: "Not authenticated" });
     }
   });
 
