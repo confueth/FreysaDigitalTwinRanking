@@ -80,8 +80,44 @@ export async function getLiveLeaderboardData() {
       
       return agents;
     } else {
-      console.error("API returned empty or invalid data");
-      return generateMockData();
+      console.error("API returned empty data format");
+      
+      if (response.data && response.data.agents && Array.isArray(response.data.agents)) {
+        console.log("Found agents array in response, using that instead");
+        
+        // Map agents from the new format
+        const agents = response.data.agents.map((entry: any, index: number) => {
+          return {
+            id: index + 1,
+            snapshotId: 0,
+            mastodonUsername: entry.mastodonUsername,
+            score: entry.score || 0,
+            prevScore: null,
+            avatarUrl: entry.avatarUrl || null,
+            city: entry.city || null,
+            likesCount: entry.likesCount || null,
+            followersCount: entry.followersCount || null,
+            retweetsCount: entry.retweetsCount || null,
+            repliesCount: null,
+            rank: index + 1,
+            prevRank: null,
+            walletAddress: entry.walletAddress || null,
+            walletBalance: entry.walletBalance || null,
+            mastodonBio: entry.mastodonBio || null,
+            bioUpdatedAt: entry.bioUpdatedAt ? new Date(entry.bioUpdatedAt) : null,
+            ubiClaimedAt: entry.ubiClaimedAt ? new Date(entry.ubiClaimedAt) : null
+          } as Agent;
+        });
+        
+        // Update cache
+        cachedLeaderboardData = agents;
+        lastFetchTime = now;
+        updateCachedCities(agents);
+        
+        return agents;
+      }
+      
+      throw new Error("Invalid data format");
     }
   } catch (apiError: any) {
     console.error("API error during leaderboard fetch:", apiError.message);
@@ -92,8 +128,8 @@ export async function getLiveLeaderboardData() {
       return cachedLeaderboardData;
     }
     
-    // Generate mock data if no cache exists
-    return generateMockData();
+    // If no cache exists, throw the error
+    throw new Error("Failed to fetch leaderboard data and no cache available");
   }
 }
 
@@ -328,40 +364,4 @@ function updateCachedCities(agents: Agent[]) {
   cachedCities = Array.from(citySet);
 }
 
-/**
- * Generate mock data for when API fails
- */
-function generateMockData() {
-  console.log("Generating mock data for demonstration purposes");
-  const mockData = [];
-  
-  for (let i = 1; i <= 50; i++) {
-    mockData.push({
-      id: i,
-      snapshotId: 0,
-      mastodonUsername: `user${i}`,
-      score: 1000 - i * 10,
-      prevScore: null,
-      avatarUrl: `https://avatars.githubusercontent.com/u/${10000 + i}`,
-      city: i % 3 === 0 ? "NEW_YORK" : i % 3 === 1 ? "SAN_FRANCISCO" : "TOKYO",
-      likesCount: 500 - i * 5,
-      followersCount: 1000 - i * 10,
-      retweetsCount: 200 - i * 2,
-      repliesCount: null,
-      rank: i,
-      prevRank: null,
-      walletAddress: null,
-      walletBalance: null,
-      mastodonBio: null,
-      bioUpdatedAt: null,
-      ubiClaimedAt: null
-    });
-  }
-  
-  // Update the cache with this mock data
-  cachedLeaderboardData = mockData as Agent[];
-  lastFetchTime = Date.now();
-  updateCachedCities(cachedLeaderboardData);
-  
-  return mockData as Agent[];
-}
+// No longer needed - we're using real data only
