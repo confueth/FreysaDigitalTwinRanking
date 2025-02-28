@@ -246,11 +246,36 @@ export async function getLiveAgentDetail(username: string) {
           });
           
           if (detailsResponse.data) {
-            // Parse and validate the data
-            const agentDetails = agentDetailsSchema.parse(detailsResponse.data);
+            // Parse and validate the data with safety checks
+            const rawData = detailsResponse.data || {};
+            
+            // Use safeParse instead of parse to avoid exceptions
+            const result = agentDetailsSchema.safeParse(rawData);
+            let agentDetails;
+            
+            if (result.success) {
+              agentDetails = result.data;
+            } else {
+              console.warn(`Validation errors for ${username}:`, result.error);
+              // Create a minimal valid object with required fields
+              agentDetails = {
+                mastodonUsername: rawData.mastodonUsername || username,
+                score: typeof rawData.score === 'number' ? rawData.score : (cachedAgent.score || 0),
+                mastodonBio: rawData.mastodonBio || null,
+                walletAddress: rawData.walletAddress || null,
+                walletBalance: rawData.walletBalance || null,
+                city: rawData.city || null,
+                likesCount: rawData.likesCount || null,
+                followersCount: rawData.followersCount || null,
+                retweetsCount: rawData.retweetsCount || null,
+                repliesCount: rawData.repliesCount || null,
+                ubiClaimedAt: rawData.ubiClaimedAt || null,
+                bioUpdatedAt: rawData.bioUpdatedAt || null
+              };
+            }
             
             // Extract tweets if available
-            const tweets = detailsResponse.data.tweets || [];
+            const tweets = rawData.tweets || [];
             
             // Merge with cached basic data
             const enrichedAgent = {
@@ -292,10 +317,37 @@ export async function getLiveAgentDetail(username: string) {
     });
     
     if (response.data) {
-      const agentDetails = agentDetailsSchema.parse(response.data);
+      // Parse and validate the data with safety checks
+      const rawData = response.data || {};
+      
+      // Use safeParse instead of parse to avoid exceptions
+      const result = agentDetailsSchema.safeParse(rawData);
+      let agentDetails;
+      
+      if (result.success) {
+        agentDetails = result.data;
+      } else {
+        console.warn(`Validation errors for ${username} (direct fetch):`, result.error);
+        // Create a minimal valid object with required fields
+        agentDetails = {
+          mastodonUsername: rawData.mastodonUsername || username,
+          score: typeof rawData.score === 'number' ? rawData.score : 0,
+          mastodonBio: rawData.mastodonBio || null,
+          walletAddress: rawData.walletAddress || null,
+          walletBalance: rawData.walletBalance || null,
+          city: rawData.city || null,
+          likesCount: rawData.likesCount || null,
+          followersCount: rawData.followersCount || null,
+          retweetsCount: rawData.retweetsCount || null,
+          repliesCount: rawData.repliesCount || null,
+          ubiClaimedAt: rawData.ubiClaimedAt || null,
+          bioUpdatedAt: rawData.bioUpdatedAt || null,
+          avatarUrl: rawData.avatarURL || rawData.avatarUrl || null
+        };
+      }
       
       // Extract tweets if available
-      const tweets = response.data.tweets || [];
+      const tweets = rawData.tweets || [];
       
       // Create an agent with the details
       const fullAgent = {
