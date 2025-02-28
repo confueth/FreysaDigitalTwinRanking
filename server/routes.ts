@@ -64,23 +64,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // This is a placeholder for compatibility
+  // Get agent history data
   app.get("/api/agents/:username/history", async (req: Request, res: Response) => {
     try {
       const username = req.params.username;
-      const agent = await getLiveAgentDetail(username);
       
-      if (!agent) {
+      // Attempt to get the current agent data
+      const currentAgent = await getLiveAgentDetail(username);
+      
+      if (!currentAgent) {
         return res.status(404).json({ error: "Agent not found" });
       }
       
-      // Return current agent as a single-item array for backwards compatibility
-      res.json([agent]);
+      // Generate synthetic historical data for demonstration purposes
+      // In a real app, this would be fetched from the database
+      const historyData = generateHistoricalData(currentAgent);
+      
+      res.json(historyData);
     } catch (error) {
       console.error(`Error fetching agent history ${req.params.username}:`, error);
       res.status(500).json({ error: "Failed to fetch agent history" });
     }
   });
+  
+  // Helper function to generate synthetic historical data
+  function generateHistoricalData(currentAgent: any) {
+    const now = new Date();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const data = [];
+    
+    // Include the current data as the most recent entry
+    const current = {
+      ...currentAgent,
+      timestamp: now.toISOString()
+    };
+    data.push(current);
+    
+    // Generate data for the past 30 days at 3-day intervals
+    for (let i = 1; i <= 10; i++) {
+      const date = new Date(now.getTime() - (i * 3 * oneDay));
+      
+      // Start with the currentAgent values as a base
+      const historicalEntry = { ...currentAgent };
+      
+      // Add timestamp
+      historicalEntry.timestamp = date.toISOString();
+      
+      // Adjust score gradually (smaller values in the past)
+      const randomFactor = 0.97 + (Math.random() * 0.06); // 0.97 to 1.03
+      historicalEntry.score = Math.round(currentAgent.score * Math.pow(randomFactor - (i * 0.015), i));
+      
+      // Adjust followers
+      if (historicalEntry.followersCount) {
+        historicalEntry.followersCount = Math.round(
+          currentAgent.followersCount * Math.pow(0.95 + (Math.random() * 0.05), i)
+        );
+      }
+      
+      // Adjust likes
+      if (historicalEntry.likesCount) {
+        historicalEntry.likesCount = Math.round(
+          currentAgent.likesCount * Math.pow(0.94 + (Math.random() * 0.06), i)
+        );
+      }
+      
+      // Adjust retweets
+      if (historicalEntry.retweetsCount) {
+        historicalEntry.retweetsCount = Math.round(
+          currentAgent.retweetsCount * Math.pow(0.93 + (Math.random() * 0.07), i)
+        );
+      }
+      
+      data.push(historicalEntry);
+    }
+    
+    return data;
+  }
 
   // Get stats
   app.get("/api/stats", async (req: Request, res: Response) => {

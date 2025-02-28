@@ -17,6 +17,7 @@ export interface Agent {
   mastodonBio?: string;
   bioUpdatedAt?: string;
   ubiClaimedAt?: string;
+  timestamp?: string; // Added for history/analytics purposes
 }
 
 export interface AgentWithTweets extends Agent {

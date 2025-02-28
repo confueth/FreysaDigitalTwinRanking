@@ -93,7 +93,9 @@ export default function Analytics({}: AnalyticsProps) {
     const allTimestamps = new Set<string>();
     Object.values(agentHistories).forEach((history: Agent[]) => {
       history.forEach(snapshot => {
-        allTimestamps.add(snapshot.timestamp);
+        if (snapshot.timestamp) {
+          allTimestamps.add(snapshot.timestamp);
+        }
       });
     });
     
@@ -111,7 +113,7 @@ export default function Analytics({}: AnalyticsProps) {
       
       // Add data for each agent at this timestamp
       Object.entries(agentHistories).forEach(([username, history]) => {
-        const snapshot = history.find(s => s.timestamp === timestamp);
+        const snapshot = history.find(s => s.timestamp ? s.timestamp === timestamp : false);
         if (snapshot) {
           switch (metric) {
             case 'score':
@@ -138,6 +140,19 @@ export default function Analytics({}: AnalyticsProps) {
   
   return (
     <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <Link to="/">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
+          >
+            <Home className="h-4 w-4" />
+            <span>Back to Leaderboard</span>
+          </Button>
+        </Link>
+      </div>
+      
       <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
         Advanced Analytics
       </h1>
