@@ -77,7 +77,29 @@ export default function Sidebar({
                 }`}
                 onClick={() => onSnapshotChange(snapshot.id)}
               >
-                <span>{snapshot.description || formatDate(snapshot.timestamp)}</span>
+                <div className="flex flex-col">
+                  <span>{snapshot.description || formatDate(snapshot.timestamp)}</span>
+                  {snapshot.id === 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Delete the initial snapshot with ID 1
+                        fetch(`/api/snapshots/${snapshot.id}`, {
+                          method: 'DELETE',
+                        })
+                          .then(response => response.json())
+                          .then(() => {
+                            // Refresh the page after deletion
+                            window.location.reload();
+                          })
+                          .catch(error => console.error('Error deleting snapshot:', error));
+                      }}
+                      className="text-xs text-red-500 hover:text-red-300 mt-1"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
                 {snapshot.id === snapshots[0].id && (
                   <span className="text-xs px-2 py-0.5 bg-primary rounded-full">Latest</span>
                 )}
