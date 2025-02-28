@@ -8,11 +8,13 @@ import AgentDetail from "@/pages/AgentDetail";
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/agent/:username" component={AgentDetail} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/agent/:username" component={AgentDetail} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
   );
 }
 

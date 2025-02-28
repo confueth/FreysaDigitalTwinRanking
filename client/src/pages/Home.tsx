@@ -15,7 +15,8 @@ type ViewMode = 'table' | 'cards' | 'timeline';
 
 export default function Home() {
   const [selectedView, setSelectedView] = useState<ViewMode>('table');
-  const [selectedSnapshot, setSelectedSnapshot] = useState<number | null>(null);
+  // Fixed snapshot ID for backward compatibility during transition to live data
+  const [selectedSnapshot, setSelectedSnapshot] = useState<number>(1);
   const [filters, setFilters] = useState<AgentFilters>({
     page: 1,
     limit: 50,
@@ -23,19 +24,16 @@ export default function Home() {
   });
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [showAgentModal, setShowAgentModal] = useState(false);
-
-  // Only query latest snapshot - remove snapshots selection from UI
-  const { data: latestSnapshot, isLoading: snapshotLoading } = useQuery({
-    queryKey: ['/api/snapshots/latest'],
-    staleTime: 60000 // 1 minute
-  });
-
-  // Set the snapshot ID when latest data is loaded
-  useEffect(() => {
-    if (latestSnapshot) {
-      setSelectedSnapshot(latestSnapshot.id);
-    }
-  }, [latestSnapshot]);
+  
+  // Set dummy loading state
+  const snapshotLoading = false;
+  
+  // Create a fake snapshot object for display
+  const currentSnapshot = {
+    id: 1,
+    timestamp: new Date().toISOString(),
+    description: "Live Data"
+  };
 
   // Query agents with filters
   const { 
@@ -109,8 +107,7 @@ export default function Home() {
     setSelectedAgent(null);
   };
 
-  // Get current snapshot (now always using the latest)
-  const currentSnapshot = latestSnapshot;
+
   
   // Handle pagination
   const handlePageChange = (page: number) => {
@@ -142,7 +139,7 @@ export default function Home() {
   }, [selectedSnapshot]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 text-white">
+    <div>
       <Header 
         selectedView={selectedView}
         onViewChange={handleViewChange}
