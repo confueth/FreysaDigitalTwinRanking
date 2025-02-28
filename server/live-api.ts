@@ -391,7 +391,46 @@ export async function getLiveStats() {
     // Calculate statistics
     const totalAgents = agents.length;
     const avgScore = Math.round(agents.reduce((sum, agent) => sum + agent.score, 0) / totalAgents);
-    const totalLikes = agents.reduce((sum, agent) => sum + (agent.likesCount || 0), 0);
+    
+    // For total likes, we need to make an extra call to get the full agent data
+    // from the first batch of agents to get likesCount (since MinimalAgent doesn't have it)
+    // This approach balances performance with accuracy
+    let totalLikes = 0;
+    try {
+      // Get detailed data for a sample of agents to estimate total likes
+      // Use first 50 agents as a representative sample to avoid excessive API calls
+      const sampleSize = Math.min(50, agents.length);
+      const fetchPromises = [];
+      
+      // We'll use either the already fetched detail data from the cache, or fetch new data
+      for (let i = 0; i < sampleSize; i++) {
+        const agent = agents[i];
+        fetchPromises.push(getLiveAgentDetail(agent.mastodonUsername).catch(() => null));
+      }
+      
+      // Wait for all fetch operations to complete
+      const detailedAgents = await Promise.all(fetchPromises);
+      
+      // Calculate average likes per agent from the sample
+      let totalSampleLikes = 0;
+      let validSamples = 0;
+      
+      for (const detailedAgent of detailedAgents) {
+        if (detailedAgent && detailedAgent.likesCount) {
+          totalSampleLikes += detailedAgent.likesCount;
+          validSamples++;
+        }
+      }
+      
+      // Calculate average likes per agent
+      const avgLikesPerAgent = validSamples > 0 ? totalSampleLikes / validSamples : 0;
+      
+      // Estimate total likes based on the average
+      totalLikes = Math.round(avgLikesPerAgent * totalAgents);
+    } catch (error) {
+      console.error("Error estimating total likes:", error);
+      totalLikes = 0; // Fallback value
+    }
     
     // Sort by score for top agents (we don't have gain/loss data in live mode)
     const sortedByScore = [...agents].sort((a, b) => b.score - a.score);
