@@ -79,6 +79,27 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
   const isLoading = useExternalApi ? isExternalLoading : isInternalLoading;
   const error = useExternalApi ? externalError : internalError;
 
+  // Format wallet balance to 3 decimal places if available
+  const formattedWalletBalance = agent?.walletBalance ? 
+    parseFloat(agent.walletBalance).toFixed(3) : 
+    undefined;
+    
+  // Clean HTML from tweet content
+  const formatTweetContent = (content: string): string => {
+    // Remove HTML tags while preserving text
+    const withoutTags = content.replace(/<[^>]*>/g, ' ').trim();
+    // Remove excess whitespace
+    const cleanedContent = withoutTags.replace(/\s+/g, ' ');
+    // Unescape HTML entities
+    return cleanedContent
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+  };
+
   // Handle error
   useEffect(() => {
     if (error) {
@@ -204,16 +225,24 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
               {agent.walletAddress && (
                 <div className="mt-8">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Wallet Details</h3>
-                    {agent.walletBalance && (
+                    <h3 className="text-lg font-semibold">Wallet Details (Base)</h3>
+                    {formattedWalletBalance && (
                       <div className="bg-gray-900 rounded-lg px-3 py-1 flex items-center">
-                        <span className="text-sm mr-2">Balance:</span>
-                        <span className="font-bold">{agent.walletBalance}</span>
+                        <span className="text-sm mr-2">ETH Balance:</span>
+                        <span className="font-bold">{formattedWalletBalance}</span>
                       </div>
                     )}
                   </div>
                   <div className="bg-gray-900 rounded-lg p-3 font-mono text-sm break-all">
-                    <span>{agent.walletAddress}</span>
+                    <a 
+                      href={`https://basescan.org/address/${agent.walletAddress}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 hover:underline flex items-center"
+                    >
+                      <span>{agent.walletAddress}</span>
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </a>
                   </div>
                 </div>
               )}
@@ -224,7 +253,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                   <div className="space-y-4">
                     {agent.tweets.map((tweet) => (
                       <div key={tweet.id} className="bg-gray-900 rounded-lg p-4">
-                        <p className="mb-2">{tweet.content}</p>
+                        <p className="mb-2">{formatTweetContent(tweet.content)}</p>
                         <div className="flex justify-between text-sm text-gray-400">
                           <span>{formatDate(tweet.timestamp)}</span>
                           <div className="flex space-x-4">
