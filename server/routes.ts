@@ -237,8 +237,18 @@ async function takeSnapshot(description: string): Promise<any> {
   try {
     console.log("Starting snapshot process with description:", description);
     
-    // Create a new snapshot
-    const snapshot = await storage.createSnapshot({ description });
+    // Create a new snapshot with formatted date and time
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('en-US', {
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric'
+    });
+    const snapshotDescription = `Live Snapshot - ${formattedDate}`;
+    
+    const snapshot = await storage.createSnapshot({ description: snapshotDescription });
     console.log("Created snapshot with ID:", snapshot.id);
     
     // Fetch leaderboard data from the specific URL provided
@@ -383,7 +393,15 @@ function setupAutomaticSnapshots() {
       console.log(`Taking automatic snapshot at ${timestamp}`);
       
       // Create a new snapshot with data from the API
-      await takeSnapshot(`Hourly snapshot - ${timestamp}`);
+      const now = new Date();
+      const formattedDate = now.toLocaleDateString('en-US', {
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric'
+      });
+      await takeSnapshot(`Hourly Snapshot - ${formattedDate}`);
       console.log("Automatic snapshot completed successfully");
     } catch (error) {
       console.error("Automatic snapshot failed:", error);
@@ -395,7 +413,15 @@ function setupAutomaticSnapshots() {
     try {
       if ((await storage.getSnapshots()).length === 0) {
         console.log("Taking initial snapshot...");
-        await takeSnapshot("Initial snapshot");
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('en-US', {
+          month: 'long', 
+          day: 'numeric', 
+          year: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric'
+        });
+        await takeSnapshot(`Initial Snapshot - ${formattedDate}`);
         console.log("Initial snapshot completed successfully");
       }
     } catch (error) {
