@@ -90,10 +90,7 @@ export default function Home() {
     setSelectedView(view);
   };
 
-  // Handle snapshot change
-  const handleSnapshotChange = (snapshotId: number) => {
-    setSelectedSnapshot(snapshotId);
-  };
+
 
   // Handle filter change
   const handleFilterChange = (newFilters: Partial<AgentFilters>) => {
@@ -127,13 +124,16 @@ export default function Home() {
       ? 'Agent Cards' 
       : 'Score Trends';
 
-  // Poll for new snapshots every 5 minutes
+  // Poll for new data every 5 minutes
   useEffect(() => {
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ['/api/snapshots'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/snapshots/latest'] });
       if (selectedSnapshot) {
         queryClient.invalidateQueries({ 
           queryKey: [`/api/snapshots/${selectedSnapshot}/agents`] 
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: [`/api/snapshots/${selectedSnapshot}/stats`] 
         });
       }
     }, 5 * 60 * 1000); // 5 minutes
