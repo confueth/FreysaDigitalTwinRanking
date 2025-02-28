@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, BarChart2 } from 'lucide-react';
+import { Link } from 'wouter';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +47,17 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         </div>
         
         <div className="flex items-center gap-4">
+          <Link to="/analytics">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
+            >
+              <BarChart2 className="h-4 w-4" />
+              <span>Analytics</span>
+            </Button>
+          </Link>
+          
           <a 
             href="https://freysa.ai/digital-twin?ref=Navali" 
             target="_blank" 
