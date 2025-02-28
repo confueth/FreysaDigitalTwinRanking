@@ -36,12 +36,9 @@ export default function AdminLogin() {
     setIsLoading(true);
     try {
       const response = await apiRequest(
+        "POST", 
         "/api/admin/login",
-        {
-          method: "POST",
-          data,
-          withCredentials: true,
-        }
+        data
       );
       
       toast({
