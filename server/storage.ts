@@ -3,6 +3,9 @@ import {
   type Snapshot, type InsertSnapshot, type Tweet, type InsertTweet,
   type LeaderboardEntry, type AgentDetails, type User, type InsertUser
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, asc, desc, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -398,10 +401,6 @@ export class MemStorage implements IStorage {
     return snapshots[currentIndex + 1];
   }
 }
-
-import { db } from "./db";
-import { eq, desc, and, or, like, lt, gt, gte, lte, isNull, asc, sql } from "drizzle-orm";
-import bcrypt from "bcrypt";
 
 /**
  * Database Storage Implementation
