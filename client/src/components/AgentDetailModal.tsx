@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { 
   Dialog, 
   DialogContent, 
   DialogDescription, 
   DialogHeader, 
-  DialogTitle 
+  DialogTitle
 } from '@/components/ui/dialog';
 import { formatNumber, formatCompactNumber, formatDate, formatWalletAddress } from '@/utils/formatters';
-import { X, MapPin } from 'lucide-react';
+import { X, MapPin, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -20,25 +21,84 @@ interface AgentDetailModalProps {
   onClose: () => void;
 }
 
+interface ExternalAgentData {
+  id?: string;
+  mastodonUsername: string;
+  score: number;
+  avatarUrl?: string;
+  city?: string;
+  likesCount?: number;
+  followersCount?: number;
+  retweetsCount?: number;
+  repliesCount?: number;
+  walletAddress?: string;
+  walletBalance?: string;
+  mastodonBio?: string;
+  bioUpdatedAt?: string;
+  ubiClaimedAt?: string;
+  tweets?: {
+    id: number;
+    content: string;
+    timestamp: string;
+    likesCount: number;
+    retweetsCount: number;
+  }[];
+}
+
 export default function AgentDetailModal({ username, isOpen, onClose }: AgentDetailModalProps) {
   const { toast } = useToast();
+  const [useExternalApi, setUseExternalApi] = useState(true);
 
-  // Query agent details
-  const { data: agent, isLoading, error } = useQuery({
+  // Query agent details from internal API first
+  const { data: internalAgent, isLoading: isInternalLoading, error: internalError } = useQuery({
     queryKey: [`/api/agents/${username}`],
-    enabled: isOpen,
+    enabled: isOpen && !useExternalApi,
   });
+  
+  // Use external API to get fresh data directly from Digital Clone API
+  const { data: externalAgent, isLoading: isExternalLoading, error: externalError } = useQuery({
+    queryKey: [`direct-agent-${username}`],
+    queryFn: async () => {
+      try {
+        const response = await axios.get<ExternalAgentData>(
+          `https://digital-clone-production.onrender.com/digital-clones/clones/${username}`
+        );
+        return response.data;
+      } catch (error) {
+        console.error("Failed to fetch from external API, falling back to internal data", error);
+        setUseExternalApi(false);
+        return null;
+      }
+    },
+    enabled: isOpen && useExternalApi,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  });
+  
+  const agent = useExternalApi ? externalAgent : internalAgent;
+  const isLoading = useExternalApi ? isExternalLoading : isInternalLoading;
+  const error = useExternalApi ? externalError : internalError;
 
   // Handle error
   useEffect(() => {
     if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load agent details. Please try again.',
-        variant: 'destructive',
-      });
+      if (useExternalApi) {
+        // If external API fails, try internal API
+        setUseExternalApi(false);
+        toast({
+          title: 'Switching to cached data',
+          description: 'Could not fetch latest data, using cached data instead.',
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load agent details. Please try again.',
+          variant: 'destructive',
+        });
+      }
     }
-  }, [error, toast]);
+  }, [error, toast, useExternalApi]);
 
   if (!isOpen) {
     return null;
@@ -47,6 +107,11 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-gray-800 border border-gray-700 text-white p-0 max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogTitle className="sr-only">Agent Details for {username}</DialogTitle>
+        <DialogDescription className="sr-only">
+          Detailed information about this agent including stats and recent activity
+        </DialogDescription>
+        
         <div className="relative">
           <div className="h-40 bg-gradient-to-r from-purple-900 to-indigo-900" />
           <Button 
@@ -66,6 +131,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                 className="h-24 w-24 rounded-full border-4 border-gray-800" 
                 src={agent?.avatarUrl || `https://ui-avatars.com/api/?name=${username}&background=random`} 
                 alt={`@${username} avatar`}
+                loading="lazy"
               />
             )}
           </div>

@@ -47,6 +47,26 @@ export default function Sidebar({
       sortBy: sortBy as AgentFilters['sortBy']
     });
   };
+  
+  // Handle resetting all filters
+  const handleResetFilters = () => {
+    // Reset local state
+    setSearchValue('');
+    setMinScore('');
+    setMaxScore('');
+    setCity('all');
+    setSortBy('score');
+    
+    // Apply reset to parent component
+    onFilterChange({
+      search: '',
+      minScore: undefined,
+      maxScore: undefined,
+      city: undefined,
+      sortBy: 'score',
+      page: 1
+    });
+  };
 
 
 
@@ -132,12 +152,22 @@ export default function Sidebar({
           </Select>
         </div>
         
-        <Button 
-          className="w-full bg-secondary hover:bg-indigo-700"
-          onClick={handleApplyFilters}
-        >
-          Apply Filters
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            className="flex-1 bg-secondary hover:bg-indigo-700"
+            onClick={handleApplyFilters}
+          >
+            Apply Filters
+          </Button>
+          
+          <Button 
+            className="flex-1 bg-red-800 hover:bg-red-700 text-white"
+            onClick={handleResetFilters}
+            variant="destructive"
+          >
+            Reset Filters
+          </Button>
+        </div>
       </div>
     </aside>
   );
