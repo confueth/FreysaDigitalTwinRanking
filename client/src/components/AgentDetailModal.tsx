@@ -251,7 +251,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-4">Recent Tweets</h3>
                   <div className="space-y-4">
-                    {agent.tweets.map((tweet) => (
+                    {agent.tweets.slice(0, 10).map((tweet) => (
                       <div key={tweet.id} className="bg-gray-900 rounded-lg p-4">
                         <p className="mb-2">{formatTweetContent(tweet.content)}</p>
                         <div className="flex justify-between text-sm text-gray-400">
@@ -273,6 +273,13 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                         </div>
                       </div>
                     ))}
+                    {agent.tweets.length > 10 && (
+                      <div className="mt-2 text-center">
+                        <span className="text-gray-400 text-sm">
+                          Showing 10 of {agent.tweets.length} tweets
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -299,11 +306,16 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                     View API Data
                   </Button>
                 </a>
-                <Link to={`/agent/${agent.mastodonUsername}`}>
-                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+                <a 
+                  href={`https://social.freysa.ai/@${agent.mastodonUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center gap-1">
+                    <ExternalLink className="h-4 w-4" />
                     View Full Profile
                   </Button>
-                </Link>
+                </a>
               </div>
             </>
           ) : (
