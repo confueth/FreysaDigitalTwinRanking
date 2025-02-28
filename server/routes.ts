@@ -69,18 +69,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const username = req.params.username;
       
-      // Attempt to get the current agent data
+      // First check if we have this agent in our database
+      const historyData = await storage.getAgentHistory(username);
+      
+      if (historyData && historyData.length > 0) {
+        // Convert timestamps to ISO strings for consistency with API format
+        const formattedData = historyData.map(agent => ({
+          ...agent,
+          timestamp: agent.timestamp ? agent.timestamp : new Date().toISOString(),
+        }));
+        
+        return res.json(formattedData);
+      }
+      
+      // If we don't have historical data, get at least the current agent
       const currentAgent = await getLiveAgentDetail(username);
       
       if (!currentAgent) {
         return res.status(404).json({ error: "Agent not found" });
       }
       
-      // Generate synthetic historical data for demonstration purposes
-      // In a real app, this would be fetched from the database
-      const historyData = generateHistoricalData(currentAgent);
+      // Return just the current data point
+      const current = {
+        ...currentAgent,
+        timestamp: new Date().toISOString()
+      };
       
-      res.json(historyData);
+      res.json([current]);
     } catch (error) {
       console.error(`Error fetching agent history ${req.params.username}:`, error);
       res.status(500).json({ error: "Failed to fetch agent history" });
