@@ -1,16 +1,16 @@
 /**
  * Format a number with comma separators
  */
-export function formatNumber(value: number | undefined): string {
-  if (value === undefined) return '0';
+export function formatNumber(value: number | undefined | null): string {
+  if (value === undefined || value === null) return '0';
   return new Intl.NumberFormat('en-US').format(value);
 }
 
 /**
  * Format a number with k/m suffix for thousands/millions
  */
-export function formatCompactNumber(value: number | undefined): string {
-  if (value === undefined) return '0';
+export function formatCompactNumber(value: number | undefined | null): string {
+  if (value === undefined || value === null) return '0';
   
   if (value >= 1000000) {
     return `${(value / 1000000).toFixed(1)}M`;
@@ -71,8 +71,8 @@ export function formatRelativeTime(dateString: string | undefined): string {
 /**
  * Get a CSS class for rank change indicator
  */
-export function getRankChangeClass(current?: number, previous?: number): string {
-  if (current === undefined || previous === undefined) return 'text-gray-400';
+export function getRankChangeClass(current?: number | null, previous?: number | null): string {
+  if (current === undefined || previous === undefined || current === null || previous === null) return 'text-gray-400';
   
   if (current < previous) {
     return 'text-green-500';
@@ -88,8 +88,8 @@ export function getRankChangeClass(current?: number, previous?: number): string 
 /**
  * Get a CSS class for score change indicator
  */
-export function getScoreChangeClass(current?: number, previous?: number): string {
-  if (current === undefined || previous === undefined) return 'text-gray-400';
+export function getScoreChangeClass(current?: number | null, previous?: number | null): string {
+  if (current === undefined || previous === undefined || current === null || previous === null) return 'text-gray-400';
   
   if (current > previous) {
     return 'text-green-500';
@@ -105,8 +105,8 @@ export function getScoreChangeClass(current?: number, previous?: number): string
 /**
  * Get the change value for display
  */
-export function getChangeValue(current?: number, previous?: number): string {
-  if (current === undefined || previous === undefined) return '-';
+export function getChangeValue(current?: number | null, previous?: number | null): string {
+  if (current === undefined || previous === undefined || current === null || previous === null) return '-';
   
   const diff = current - previous;
   
