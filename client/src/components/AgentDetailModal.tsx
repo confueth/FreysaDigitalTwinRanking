@@ -259,7 +259,17 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-center">
+              <div className="mt-8 flex justify-center gap-3">
+                <a 
+                  href={`https://digital-clone-production.onrender.com/digital-clones/clones/${agent.mastodonUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center gap-1">
+                    <ExternalLink className="h-4 w-4" />
+                    View API Data
+                  </Button>
+                </a>
                 <Link to={`/agent/${agent.mastodonUsername}`}>
                   <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
                     View Full Profile
