@@ -23,12 +23,17 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
   return (
     <header className="bg-gray-900 border-b border-gray-800">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11 17.25V11h4.75m0 0l-4-4m4 4l-4 4" />
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-          <h1 className="text-xl font-bold">Freysa Game Leaderboard</h1>
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow">
+            <img 
+              src="/images/profile-freysa-original.jpg" 
+              alt="Freysa" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
+            Freysa Game Leaderboard
+          </h1>
         </div>
         
         <div className="flex items-center">
