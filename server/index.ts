@@ -6,6 +6,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { importAllCSVFiles } from "./csv-import";
 import { storage } from "./storage";
 import { pool } from "./db";
+import { initializeScheduler } from "./scheduler";
 
 const app = express();
 app.use(express.json());
