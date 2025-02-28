@@ -35,12 +35,14 @@ export default function AdminLogin() {
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     try {
-      const response = await apiRequest({
-        url: "/api/admin/login",
-        method: "POST",
-        data,
-        withCredentials: true,
-      });
+      const response = await apiRequest(
+        "/api/admin/login",
+        {
+          method: "POST",
+          data,
+          withCredentials: true,
+        }
+      );
       
       toast({
         title: "Login successful",

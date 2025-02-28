@@ -53,11 +53,13 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await apiRequest({
-        url: "/api/admin/logout",
-        method: "POST",
-        withCredentials: true,
-      });
+      await apiRequest(
+        "/api/admin/logout",
+        {
+          method: "POST",
+          withCredentials: true,
+        }
+      );
       
       toast({
         title: "Logged out",
@@ -84,12 +86,14 @@ export default function AdminDashboard() {
     try {
       const description = snapshotDescription.trim() || `Manual snapshot - ${new Date().toLocaleString()}`;
       
-      const response = await apiRequest({
-        url: "/api/snapshots",
-        method: "POST",
-        data: { description },
-        withCredentials: true,
-      });
+      const response = await apiRequest(
+        "/api/snapshots",
+        {
+          method: "POST",
+          data: { description },
+          withCredentials: true,
+        }
+      );
       
       toast({
         title: "Snapshot Created",
