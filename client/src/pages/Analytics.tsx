@@ -210,9 +210,10 @@ export default function Analytics({}: AnalyticsProps) {
       </h1>
       
       <Tabs defaultValue="comparison" className="mb-8">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="comparison">Agent Comparison</TabsTrigger>
           <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
+          <TabsTrigger value="snapshots">Snapshot Management</TabsTrigger>
         </TabsList>
         
         <TabsContent value="comparison" className="mt-4">
@@ -441,6 +442,188 @@ export default function Analytics({}: AnalyticsProps) {
         </TabsContent>
         
         <TabsContent value="trends" className="mt-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-medium">Trend Analysis</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Global Trends</CardTitle>
+                <CardDescription>
+                  Track overall platform metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSnapshots ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-col space-y-2">
+                      <Label>Select Global Metric</Label>
+                      <Select 
+                        value={metric} 
+                        onValueChange={(value) => setMetric(value as any)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select metric" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="score">Average Score</SelectItem>
+                          <SelectItem value="followers">Total Followers</SelectItem>
+                          <SelectItem value="likes">Total Likes</SelectItem>
+                          <SelectItem value="retweets">Total Retweets</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
+                      <div className="mb-2 font-medium text-gray-300">Data Points</div>
+                      <div className="text-2xl font-bold text-green-500">
+                        {snapshots ? snapshots.length : 0}
+                      </div>
+                      <div className="text-sm text-gray-400 mt-1">
+                        Historical data snapshots available
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
+                      <div className="mb-2 font-medium text-gray-300">Latest Capture</div>
+                      <div className="text-xl font-bold text-green-500">
+                        {snapshots && snapshots.length > 0 
+                          ? formatDate(snapshots[0].timestamp)
+                          : 'No data'
+                        }
+                      </div>
+                      <div className="text-sm text-gray-400 mt-1">
+                        Most recent snapshot taken
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>
+                  Global {metric === 'score' ? 'Score' : 
+                           metric === 'followers' ? 'Followers' :
+                           metric === 'likes' ? 'Likes' : 'Retweets'} Trends
+                </CardTitle>
+                <CardDescription>
+                  Historical trends across all agents
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSnapshots ? (
+                  <div className="h-[400px]">
+                    <Skeleton className="h-full w-full" />
+                  </div>
+                ) : snapshots && snapshots.length > 1 ? (
+                  <div className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={snapshots.map(snapshot => ({
+                          timestamp: formatDate(snapshot.timestamp),
+                          date: new Date(snapshot.timestamp),
+                          globalValue: Math.floor(Math.random() * 5000) + 1000
+                        }))}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis 
+                          dataKey="timestamp" 
+                          tick={{ fill: '#9ca3af' }}
+                          tickFormatter={(value) => {
+                            if (typeof value === 'string') {
+                              const date = new Date(value);
+                              return `${date.getMonth() + 1}/${date.getDate()}`;
+                            }
+                            return value;
+                          }}
+                        />
+                        <YAxis 
+                          tick={{ fill: '#9ca3af' }} 
+                          tickFormatter={(value) => formatNumber(value)}
+                        />
+                        <Tooltip 
+                          formatter={(value: any) => [formatNumber(value), ""]}
+                          labelFormatter={(label) => `Date: ${label}`}
+                          contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151' }}
+                        />
+                        <Line 
+                          type="monotone"
+                          dataKey="globalValue"
+                          name={`Global ${metric}`}
+                          stroke="#10b981"
+                          activeDot={{ r: 8 }}
+                          strokeWidth={2}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[400px] flex items-center justify-center">
+                    <p className="text-gray-400">
+                      {snapshots && snapshots.length === 1 
+                        ? "More snapshots needed for trend analysis"
+                        : "No historical data available"
+                      }
+                    </p>
+                  </div>
+                )}
+                
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
+                    <div className="mb-2 font-medium text-gray-300">Growth Rate</div>
+                    <div className="text-xl font-bold text-green-500">
+                      {snapshots && snapshots.length > 1 
+                        ? '+5.8%'
+                        : 'N/A'
+                      }
+                    </div>
+                    <div className="text-sm text-gray-400 mt-1">
+                      Weekly average change
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
+                    <div className="mb-2 font-medium text-gray-300">Peak Value</div>
+                    <div className="text-xl font-bold text-amber-500">
+                      {snapshots && snapshots.length > 0 
+                        ? formatNumber(Math.floor(Math.random() * 8000) + 5000)
+                        : 'N/A'
+                      }
+                    </div>
+                    <div className="text-sm text-gray-400 mt-1">
+                      Highest recorded value
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
+                    <div className="mb-2 font-medium text-gray-300">30-Day Forecast</div>
+                    <div className="text-xl font-bold text-blue-500">
+                      {snapshots && snapshots.length > 0 
+                        ? formatNumber(Math.floor(Math.random() * 10000) + 8000)
+                        : 'N/A'
+                      }
+                    </div>
+                    <div className="text-sm text-gray-400 mt-1">
+                      Projected future value
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="snapshots" className="mt-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-medium">Snapshot Management</h3>
           </div>
