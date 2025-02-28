@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import axios, { AxiosRequestConfig, AxiosError } from 'axios';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,8 +22,23 @@ interface CacheItem<T> {
   timestamp: number;
 }
 
-// Shared cache across hook instances
+// Shared cache across hook instances - use LRU cache to prevent memory leaks
+const MAX_CACHE_SIZE = 100;
 const apiCache = new Map<string, CacheItem<any>>();
+
+// Helper function to clean up cache when it gets too large
+function pruneCache() {
+  if (apiCache.size > MAX_CACHE_SIZE) {
+    // Remove oldest entries first
+    const entriesToRemove = apiCache.size - MAX_CACHE_SIZE;
+    const entries = Array.from(apiCache.entries());
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+    
+    for (let i = 0; i < entriesToRemove; i++) {
+      apiCache.delete(entries[i][0]);
+    }
+  }
+}
 
 export function useApiWithRetry<T>({
   url,
@@ -43,132 +58,121 @@ export function useApiWithRetry<T>({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
-
+  
+  // Use refs to prevent unnecessary re-renders and preserve values between renders
+  const isMounted = useRef(true);
+  const controllerRef = useRef<AbortController | null>(null);
+  const retriesRef = useRef(0);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const configRef = useRef(config);
+  
+  // Update ref when config changes
   useEffect(() => {
-    if (!enabled) return;
-
-    const controller = new AbortController();
-    const finalConfig = { ...config, signal: controller.signal };
+    configRef.current = config;
+  }, [config]);
+  
+  // Track component mount state
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+  
+  // Memoized fetch implementation to avoid recreation on each render
+  const fetchWithRetries = useCallback(async (skipCache = false) => {
+    // Don't proceed if component is unmounted
+    if (!isMounted.current) return;
     
-    // Check cache first if a cache key is provided
-    if (cacheKey && apiCache.has(cacheKey)) {
+    // Create a new abort controller for this request
+    controllerRef.current?.abort();
+    controllerRef.current = new AbortController();
+    
+    // Check cache first if a cache key is provided and not skipping cache
+    if (cacheKey && !skipCache && apiCache.has(cacheKey)) {
       const cachedItem = apiCache.get(cacheKey)!;
       const now = Date.now();
       
       if (now - cachedItem.timestamp < cacheDuration) {
-        console.log(`Using cached data for ${cacheKey}`);
-        setData(cachedItem.data);
+        // Use cached data
+        if (isMounted.current) {
+          setData(cachedItem.data);
+          setLoading(false);
+        }
         return;
       } else {
-        console.log(`Cache expired for ${cacheKey}, fetching fresh data`);
+        // Cache expired
         apiCache.delete(cacheKey);
       }
     }
-
-    let retryCount = 0;
-    let timeout: NodeJS.Timeout;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await axios({
-          url,
-          method,
-          ...finalConfig
-        });
-        
-        setData(response.data);
-        
-        // Cache the response if cacheKey is provided
-        if (cacheKey) {
-          apiCache.set(cacheKey, {
-            data: response.data,
-            timestamp: Date.now()
-          });
-        }
-        
-        onSuccess?.(response.data);
-      } catch (err) {
-        // Properly type the error
-        const error = err as Error;
-        const axiosError = err as AxiosError;
-        
-        // Only retry if not cancelled and not reached max retries
-        if (axios.isCancel(err)) {
-          // Request was cancelled, ignore
-          return;
-        } else if (retryCount < maxRetries) {
-          retryCount++;
-          console.log(`Retrying request (${retryCount}/${maxRetries})...`);
-          
-          // Exponential backoff
-          const delay = retryDelay * Math.pow(2, retryCount - 1);
-          timeout = setTimeout(fetchData, delay);
-          return;
-        }
-        
-        setError(error);
-        onError?.(error);
-        
-        // Show toast notification for failures
-        // Create safe error message
-        let errorMessage = error.message;
-        if (axios.isAxiosError(err)) {
-          const responseData = axiosError.response?.data as any;
-          errorMessage = responseData?.message || error.message;
-        }
-        
-        toast({
-          title: "Request failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      controller.abort();
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [url, method, ...dependencies]);
-
-  const refetch = async () => {
-    if (cacheKey) {
-      apiCache.delete(cacheKey);
-    }
     
-    setLoading(true);
-    setError(null);
+    if (isMounted.current) {
+      setLoading(true);
+      setError(null);
+    }
     
     try {
       const response = await axios({
         url,
         method,
-        ...config
+        ...configRef.current,
+        signal: controllerRef.current.signal
       });
       
-      setData(response.data);
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        setData(response.data);
+        setError(null);
+        setLoading(false);
+      }
       
+      // Reset retry count on success
+      retriesRef.current = 0;
+      
+      // Cache the response if cacheKey is provided
       if (cacheKey) {
         apiCache.set(cacheKey, {
           data: response.data,
           timestamp: Date.now()
         });
+        pruneCache(); // Clean up cache if it's too large
       }
       
+      // Call success callback
       onSuccess?.(response.data);
     } catch (err) {
+      // Skip error handling if request was cancelled or component unmounted
+      if (!isMounted.current || axios.isCancel(err)) {
+        return;
+      }
+      
       const error = err as Error;
-      setError(error);
+      
+      // Handle retries
+      if (retriesRef.current < maxRetries) {
+        retriesRef.current++;
+        
+        // Exponential backoff with jitter to prevent thundering herd
+        const baseDelay = retryDelay * Math.pow(2, retriesRef.current - 1);
+        const jitter = Math.random() * 0.3 * baseDelay; // Add 0-30% jitter
+        const delay = baseDelay + jitter;
+        
+        // Schedule retry
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => fetchWithRetries(skipCache), delay);
+        return;
+      }
+      
+      // Update error state if all retries failed
+      if (isMounted.current) {
+        setError(error);
+        setLoading(false);
+      }
+      
+      // Call error callback
       onError?.(error);
       
-      // Create safe error message
+      // Show toast notification with appropriate error message
       let errorMessage = error.message;
       if (axios.isAxiosError(err)) {
         const axiosError = err as AxiosError;
@@ -177,15 +181,37 @@ export function useApiWithRetry<T>({
       }
       
       toast({
-        title: "Refresh failed",
+        title: "Request failed",
         description: errorMessage,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
-  };
-
+  }, [url, method, cacheKey, cacheDuration, maxRetries, retryDelay, toast, onSuccess, onError]);
+  
+  // Expose refetch method that bypasses cache
+  const refetch = useCallback(() => {
+    retriesRef.current = 0;
+    return fetchWithRetries(true);
+  }, [fetchWithRetries]);
+  
+  // Main effect to trigger data fetching
+  useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+    
+    // Reset retries on dependency changes
+    retriesRef.current = 0;
+    fetchWithRetries(false);
+    
+    // Cleanup function
+    return () => {
+      if (controllerRef.current) controllerRef.current.abort();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [url, method, enabled, fetchWithRetries, ...dependencies]);
+  
   return { data, loading, error, refetch };
 }
 
