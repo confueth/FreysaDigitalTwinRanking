@@ -90,36 +90,45 @@ export type Tweet = typeof tweets.$inferSelect;
 // API response types
 export const leaderboardEntrySchema = z.object({
   mastodonUsername: z.string(),
-  score: z.number(),
-  avatarURL: z.string().optional(),
-  city: z.string().optional(),
-  likesCount: z.number().optional(),
-  followersCount: z.number().optional(),
-  retweetsCount: z.number().optional(),
-});
+  score: z.number().optional().default(0),
+  avatarURL: z.string().optional().nullable(),
+  avatarUrl: z.string().optional().nullable(), // Both forms
+  city: z.string().optional().nullable(),
+  likesCount: z.number().optional().nullable(),
+  followersCount: z.number().optional().nullable(),
+  retweetsCount: z.number().optional().nullable(),
+  repliesCount: z.number().optional().nullable(),
+  rank: z.number().optional().nullable(),
+  walletAddress: z.string().optional().nullable(),
+  walletBalance: z.string().optional().nullable(),
+  mastodonBio: z.string().optional().nullable(),
+  bioUpdatedAt: z.string().optional().nullable(),
+  ubiClaimedAt: z.string().optional().nullable(),
+}).passthrough(); // Allow extra fields
 
 export const agentDetailsSchema = z.object({
   mastodonUsername: z.string(),
-  mastodonBio: z.string().optional(),
-  walletAddress: z.string().optional(),
-  likesCount: z.number().optional(),
-  followersCount: z.number().optional(),
-  retweetsCount: z.number().optional(),
-  repliesCount: z.number().optional(),
-  walletBalance: z.string().optional(),
-  score: z.number(),
-  city: z.string().optional(),
-  ubiClaimedAt: z.string().optional(),
-  bioUpdatedAt: z.string().optional(),
+  mastodonBio: z.string().optional().nullable(),
+  walletAddress: z.string().optional().nullable(),
+  likesCount: z.number().optional().nullable(),
+  followersCount: z.number().optional().nullable(),
+  retweetsCount: z.number().optional().nullable(),
+  repliesCount: z.number().optional().nullable(),
+  walletBalance: z.string().optional().nullable(),
+  score: z.number().optional().default(0), // Make score optional with default
+  city: z.string().optional().nullable(),
+  ubiClaimedAt: z.string().optional().nullable(),
+  bioUpdatedAt: z.string().optional().nullable(),
+  avatarUrl: z.string().optional().nullable(), // Add missing avatarUrl
   tweets: z.array(
     z.object({
       content: z.string(),
       timestamp: z.string(),
-      likesCount: z.number().optional(),
-      retweetsCount: z.number().optional(),
+      likesCount: z.number().optional().nullable(),
+      retweetsCount: z.number().optional().nullable(),
     })
-  ).optional(),
-});
+  ).optional().nullable(),
+}).passthrough(); // Allow extra fields
 
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
 export type AgentDetails = z.infer<typeof agentDetailsSchema>;
