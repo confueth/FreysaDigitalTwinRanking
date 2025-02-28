@@ -121,10 +121,10 @@ export default function Home() {
       ? 'Agent Cards' 
       : 'Score Trends';
 
-  // Poll for new data every 5 minutes
+  // Poll for new data infrequently to avoid excessive API calls
   useEffect(() => {
-    const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ['/api/snapshots/latest'] });
+    // Initial load when component mounts
+    const refreshData = () => {
       if (selectedSnapshot) {
         queryClient.invalidateQueries({ 
           queryKey: [`/api/snapshots/${selectedSnapshot}/agents`] 
@@ -133,10 +133,28 @@ export default function Home() {
           queryKey: [`/api/snapshots/${selectedSnapshot}/stats`] 
         });
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    };
     
-    return () => clearInterval(interval);
-  }, [selectedSnapshot]);
+    // Set up infrequent polling (once every 30 minutes)
+    // This respects our API usage and ensures data is eventually refreshed
+    const interval = setInterval(refreshData, 30 * 60 * 1000); // 30 minutes
+    
+    // Add event listener to refresh data when user returns to tab
+    // This provides fresh data when users are actually using the app
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // User has returned to the tab, refresh data
+        refreshData();
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange, false);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [selectedSnapshot, queryClient]);
 
   return (
     <div>
