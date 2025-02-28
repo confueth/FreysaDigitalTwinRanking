@@ -47,7 +47,7 @@ export default function Home() {
       // Only include filter parameters that affect the server request
       // Client-side filtering is used for performance
       { 
-        limit: 1000 // Get a larger batch once to reduce API calls
+        limit: 2000 // Get a larger batch once to reduce API calls (increased from 1000)
       }
     ],
     enabled: !!selectedSnapshot,
@@ -69,7 +69,7 @@ export default function Home() {
       }
       
       console.log('Fetching fresh leaderboard data');
-      const response = await fetch(`${baseUrl}?limit=1000`, {
+      const response = await fetch(`${baseUrl}?limit=2000`, {
         credentials: 'include',
       });
       
@@ -255,7 +255,7 @@ export default function Home() {
             <div className="flex space-x-2">
               <span className="text-gray-400">
                 {agents ? 
-                  `Showing ${displayAgents.length} of ${totalAgentsCount} filtered agents (${stats?.totalAgents || '?'} total)` : 
+                  `Showing ${displayAgents.length} of ${totalAgentsCount} filtered agents (${stats?.totalAgents || totalAgentsCount} total)` : 
                   'Loading...'}
               </span>
             </div>
