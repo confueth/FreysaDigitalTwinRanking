@@ -53,7 +53,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
             className="text-sm px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
             title="Create your own Digital Twin with referral"
           >
-            Join with Referral
+            Create your Digital Twin
           </a>
           
           <DropdownMenu>
