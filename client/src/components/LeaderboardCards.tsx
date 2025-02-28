@@ -95,8 +95,13 @@ export default function LeaderboardCards({
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="mt-6 flex justify-center">
+      {/* Agent count and pagination */}
+      <div className="mt-6 flex flex-col items-center space-y-4">
+        <p className="text-sm text-gray-400">
+          Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
+          <span className="font-medium">{Math.min(currentPage * pageSize, totalAgents)}</span> of{' '}
+          <span className="font-medium">{totalAgents}</span> agents
+        </p>
         <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
           <Button
             variant="outline"
