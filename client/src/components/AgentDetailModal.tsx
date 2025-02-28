@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
@@ -13,8 +13,8 @@ import { X, MapPin, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Link } from 'wouter';
 
+// Define types
 interface AgentDetailModalProps {
   username: string;
   isOpen: boolean;
@@ -48,23 +48,90 @@ interface ExternalAgentData {
   tweets?: TweetData[];
 }
 
-// Cache for agent details to reduce memory usage
-const agentCache = new Map<string, ExternalAgentData>();
-const MAX_CACHE_ENTRIES = 10;
+// Simple but effective LRU (Least Recently Used) cache implementation
+class LRUCache<K, V> {
+  private capacity: number;
+  private cache: Map<K, V>;
+  private order: K[];
+
+  constructor(capacity: number) {
+    this.capacity = capacity;
+    this.cache = new Map<K, V>();
+    this.order = [];
+  }
+
+  // Check if key exists in cache
+  has(key: K): boolean {
+    return this.cache.has(key);
+  }
+  
+  // Get item and move to most recently used position
+  get(key: K): V | undefined {
+    if (!this.cache.has(key)) return undefined;
+    
+    // Move key to the end (most recently used)
+    this.order = this.order.filter(k => k !== key);
+    this.order.push(key);
+    
+    return this.cache.get(key);
+  }
+
+  // Add or update item
+  set(key: K, value: V): void {
+    // If key exists, update and move to most recently used
+    if (this.cache.has(key)) {
+      this.cache.set(key, value);
+      this.order = this.order.filter(k => k !== key);
+      this.order.push(key);
+      return;
+    }
+    
+    // If at capacity, remove least recently used
+    if (this.order.length >= this.capacity) {
+      const leastUsed = this.order.shift();
+      if (leastUsed !== undefined) {
+        this.cache.delete(leastUsed);
+      }
+    }
+    
+    // Add new item
+    this.cache.set(key, value);
+    this.order.push(key);
+  }
+
+  // Delete an item from cache
+  delete(key: K): boolean {
+    if (!this.cache.has(key)) return false;
+    
+    this.order = this.order.filter(k => k !== key);
+    return this.cache.delete(key);
+  }
+  
+  // Get cache size
+  get size(): number {
+    return this.cache.size;
+  }
+  
+  // Clear the cache
+  clear(): void {
+    this.cache.clear();
+    this.order = [];
+  }
+}
+
+// Initialize cache with capacity - increased for better performance
+const agentCache = new LRUCache<string, ExternalAgentData>(20);
 
 export default function AgentDetailModal({ username, isOpen, onClose }: AgentDetailModalProps) {
   const { toast } = useToast();
   const [useExternalApi, setUseExternalApi] = useState(true);
 
-  // Clean up cache when it gets too large
+  // No need to manually clean up cache as our LRUCache handles this automatically
   useEffect(() => {
-    if (agentCache.size > MAX_CACHE_ENTRIES) {
-      // Remove oldest entry (first key in map)
-      const firstKey = agentCache.keys().next().value;
-      if (firstKey !== undefined) {
-        agentCache.delete(firstKey);
-      }
-    }
+    // Do any component initialization work here if needed
+    return () => {
+      // Clean up resources when component unmounts
+    };
   }, []);
 
   // Query agent details from internal API first - optimized with longer cache times
