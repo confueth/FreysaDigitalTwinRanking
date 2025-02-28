@@ -80,9 +80,16 @@ export async function importLeaderboardFromCSV(
           for (const entry of results) {
             if (entry.mastodonBio || entry.walletAddress || entry.ubiClaimedAt || entry.bioUpdatedAt) {
               const details: AgentDetails = {
+                mastodonUsername: entry.mastodonUsername,
+                score: parseFloat(entry.score) || 0,
                 mastodonBio: entry.mastodonBio || null,
                 walletAddress: entry.walletAddress || null,
                 walletBalance: entry.walletBalance || null,
+                city: entry.city || null,
+                likesCount: entry.likesCount ? parseInt(entry.likesCount, 10) : null,
+                followersCount: entry.followersCount ? parseInt(entry.followersCount, 10) : null,
+                retweetsCount: entry.retweetsCount ? parseInt(entry.retweetsCount, 10) : null,
+                repliesCount: null,
                 bioUpdatedAt: entry.bioUpdatedAt ? new Date(entry.bioUpdatedAt) : null,
                 ubiClaimedAt: entry.ubiClaimedAt ? new Date(entry.ubiClaimedAt) : null,
               };
