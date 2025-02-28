@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback, memo } from 'react';
 import {
   BarChart,
   Bar,
@@ -29,9 +29,10 @@ interface CityData {
   avgScore: number;
   totalScore: number;
   color: string;
+  percentage?: number;
 }
 
-// Generate colors for cities
+// Pre-define colors for performance
 const CITY_COLORS = [
   '#10B981', // Green
   '#3B82F6', // Blue
@@ -45,38 +46,133 @@ const CITY_COLORS = [
   '#A78BFA', // Violet
 ];
 
-const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) => {
-  const isMobile = useIsMobile();
+// Extract color generation to a memoized function for better performance
+const getColorForIndex = (index: number): string => {
+  return CITY_COLORS[index % CITY_COLORS.length];
+};
 
-  // Process city data for visualization
+// Memoized tooltips to prevent unnecessary rerenders
+const CustomTooltip = memo(({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-gray-800 border border-gray-700 rounded-md p-3 shadow-md">
+        <p className="text-gray-300 text-sm font-medium">{data.city.replace('_', ' ')}</p>
+        <p className="text-sm">
+          <span className="text-gray-400">Agents:</span> <span className="font-semibold">{formatNumber(data.count)}</span>
+        </p>
+        <p className="text-sm">
+          <span className="text-gray-400">Avg Score:</span> <span className="font-semibold">{formatNumber(data.avgScore)}</span>
+        </p>
+        <p className="text-sm">
+          <span className="text-gray-400">Total Score:</span> <span className="font-semibold">{formatNumber(data.totalScore)}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+});
+
+const PieCustomTooltip = memo(({ active, payload, totalAgents }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div className="bg-gray-800 border border-gray-700 rounded-md p-3 shadow-md">
+        <p className="text-gray-300 text-sm font-medium">{data.name.replace('_', ' ')}</p>
+        <p className="text-sm">
+          <span className="text-gray-400">Agents:</span> <span className="font-semibold">{formatNumber(data.value)}</span>
+        </p>
+        <p className="text-sm">
+          <span className="text-gray-400">Percentage:</span> <span className="font-semibold">
+            {data.payload.percentage?.toFixed(1) || ((data.value / totalAgents) * 100).toFixed(1)}%
+          </span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+});
+
+// Memoized formatter functions
+const formatCityName = (value: string, isMobile: boolean): string => {
+  if (value === 'Unknown') return value;
+  if (isMobile) {
+    // Shorten city names on mobile
+    return value.split('_').map((part: string): string => part.charAt(0)).join('');
+  }
+  return value.replace('_', ' ');
+};
+
+const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) => {
+  const [activeTab, setActiveTab] = useState('bar');
+  const isMobile = useIsMobile();
+  
+  // Handle tab change
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value);
+  }, []);
+
+  // Highly optimized city data calculation
   const cityData = useMemo(() => {
     if (!agents?.length) return [];
-
-    // Group data by city
-    const cityGroups = agents.reduce((acc, agent) => {
+    
+    const totalAgents = agents.length;
+    
+    // Use Map for better performance on large datasets
+    const cityMap = new Map<string, { count: number; totalScore: number }>();
+    
+    // Single loop through agents (more efficient than reduce)
+    for (let i = 0; i < agents.length; i++) {
+      const agent = agents[i];
       const city = agent.city || 'Unknown';
-      if (!acc[city]) {
-        acc[city] = {
-          agents: [],
-          totalScore: 0,
-        };
+      
+      const existing = cityMap.get(city);
+      if (existing) {
+        existing.count++;
+        existing.totalScore += agent.score || 0;
+      } else {
+        cityMap.set(city, {
+          count: 1,
+          totalScore: agent.score || 0
+        });
       }
-      acc[city].agents.push(agent);
-      acc[city].totalScore += agent.score || 0;
-      return acc;
-    }, {} as Record<string, { agents: Agent[], totalScore: number }>);
-
-    // Transform grouped data into chart data
-    return Object.entries(cityGroups)
-      .map(([city, data], index) => ({
+    }
+    
+    // Pre-allocate array size for performance
+    const result: CityData[] = new Array(cityMap.size);
+    let index = 0;
+    
+    // Transform map to array (faster than Array.from with mapping)
+    cityMap.forEach((data, city) => {
+      result[index++] = {
         city,
-        count: data.agents.length,
-        avgScore: Math.round(data.totalScore / data.agents.length),
+        count: data.count,
+        avgScore: Math.round(data.totalScore / data.count),
         totalScore: data.totalScore,
-        color: CITY_COLORS[index % CITY_COLORS.length]
-      }))
-      .sort((a, b) => b.count - a.count);
+        color: getColorForIndex(index - 1),
+        percentage: (data.count / totalAgents) * 100
+      };
+    });
+    
+    // Sort by count (most common first)
+    result.sort((a, b) => b.count - a.count);
+    
+    // Limit to top 10 cities for performance
+    return result.slice(0, 10);
   }, [agents]);
+
+  // Create memoized formatter functions
+  const tickFormatter = useCallback((value: string): string => {
+    return formatCityName(value, isMobile);
+  }, [isMobile]);
+  
+  const valueFormatter = useCallback((value: number): string => {
+    return formatCompactNumber(value);
+  }, []);
+  
+  const legendFormatter = useCallback((value: string): string => {
+    return value.replace('_', ' ');
+  }, []);
 
   if (isLoading) {
     return <StatisticsSkeleton />;
@@ -90,50 +186,16 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
     );
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-gray-800 border border-gray-700 rounded-md p-3 shadow-md">
-          <p className="text-gray-300 text-sm font-medium">{payload[0].payload.city}</p>
-          <p className="text-sm">
-            <span className="text-gray-400">Agents:</span> <span className="font-semibold">{formatNumber(payload[0].payload.count)}</span>
-          </p>
-          <p className="text-sm">
-            <span className="text-gray-400">Avg Score:</span> <span className="font-semibold">{formatNumber(payload[0].payload.avgScore)}</span>
-          </p>
-          <p className="text-sm">
-            <span className="text-gray-400">Total Score:</span> <span className="font-semibold">{formatNumber(payload[0].payload.totalScore)}</span>
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const PieCustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-gray-800 border border-gray-700 rounded-md p-3 shadow-md">
-          <p className="text-gray-300 text-sm font-medium">{payload[0].name}</p>
-          <p className="text-sm">
-            <span className="text-gray-400">Agents:</span> <span className="font-semibold">{formatNumber(payload[0].value)}</span>
-          </p>
-          <p className="text-sm">
-            <span className="text-gray-400">Percentage:</span> <span className="font-semibold">
-              {((payload[0].value / agents.length) * 100).toFixed(1)}%
-            </span>
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  // Memoized cell renderer - use index as key for better reconciliation
+  const renderCell = (entry: CityData, index: number) => (
+    <Cell key={`cell-${index}`} fill={entry.color} />
+  );
 
   return (
     <div className="bg-gray-800 rounded-lg p-4 sm:p-6">
       <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-200">City Statistics</h3>
       
-      <Tabs defaultValue="bar" className="w-full">
+      <Tabs defaultValue="bar" value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid grid-cols-2 mb-4">
           <TabsTrigger value="bar">Bar Chart</TabsTrigger>
           <TabsTrigger value="pie">Pie Chart</TabsTrigger>
@@ -151,26 +213,17 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
                 stroke="#9CA3AF" 
                 fontSize={12} 
                 tick={{ fill: '#9CA3AF' }}
-                tickFormatter={(value: string): string => {
-                  if (value === 'Unknown') return value;
-                  if (isMobile) {
-                    // Shorten city names on mobile
-                    return value.split('_').map((part: string): string => part.charAt(0)).join('');
-                  }
-                  return value.replace('_', ' ');
-                }}
+                tickFormatter={tickFormatter}
               />
               <YAxis 
                 stroke="#9CA3AF" 
                 fontSize={12}
                 tick={{ fill: '#9CA3AF' }}
-                tickFormatter={(value) => formatCompactNumber(value)}
+                tickFormatter={valueFormatter}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="count" name="Agents">
-                {cityData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
+                {cityData.map(renderCell)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -187,14 +240,12 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
                 outerRadius={isMobile ? 80 : 100}
                 dataKey="count"
                 nameKey="city"
-                label={isMobile ? false : entry => entry.city.replace('_', ' ')}
+                label={isMobile ? false : (entry) => formatCityName(entry.city, false)}
               >
-                {cityData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
+                {cityData.map(renderCell)}
               </Pie>
-              <Tooltip content={<PieCustomTooltip />} />
-              <Legend formatter={(value) => value.replace('_', ' ')} />
+              <Tooltip content={<PieCustomTooltip totalAgents={agents.length} />} />
+              <Legend formatter={legendFormatter} />
             </PieChart>
           </ResponsiveContainer>
         </TabsContent>
@@ -203,7 +254,8 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
   );
 };
 
-const StatisticsSkeleton: React.FC = () => {
+// Memoized skeleton to prevent rerenders
+const StatisticsSkeleton = memo(() => {
   return (
     <div className="bg-gray-800 rounded-lg p-4 sm:p-6">
       <Skeleton className="h-6 w-32 mb-4 bg-gray-700" />
@@ -217,6 +269,7 @@ const StatisticsSkeleton: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
-export default CityStatistics;
+// Export memoized component for better performance
+export default memo(CityStatistics);
