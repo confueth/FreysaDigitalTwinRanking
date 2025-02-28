@@ -7,6 +7,9 @@ import type { Agent, LeaderboardEntry, AgentDetails } from "@shared/schema";
 const LEADERBOARD_API = "https://digital-clone-production.onrender.com/digital-clones/leaderboards?full=true";
 const AGENT_DETAILS_API = "https://digital-clone-production.onrender.com/digital-clones/clones/";
 
+// Turn off strict schema validation for now to fix the app
+const DISABLE_VALIDATION = true;
+
 // Memory-optimized cache implementation
 // Instead of storing full agent objects, we only store essential fields for the leaderboard
 // and fetch complete details only when needed
@@ -44,6 +47,32 @@ const FORCE_REFRESH_TTL = 60 * 60 * 1000; // Force refresh after 1 hour
 const AGENT_DETAILS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes for individual agent details
 const REQUEST_THROTTLE = 5 * 1000; // Min time between API calls (5 seconds)
 const MAX_AGENT_CACHE_SIZE = 100; // Maximum number of agent details to cache
+
+/**
+ * Update the cities cache from new agent data
+ */
+function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
+  // Only update if we don't already have city data or if it's been over 24 hours
+  const now = Date.now();
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  
+  if (!cachedCities || cachedCities.size === 0 || now - lastFetchTime > ONE_DAY) {
+    // Initialize the Set if needed
+    if (!cachedCities) {
+      cachedCities = new Set<string>();
+    }
+    
+    // Add new cities to the set
+    for (let i = 0; i < agents.length; i++) {
+      const agent = agents[i];
+      if (agent.city) {
+        cachedCities.add(agent.city);
+      }
+    }
+    
+    console.log(`Updated cities cache with ${cachedCities.size} cities`);
+  }
+}
 
 /**
  * Get the live leaderboard data directly from the API
@@ -93,7 +122,7 @@ export async function getLiveLeaderboardData() {
   
   try {
     // Fetch fresh data from API
-    console.log("Fetching live leaderboard data from:", LEADERBOARD_API);
+    console.log("Fetching fresh leaderboard data");
     
     const response = await axios.get(LEADERBOARD_API, {
       headers: { 
@@ -103,12 +132,6 @@ export async function getLiveLeaderboardData() {
       },
       timeout: 60000 // 60 second timeout
     });
-    
-    console.log("Received live leaderboard data response:", 
-                response.status, 
-                response.statusText,
-                "Data sample:", 
-                JSON.stringify(response.data).substring(0, 200) + "...");
     
     // Process different response formats
     let agentData: MinimalAgent[] = [];
@@ -165,7 +188,7 @@ export async function getLiveLeaderboardData() {
     lastFetchTime = now;
     
     // Log for debugging purposes
-    console.log(`Processed ${agentData.length} agents. Sample: ${JSON.stringify(agentData.slice(0, 2))}`);
+    console.log(`Processed ${agentData.length} agents`);
     
     // Update cities cache 
     updateCachedCities(agentData);
@@ -249,29 +272,34 @@ export async function getLiveAgentDetail(username: string) {
             // Parse and validate the data with safety checks
             const rawData = detailsResponse.data || {};
             
-            // Use safeParse instead of parse to avoid exceptions
-            const result = agentDetailsSchema.safeParse(rawData);
-            let agentDetails;
+            // Skip validation if disabled, otherwise use safeParse to avoid exceptions
+            let agentDetails: any;
             
-            if (result.success) {
-              agentDetails = result.data;
+            if (DISABLE_VALIDATION) {
+              agentDetails = rawData;
             } else {
-              console.warn(`Validation errors for ${username}:`, result.error);
-              // Create a minimal valid object with required fields
-              agentDetails = {
-                mastodonUsername: rawData.mastodonUsername || username,
-                score: typeof rawData.score === 'number' ? rawData.score : (cachedAgent.score || 0),
-                mastodonBio: rawData.mastodonBio || null,
-                walletAddress: rawData.walletAddress || null,
-                walletBalance: rawData.walletBalance || null,
-                city: rawData.city || null,
-                likesCount: rawData.likesCount || null,
-                followersCount: rawData.followersCount || null,
-                retweetsCount: rawData.retweetsCount || null,
-                repliesCount: rawData.repliesCount || null,
-                ubiClaimedAt: rawData.ubiClaimedAt || null,
-                bioUpdatedAt: rawData.bioUpdatedAt || null
-              };
+              const result = agentDetailsSchema.safeParse(rawData);
+              if (result.success) {
+                agentDetails = result.data;
+              } else {
+                console.warn(`Validation errors for ${username}:`, result.error);
+                // Create a minimal valid object with required fields
+                agentDetails = {
+                  mastodonUsername: rawData.mastodonUsername || username,
+                  score: typeof rawData.score === 'number' ? rawData.score : (cachedAgent.score || 0),
+                  mastodonBio: rawData.mastodonBio || null,
+                  walletAddress: rawData.walletAddress || null,
+                  walletBalance: rawData.walletBalance || null,
+                  city: rawData.city || null,
+                  likesCount: rawData.likesCount || null,
+                  followersCount: rawData.followersCount || null,
+                  retweetsCount: rawData.retweetsCount || null,
+                  repliesCount: rawData.repliesCount || null,
+                  ubiClaimedAt: rawData.ubiClaimedAt || null,
+                  bioUpdatedAt: rawData.bioUpdatedAt || null,
+                  avatarUrl: rawData.avatarURL || rawData.avatarUrl || null
+                };
+              }
             }
             
             // Extract tweets if available
@@ -285,6 +313,7 @@ export async function getLiveAgentDetail(username: string) {
               walletBalance: agentDetails.walletBalance || cachedAgent.walletBalance,
               bioUpdatedAt: agentDetails.bioUpdatedAt ? new Date(agentDetails.bioUpdatedAt) : cachedAgent.bioUpdatedAt,
               ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : cachedAgent.ubiClaimedAt,
+              avatarUrl: agentDetails.avatarUrl || agentDetails.avatarURL || cachedAgent.avatarUrl,
               tweets: tweets
             };
             
@@ -296,12 +325,12 @@ export async function getLiveAgentDetail(username: string) {
             
             return enrichedAgent;
           }
+          return cachedAgent;
         } catch (detailsError) {
           console.error(`Error fetching details for ${username}:`, detailsError);
           // Return the cached agent without additional details
+          return cachedAgent;
         }
-        
-        return cachedAgent;
       }
     }
     
@@ -320,30 +349,34 @@ export async function getLiveAgentDetail(username: string) {
       // Parse and validate the data with safety checks
       const rawData = response.data || {};
       
-      // Use safeParse instead of parse to avoid exceptions
-      const result = agentDetailsSchema.safeParse(rawData);
-      let agentDetails;
+      // Skip validation if disabled, otherwise use safeParse
+      let agentDetails: any;
       
-      if (result.success) {
-        agentDetails = result.data;
+      if (DISABLE_VALIDATION) {
+        agentDetails = rawData;
       } else {
-        console.warn(`Validation errors for ${username} (direct fetch):`, result.error);
-        // Create a minimal valid object with required fields
-        agentDetails = {
-          mastodonUsername: rawData.mastodonUsername || username,
-          score: typeof rawData.score === 'number' ? rawData.score : 0,
-          mastodonBio: rawData.mastodonBio || null,
-          walletAddress: rawData.walletAddress || null,
-          walletBalance: rawData.walletBalance || null,
-          city: rawData.city || null,
-          likesCount: rawData.likesCount || null,
-          followersCount: rawData.followersCount || null,
-          retweetsCount: rawData.retweetsCount || null,
-          repliesCount: rawData.repliesCount || null,
-          ubiClaimedAt: rawData.ubiClaimedAt || null,
-          bioUpdatedAt: rawData.bioUpdatedAt || null,
-          avatarUrl: rawData.avatarURL || rawData.avatarUrl || null
-        };
+        const result = agentDetailsSchema.safeParse(rawData);
+        if (result.success) {
+          agentDetails = result.data;
+        } else {
+          console.warn(`Validation errors for ${username} (direct fetch):`, result.error);
+          // Create a minimal valid object with required fields
+          agentDetails = {
+            mastodonUsername: rawData.mastodonUsername || username,
+            score: typeof rawData.score === 'number' ? rawData.score : 0,
+            mastodonBio: rawData.mastodonBio || null,
+            walletAddress: rawData.walletAddress || null,
+            walletBalance: rawData.walletBalance || null,
+            city: rawData.city || null,
+            likesCount: rawData.likesCount || null,
+            followersCount: rawData.followersCount || null,
+            retweetsCount: rawData.retweetsCount || null,
+            repliesCount: rawData.repliesCount || null,
+            ubiClaimedAt: rawData.ubiClaimedAt || null,
+            bioUpdatedAt: rawData.bioUpdatedAt || null,
+            avatarUrl: rawData.avatarURL || rawData.avatarUrl || null
+          };
+        }
       }
       
       // Extract tweets if available
@@ -356,7 +389,7 @@ export async function getLiveAgentDetail(username: string) {
         mastodonUsername: username,
         score: agentDetails.score || 0,
         prevScore: null,
-        avatarUrl: agentDetails.avatarUrl || null,
+        avatarUrl: agentDetails.avatarUrl || agentDetails.avatarURL || null,
         city: agentDetails.city || null,
         likesCount: agentDetails.likesCount || null,
         followersCount: agentDetails.followersCount || null,
@@ -516,31 +549,3 @@ export function getAvailableCities() {
   
   return [];
 }
-
-/**
- * Update the cities cache from new agent data
- */
-function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
-  // Only update if we don't already have city data or if it's been over 24 hours
-  const now = Date.now();
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-  
-  if (!cachedCities || cachedCities.size === 0 || now - lastFetchTime > ONE_DAY) {
-    // Initialize the Set if needed
-    if (!cachedCities) {
-      cachedCities = new Set<string>();
-    }
-    
-    // Add new cities to the set
-    for (let i = 0; i < agents.length; i++) {
-      const agent = agents[i];
-      if (agent.city) {
-        cachedCities.add(agent.city);
-      }
-    }
-    
-    console.log(`Updated cities cache with ${cachedCities.size} cities`);
-  }
-}
-
-// No longer needed - we're using real data only
