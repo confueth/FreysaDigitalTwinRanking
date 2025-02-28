@@ -16,6 +16,16 @@ interface MinimalAgent {
   score: number;
   avatarUrl?: string;
   city?: string;
+  followersCount?: number;
+  likesCount?: number;
+  retweetsCount?: number;
+  repliesCount?: number;
+  rank?: number;
+  walletAddress?: string;
+  walletBalance?: string;
+  mastodonBio?: string;
+  bioUpdatedAt?: string;
+  ubiClaimedAt?: string;
 }
 
 // Cache control with improved API usage protection and memory optimization
@@ -104,7 +114,12 @@ export async function getLiveLeaderboardData() {
           mastodonUsername: entry.mastodonUsername,
           score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
           avatarUrl: entry.avatarURL || entry.avatarUrl,
-          city: entry.city
+          city: entry.city,
+          followersCount: entry.followersCount || 0,
+          likesCount: entry.likesCount || 0,
+          retweetsCount: entry.retweetsCount || 0,
+          repliesCount: entry.repliesCount || 0,
+          rank: index + 1 // Set rank based on position
         }));
       } catch (parseError) {
         console.error("Error parsing array format:", parseError);
@@ -120,7 +135,17 @@ export async function getLiveLeaderboardData() {
         mastodonUsername: entry.mastodonUsername,
         score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
         avatarUrl: entry.avatarUrl || entry.avatarURL,
-        city: entry.city
+        city: entry.city,
+        followersCount: entry.followersCount || 0,
+        likesCount: entry.likesCount || 0,
+        retweetsCount: entry.retweetsCount || 0,
+        repliesCount: entry.repliesCount || 0,
+        rank: index + 1, // Set rank based on position
+        walletAddress: entry.walletAddress || null,
+        walletBalance: entry.walletBalance || null,
+        mastodonBio: entry.mastodonBio || null,
+        bioUpdatedAt: entry.bioUpdatedAt || null,
+        ubiClaimedAt: entry.ubiClaimedAt || null
       }));
     }
     
@@ -263,7 +288,7 @@ export async function getLiveAgentDetail(username: string) {
         mastodonUsername: username,
         score: agentDetails.score || 0,
         prevScore: null,
-        avatarUrl: agentDetails.avatarUrl || null,
+        avatarUrl: response.data.avatarUrl || null, // Use response data directly
         city: agentDetails.city || null,
         likesCount: agentDetails.likesCount || null,
         followersCount: agentDetails.followersCount || null,
