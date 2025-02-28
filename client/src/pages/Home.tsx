@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import Header from '@/components/Header';
@@ -10,6 +10,7 @@ import StatCards from '@/components/StatCards';
 import AgentDetailModal from '@/components/AgentDetailModal';
 import { Agent, AgentFilters, Snapshot } from '@/types/agent';
 import { formatDate } from '@/utils/formatters';
+import { applyAllFilters } from '@/utils/FilterUtils';
 
 type ViewMode = 'table' | 'cards' | 'timeline';
 
@@ -121,19 +122,54 @@ export default function Home() {
       ? 'Agent Cards' 
       : 'Score Trends';
 
+  // Memoized refreshData function
+  const refreshData = useCallback(() => {
+    // Don't refresh if user has been inactive for a while
+    const INACTIVITY_THRESHOLD = 1 * 60 * 60 * 1000; // 1 hour
+    const lastActivity = parseInt(localStorage.getItem('lastUserActivity') || '0', 10);
+    const now = Date.now();
+    
+    if (now - lastActivity > INACTIVITY_THRESHOLD) {
+      console.log('Skipping refresh due to user inactivity');
+      return;
+    }
+    
+    if (selectedSnapshot) {
+      console.log('Refreshing data');
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/snapshots/${selectedSnapshot}/agents`] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/snapshots/${selectedSnapshot}/stats`] 
+      });
+    }
+  }, [selectedSnapshot, queryClient]);
+  
+  // Apply client-side filtering to reduce server load
+  const filteredResults = useMemo(() => {
+    if (!agents || !agents.length) return { filteredAgents: [], totalCount: 0 };
+    return applyAllFilters(agents, filters);
+  }, [agents, filters]);
+  
+  // Display data - this is now client-side filtered
+  const displayAgents = filteredResults.filteredAgents || [];
+  const totalAgentsCount = filteredResults.totalCount || 0;
+  
   // Poll for new data infrequently to avoid excessive API calls
   useEffect(() => {
-    // Initial load when component mounts
-    const refreshData = () => {
-      if (selectedSnapshot) {
-        queryClient.invalidateQueries({ 
-          queryKey: [`/api/snapshots/${selectedSnapshot}/agents`] 
-        });
-        queryClient.invalidateQueries({ 
-          queryKey: [`/api/snapshots/${selectedSnapshot}/stats`] 
-        });
-      }
+    // Track user activity
+    const updateLastActivity = () => {
+      localStorage.setItem('lastUserActivity', Date.now().toString());
     };
+    
+    // Update on any user interaction
+    window.addEventListener('mousemove', updateLastActivity);
+    window.addEventListener('keydown', updateLastActivity);
+    window.addEventListener('click', updateLastActivity);
+    window.addEventListener('scroll', updateLastActivity);
+    
+    // Initial activity timestamp
+    updateLastActivity();
     
     // Set up infrequent polling (once every 30 minutes)
     // This respects our API usage and ensures data is eventually refreshed
@@ -143,18 +179,30 @@ export default function Home() {
     // This provides fresh data when users are actually using the app
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        // User has returned to the tab, refresh data
-        refreshData();
+        // Only refresh if we've been hidden for a while
+        const lastRefresh = parseInt(localStorage.getItem('lastRefresh') || '0', 10);
+        const now = Date.now();
+        const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+        
+        if (now - lastRefresh > REFRESH_THRESHOLD) {
+          refreshData();
+          localStorage.setItem('lastRefresh', now.toString());
+        }
       }
     };
     
     document.addEventListener("visibilitychange", handleVisibilityChange, false);
+    localStorage.setItem('lastRefresh', Date.now().toString());
     
     return () => {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener('mousemove', updateLastActivity);
+      window.removeEventListener('keydown', updateLastActivity);
+      window.removeEventListener('click', updateLastActivity);
+      window.removeEventListener('scroll', updateLastActivity);
     };
-  }, [selectedSnapshot, queryClient]);
+  }, [refreshData]);
 
   return (
     <div>
@@ -182,18 +230,20 @@ export default function Home() {
             <h2 className="text-xl font-bold">{viewTitle}</h2>
             <div className="flex space-x-2">
               <span className="text-gray-400">
-                {agents ? `Showing ${agents.length} of ${stats?.totalAgents || '?'} agents` : 'Loading...'}
+                {agents ? 
+                  `Showing ${displayAgents.length} of ${totalAgentsCount} filtered agents (${stats?.totalAgents || '?'} total)` : 
+                  'Loading...'}
               </span>
             </div>
           </div>
           
           {selectedView === 'table' && (
             <LeaderboardTable 
-              agents={agents || []}
+              agents={displayAgents}
               onAgentSelect={handleAgentSelect}
               currentPage={filters.page || 1}
               onPageChange={handlePageChange}
-              totalAgents={stats?.totalAgents || 0}
+              totalAgents={totalAgentsCount}
               pageSize={filters.limit || 50}
               isLoading={agentsLoading}
             />
@@ -201,11 +251,11 @@ export default function Home() {
           
           {selectedView === 'cards' && (
             <LeaderboardCards 
-              agents={agents || []}
+              agents={displayAgents}
               onAgentSelect={handleAgentSelect}
               currentPage={filters.page || 1}
               onPageChange={handlePageChange}
-              totalAgents={stats?.totalAgents || 0}
+              totalAgents={totalAgentsCount}
               pageSize={filters.limit || 50}
               isLoading={agentsLoading}
             />
