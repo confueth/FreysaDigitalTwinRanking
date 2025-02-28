@@ -4,14 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Search } from 'lucide-react';
-import { Snapshot, AgentFilters } from '@/types/agent';
-import { formatDate } from '@/utils/formatters';
+import { AgentFilters } from '@/types/agent';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface SidebarProps {
-  snapshots: Snapshot[];
-  selectedSnapshot: number | null;
-  onSnapshotChange: (id: number) => void;
   filters: AgentFilters;
   onFilterChange: (filters: Partial<AgentFilters>) => void;
   cities: string[];
@@ -19,9 +15,6 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ 
-  snapshots, 
-  selectedSnapshot, 
-  onSnapshotChange, 
   filters, 
   onFilterChange, 
   cities,
@@ -55,63 +48,10 @@ export default function Sidebar({
     });
   };
 
-  // Function to simplify snapshot names
-  const formatSnapshotName = (snapshot: Snapshot): string => {
-    if (snapshot.description) {
-      // Extract just the date part from CSV import descriptions
-      if (snapshot.description.includes('Leaderboard Snapshot')) {
-        return snapshot.description.replace('Leaderboard Snapshot - ', '');
-      }
-      // Extract just the date part from Initial/Live snapshot descriptions
-      if (snapshot.description.includes('Live Snapshot') || 
-          snapshot.description.includes('Initial Snapshot') ||
-          snapshot.description.includes('Hourly Snapshot')) {
-        const parts = snapshot.description.split(' - ');
-        if (parts.length > 1) {
-          return parts[1];
-        }
-      }
-      return snapshot.description;
-    }
-    return formatDate(snapshot.timestamp);
-  };
+
 
   return (
     <aside className="w-full md:w-64 bg-gray-900 border-r border-gray-800 p-4 md:h-[calc(100vh-64px)] md:overflow-y-auto">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Snapshot</h2>
-        {isLoading ? (
-          <Skeleton className="h-10 w-full bg-gray-800" />
-        ) : snapshots.length > 0 ? (
-          <Select 
-            value={selectedSnapshot?.toString()} 
-            onValueChange={(value) => onSnapshotChange(parseInt(value))}
-          >
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
-              <SelectValue placeholder="Select a snapshot" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700 text-white">
-              {/* Sort snapshots by timestamp, newest first */}
-              {[...snapshots]
-                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                .map((snapshot) => (
-                  <SelectItem key={snapshot.id} value={snapshot.id.toString()}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{formatSnapshotName(snapshot)}</span>
-                      {snapshot.id === snapshots[0].id && (
-                        <span className="text-xs px-2 py-0.5 bg-primary rounded-full ml-2">Latest</span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <div className="text-center py-2 text-gray-400">
-            No snapshots available
-          </div>
-        )}
-      </div>
 
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Search</h2>
