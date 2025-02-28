@@ -94,33 +94,75 @@ export async function createSnapshot(
 }
 
 /**
+ * Checks if a snapshot has been created today
+ * @param storage Storage implementation
+ * @returns true if a snapshot was created today, false otherwise
+ */
+async function hasSnapshotForToday(storage: IStorage): Promise<boolean> {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Beginning of today
+    
+    // Get all snapshots
+    const snapshots = await storage.getSnapshots();
+    
+    // Check if any snapshot was created today
+    return snapshots.some(snapshot => {
+      const snapshotDate = new Date(snapshot.timestamp);
+      snapshotDate.setHours(0, 0, 0, 0); // Beginning of the snapshot day
+      return snapshotDate.getTime() === today.getTime();
+    });
+  } catch (error) {
+    console.error('Error checking for today\'s snapshot:', error);
+    return false;
+  }
+}
+
+/**
  * Configure a scheduled job to create daily snapshots
  * @param storage Storage implementation
  */
 export function scheduleSnapshots(storage: IStorage): void {
-  // Schedule a daily snapshot at midnight
-  cron.schedule('0 0 * * *', async () => {
-    console.log('Running scheduled daily snapshot');
-    await createSnapshot(storage);
+  // Run a check every hour to see if we have a snapshot for today
+  cron.schedule('0 * * * *', async () => {
+    console.log('Running hourly snapshot check');
+    const hasSnapshotToday = await hasSnapshotForToday(storage);
+    
+    if (!hasSnapshotToday) {
+      console.log('No snapshot for today found, creating one now');
+      await createSnapshot(storage, `Daily snapshot - ${new Date().toLocaleDateString()}`);
+    } else {
+      console.log('Snapshot for today already exists, skipping');
+    }
   });
   
-  // Also create a snapshot on startup if there are none
+  // Also create a snapshot on startup if there is none for today
   initializeSnapshot(storage);
 }
 
 /**
- * Create an initial snapshot if no snapshots exist
+ * Create an initial snapshot if no snapshots exist for today
  * @param storage Storage implementation
  */
 async function initializeSnapshot(storage: IStorage): Promise<void> {
   try {
+    // First check if we have any snapshots at all
     const snapshots = await storage.getSnapshots();
     
     if (!snapshots || snapshots.length === 0) {
-      console.log('No snapshots found. Creating initial snapshot...');
+      console.log('No snapshots found at all. Creating initial snapshot...');
       await createSnapshot(storage, 'Initial snapshot');
+      return;
+    }
+    
+    // Then check if we have a snapshot for today
+    const hasSnapshotToday = await hasSnapshotForToday(storage);
+    
+    if (!hasSnapshotToday) {
+      console.log('No snapshot for today found. Creating initial snapshot for today...');
+      await createSnapshot(storage, `Initial snapshot - ${new Date().toLocaleDateString()}`);
     } else {
-      console.log(`Found ${snapshots.length} existing snapshots. No initialization needed.`);
+      console.log('Snapshot for today already exists. No initialization needed.');
     }
   } catch (error) {
     console.error('Error initializing snapshot:', error);

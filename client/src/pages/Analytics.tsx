@@ -59,12 +59,16 @@ export default function Analytics({}: AnalyticsProps) {
   const createSnapshotMutation = useMutation({
     mutationFn: async () => {
       const description = `Manual snapshot - ${new Date().toLocaleString()}`;
-      return apiRequest('/api/snapshots', {
+      
+      return fetch('/api/snapshots', {
         method: 'POST',
         body: JSON.stringify({ description }),
         headers: {
           'Content-Type': 'application/json',
         },
+      }).then(res => {
+        if (!res.ok) throw new Error('Failed to create snapshot');
+        return res.json();
       });
     },
     onSuccess: () => {
@@ -439,23 +443,6 @@ export default function Analytics({}: AnalyticsProps) {
         <TabsContent value="trends" className="mt-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-medium">Snapshot Management</h3>
-            <Button 
-              onClick={() => createSnapshotMutation.mutate()}
-              disabled={createSnapshotMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {createSnapshotMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating Snapshot...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Create Snapshot
-                </>
-              )}
-            </Button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -480,17 +467,10 @@ export default function Analytics({}: AnalyticsProps) {
                   </div>
                   
                   <div className="flex flex-col space-y-2">
-                    <Label>Manual Snapshots</Label>
+                    <Label>Automatic Updates</Label>
                     <div className="text-sm text-gray-400">
-                      <p>Create a snapshot whenever you want to record the current state</p>
+                      <p>Hourly checks ensure a snapshot is taken once per day</p>
                     </div>
-                    <Button 
-                      onClick={() => createSnapshotMutation.mutate()}
-                      disabled={createSnapshotMutation.isPending}
-                      className="w-full bg-green-600 hover:bg-green-700"
-                    >
-                      {createSnapshotMutation.isPending ? 'Creating...' : 'Create Snapshot Now'}
-                    </Button>
                   </div>
                 </div>
               </CardContent>
