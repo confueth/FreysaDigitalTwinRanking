@@ -35,7 +35,12 @@ app.use((req, res, next) => {
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
+    try {
+      return originalResJson.apply(res, [bodyJson, ...args]);
+    } catch (err) {
+      console.error("Error in json response:", err);
+      return res;
+    }
   };
 
   res.on("finish", () => {
@@ -43,11 +48,15 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+        try {
+          logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+          if (logLine.length > 80) {
+            logLine = logLine.slice(0, 79) + "…";
+          }
+        } catch (err) {
+          console.error("Error stringifying response:", err);
+          logLine += " :: [Complex object]";
+        }
       }
 
       log(logLine);
@@ -79,8 +88,10 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
+    console.error(err);
   });
 
   // importantly only setup vite in development and after
