@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import LeaderboardTable from '@/components/LeaderboardTable';
@@ -7,15 +8,12 @@ import LeaderboardCards from '@/components/LeaderboardCards';
 import LeaderboardTimeline from '@/components/LeaderboardTimeline';
 import StatCards from '@/components/StatCards';
 import AgentDetailModal from '@/components/AgentDetailModal';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
 import { Agent, AgentFilters, Snapshot } from '@/types/agent';
 import { formatDate } from '@/utils/formatters';
 
 type ViewMode = 'table' | 'cards' | 'timeline';
 
 export default function Home() {
-  const { toast } = useToast();
   const [selectedView, setSelectedView] = useState<ViewMode>('table');
   const [selectedSnapshot, setSelectedSnapshot] = useState<number | null>(null);
   const [filters, setFilters] = useState<AgentFilters>({
@@ -94,26 +92,6 @@ export default function Home() {
     staleTime: 300000 // 5 minutes
   });
 
-  // Handle taking a new snapshot
-  const handleTakeSnapshot = async () => {
-    try {
-      await apiRequest('POST', '/api/snapshots', { description: 'Manual snapshot' });
-      toast({
-        title: 'Snapshot created',
-        description: 'A new snapshot of the leaderboard has been created.',
-      });
-      // Refetch snapshots and agents
-      queryClient.invalidateQueries({ queryKey: ['/api/snapshots'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/snapshots/${selectedSnapshot}/agents`] });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to create snapshot. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
-
   // Handle view change
   const handleViewChange = (view: ViewMode) => {
     setSelectedView(view);
@@ -156,10 +134,23 @@ export default function Home() {
       ? 'Agent Cards' 
       : 'Score Trends';
 
+  // Poll for new snapshots every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/snapshots'] });
+      if (selectedSnapshot) {
+        queryClient.invalidateQueries({ 
+          queryKey: [`/api/snapshots/${selectedSnapshot}/agents`] 
+        });
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
+  }, [selectedSnapshot]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">
       <Header 
-        onTakeSnapshot={handleTakeSnapshot} 
         selectedView={selectedView}
         onViewChange={handleViewChange}
       />

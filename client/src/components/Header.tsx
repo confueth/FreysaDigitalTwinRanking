@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -9,12 +9,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
-  onTakeSnapshot: () => void;
   selectedView: 'table' | 'cards' | 'timeline';
   onViewChange: (view: 'table' | 'cards' | 'timeline') => void;
 }
 
-export default function Header({ onTakeSnapshot, selectedView, onViewChange }: HeaderProps) {
+export default function Header({ selectedView, onViewChange }: HeaderProps) {
   const viewLabels = {
     'table': 'Table View',
     'cards': 'Card View',
@@ -32,17 +31,7 @@ export default function Header({ onTakeSnapshot, selectedView, onViewChange }: H
           <h1 className="text-xl font-bold">Freysa Game Leaderboard</h1>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <Button 
-            variant="default" 
-            size="sm"
-            className="flex items-center bg-primary hover:bg-purple-800"
-            onClick={onTakeSnapshot}
-          >
-            <Camera className="h-4 w-4 mr-1" />
-            Take Snapshot
-          </Button>
-          
+        <div className="flex items-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="bg-gray-800 hover:bg-gray-700 border-gray-700">
