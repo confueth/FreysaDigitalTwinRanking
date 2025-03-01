@@ -181,8 +181,8 @@ export class MemStorage implements IStorage {
       result.sort((a, b) => a.rank - b.rank);
     }
     
-    // Apply pagination
-    if (filters.page !== undefined && filters.limit !== undefined) {
+    // Apply pagination if limit > 0 (otherwise return all results)
+    if (filters.page !== undefined && filters.limit !== undefined && filters.limit > 0) {
       const startIndex = (filters.page - 1) * filters.limit;
       result = result.slice(startIndex, startIndex + filters.limit);
     }
