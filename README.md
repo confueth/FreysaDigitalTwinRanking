@@ -162,4 +162,4 @@ The application uses a robust data model with these core entities:
 
 ---
 
-Developed with ❤️ for the Freysa gaming community.
+Developed with ❤️ for the Freysa.ai community.
