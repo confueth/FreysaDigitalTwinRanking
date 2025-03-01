@@ -18,8 +18,6 @@ type ViewMode = 'table' | 'cards' | 'timeline';
 
 export default function Home() {
   const [selectedView, setSelectedView] = useState<ViewMode>('table');
-  // Fixed snapshot ID for backward compatibility during transition to live data
-  const [selectedSnapshot, setSelectedSnapshot] = useState<number>(1);
   const [filters, setFilters] = useState<AgentFilters>({
     page: 1,
     limit: 25,
@@ -28,14 +26,28 @@ export default function Home() {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [showAgentModal, setShowAgentModal] = useState(false);
   
-  // Set dummy loading state
-  const snapshotLoading = false;
+  // Query available snapshots 
+  const { data: snapshots, isLoading: snapshotsLoading } = useQuery<Snapshot[]>({
+    queryKey: ['/api/snapshots'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
   
-  // Create a fake snapshot object for display
-  const currentSnapshot = {
-    id: 1,
+  // Use the latest snapshot ID, fallback to 3 if not available yet
+  const latestSnapshot = snapshots && snapshots.length > 0 ? snapshots[0] : null;
+  const [selectedSnapshot, setSelectedSnapshot] = useState<number>(3);
+  
+  // Update selected snapshot when snapshots data loads
+  useEffect(() => {
+    if (latestSnapshot) {
+      setSelectedSnapshot(latestSnapshot.id);
+    }
+  }, [latestSnapshot]);
+  
+  // Current snapshot object for display
+  const currentSnapshot = latestSnapshot || {
+    id: selectedSnapshot,
     timestamp: new Date().toISOString(),
-    description: "Live Data"
+    description: "Loading snapshot data..."
   };
 
   // Query agents with filters - optimized with caching strategy
@@ -114,7 +126,6 @@ export default function Home() {
   const handleViewChange = (view: ViewMode) => {
     setSelectedView(view);
   };
-
 
 
   // Handle filter change
@@ -244,7 +255,7 @@ export default function Home() {
             filters={filters}
             onFilterChange={handleFilterChange}
             cities={cities || []}
-            isLoading={snapshotLoading}
+            isLoading={snapshotsLoading}
           />
           
           <div className="flex-grow p-4 overflow-auto">
@@ -304,7 +315,6 @@ export default function Home() {
                   isLoading={agentsLoading}
                 />
                 
-
               </div>
             )}
           </div>
@@ -316,7 +326,7 @@ export default function Home() {
             filters={filters}
             onFilterChange={handleFilterChange}
             cities={cities || []}
-            isLoading={snapshotLoading}
+            isLoading={snapshotsLoading}
           />
           
           <div className="p-3">
@@ -378,7 +388,6 @@ export default function Home() {
                   isLoading={agentsLoading}
                 />
                 
-
               </div>
             )}
           </div>
