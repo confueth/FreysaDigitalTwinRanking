@@ -1,8 +1,14 @@
 /**
  * Format a number with comma separators
  */
-export function formatNumber(value: number | undefined | null): string {
+export function formatNumber(value: number | undefined | null, roundToDollar: boolean = false): string {
   if (value === undefined || value === null) return '0';
+  
+  // Round to nearest dollar if requested (for currency displays)
+  if (roundToDollar) {
+    value = Math.round(value);
+  }
+  
   return new Intl.NumberFormat('en-US').format(value);
 }
 
@@ -26,12 +32,27 @@ export function formatCompactNumber(value: number | undefined | null): string {
 /**
  * Format a date from string to a readable format in the user's local timezone
  */
-export function formatDate(dateString: string | undefined): string {
+export function formatDate(dateString: string | undefined, formatType: 'full' | 'short' | 'game-ends' = 'full'): string {
   if (!dateString) return '';
   
   const date = new Date(dateString);
   
-  // Format with time if available
+  if (formatType === 'game-ends') {
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric', 
+      year: 'numeric'
+    });
+  }
+  
+  if (formatType === 'short') {
+    return date.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+  
+  // Format with time if available (full format)
   if (date.getHours() !== 0 || date.getMinutes() !== 0) {
     return date.toLocaleString(undefined, { // undefined uses the user's browser locale
       month: 'short',
@@ -148,11 +169,20 @@ export function formatWalletAddress(address?: string): string {
 }
 
 /**
- * Format a number as currency with 2 decimal places
+ * Format a number as currency with 2 decimal places or as a rounded dollar amount
  */
-export function formatCurrency(value: number | undefined | null): string {
-  if (value === undefined || value === null) return '0.00';
+export function formatCurrency(value: number | undefined | null, roundToDollar: boolean = false): string {
+  if (value === undefined || value === null) return '0';
   
+  if (roundToDollar) {
+    // Round to nearest dollar with no decimal places
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(Math.round(value));
+  }
+  
+  // Regular currency format with 2 decimal places
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
