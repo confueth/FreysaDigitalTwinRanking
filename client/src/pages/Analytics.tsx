@@ -43,8 +43,8 @@ export default function Analytics({}: AnalyticsProps) {
   
   // CSV Generation function
   const generateCsvForSnapshot = (snapshotId: number) => {
-    // Fetch the agents for this snapshot
-    fetch(`/api/snapshots/${snapshotId}/agents`)
+    // Fetch the agents for this snapshot - add limit=0 to get all agents
+    fetch(`/api/snapshots/${snapshotId}/agents?limit=0`)
       .then(response => response.json())
       .then(agents => {
         if (!agents || agents.length === 0) {
