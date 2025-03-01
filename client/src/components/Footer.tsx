@@ -33,10 +33,10 @@ export default function Footer() {
       <div className="mt-3 text-xs text-gray-400 flex items-center justify-center flex-wrap gap-x-4 gap-y-1">
         <div className="flex items-center">
           <Code className="h-3 w-3 mr-1" />
-          <span>© 2025 Freysa Leaderboard</span>
+          <span>It begins with Freysa 🌱</span>
         </div>
         <a 
-          href="https://github.com/confxsd/freysa-leaderboard" 
+          href="https://github.com/confueth/FreysaDigitalTwinRanking" 
           target="_blank" 
           rel="noopener noreferrer"
           className="hover:text-gray-300 transition-colors flex items-center"
@@ -46,15 +46,7 @@ export default function Footer() {
           </svg>
           <span>Source Code</span>
         </a>
-        <a 
-          href="https://x.com/confu_eth" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="hover:text-gray-300 transition-colors flex items-center"
-        >
-          <Coffee className="h-3 w-3 mr-1" />
-          <span>Support the Developer</span>
-        </a>
+        
       </div>
     </footer>
   );
