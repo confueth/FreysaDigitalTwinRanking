@@ -50,33 +50,30 @@ export default function Home() {
     description: "Loading snapshot data..."
   };
 
-  // Query agents with filters - optimized with caching strategy
+  // Query agents with filters - use live data by default for regular views
   const { 
     data: agents, 
     isLoading: agentsLoading,
     refetch: refetchAgents
   } = useQuery<Agent[]>({
     queryKey: [
-      `/api/snapshots/${selectedSnapshot}/agents`, 
-      // Only include filter parameters that affect the server request
-      // Client-side filtering is used for performance
+      `/api/agents`, 
       { 
-        limit: 2000 // Get a larger batch once to reduce API calls (increased from 1000)
+        limit: 2000 // Get a larger batch once to reduce API calls
       }
     ],
-    enabled: !!selectedSnapshot,
     queryFn: async ({ queryKey }) => {
       const [baseUrl] = queryKey;
       
       // Check if we have data in sessionStorage cache
-      const cacheKey = `leaderboard_data_${selectedSnapshot}`;
+      const cacheKey = `leaderboard_data_live`;
       const cachedData = sessionStorage.getItem(cacheKey);
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
       
-      // Use cache if it's available and less than 10 minutes old
+      // Use cache if it's available and less than 5 minutes old (shorter time for live data)
       if (cachedData && cacheTime) {
         const cacheAge = Date.now() - parseInt(cacheTime, 10);
-        if (cacheAge < 10 * 60 * 1000) { // 10 minutes
+        if (cacheAge < 5 * 60 * 1000) { // 5 minutes 
           console.log('Using cached leaderboard data');
           return JSON.parse(cachedData) as Agent[];
         }
@@ -103,8 +100,8 @@ export default function Home() {
       
       return data as Agent[];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep in memory longer
+    staleTime: 2 * 60 * 1000, // 2 minutes - more frequent updates for live data
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Query stats for the selected snapshot - optimized with longer cache time
@@ -171,15 +168,24 @@ export default function Home() {
       return;
     }
     
+    console.log('Refreshing data');
+    
+    // Invalidate the live data endpoints 
+    queryClient.invalidateQueries({ 
+      queryKey: [`/api/agents`] 
+    });
+    
+    // Also invalidate stats if we have a selected snapshot for timeline view
     if (selectedSnapshot) {
-      console.log('Refreshing data');
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/snapshots/${selectedSnapshot}/agents`] 
-      });
       queryClient.invalidateQueries({ 
         queryKey: [`/api/snapshots/${selectedSnapshot}/stats`] 
       });
     }
+    
+    // Invalidate cities list
+    queryClient.invalidateQueries({ 
+      queryKey: [`/api/cities`] 
+    });
   }, [selectedSnapshot, queryClient]);
   
   // Apply client-side filtering to reduce server load
