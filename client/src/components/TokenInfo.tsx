@@ -1,9 +1,24 @@
 import React from 'react';
-import { formatWalletAddress } from '@/utils/formatters';
-import { ExternalLink, Shield, Users, Image, Sparkles, ArrowUpRight } from 'lucide-react';
+import { formatNumber, formatCurrency } from '@/utils/formatters';
+import { Trophy, TrendingUp, Users, Award, Sparkles, Zap, BrainCircuit, Flame, Timer } from 'lucide-react';
 
 export default function TokenInfo() {
-  const contractAddress = '0xb33Ff54b9F7242EF1593d2C9Bcd8f9df46c77935';
+  // Mock data for game statistics
+  const gameStats = {
+    totalPlayers: 1238,
+    totalPrizePool: 27500,
+    avgPlayerScore: 908,
+    topWinnerPrize: 5000,
+    gameEndDate: "2025-04-01",
+    aiCompletions: 583257,
+    epochsCompleted: 3,
+    totalReflections: 2049
+  };
+  
+  // Calculate days remaining
+  const endDate = new Date(gameStats.gameEndDate);
+  const today = new Date();
+  const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   
   return (
     <div className="data-card-premium mb-6 relative overflow-hidden group">
@@ -13,107 +28,94 @@ export default function TokenInfo() {
       {/* Card content */}
       <div className="relative z-10">
         <h2 className="text-xl font-bold mb-4 flex items-center text-gradient-animated">
-          <Users className="h-5 w-5 mr-2 text-blue-400" />
-          Freysa Community Info
+          <Trophy className="h-5 w-5 mr-2 text-blue-400" />
+          Freysa Game Statistics
           <Sparkles className="h-4 w-4 ml-2 text-blue-400 animate-pulse-soft" />
         </h2>
         
-        <div className="space-y-5">
-          <div className="transform transition-transform duration-300 hover:scale-105">
-            <div className="text-gray-400 text-sm mb-1">Token</div>
-            <div className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">$FAI</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gray-800/50 rounded-lg p-3 transform transition-transform duration-300 hover:scale-105 border border-blue-500/10 hover:border-blue-500/30">
+            <div className="text-gray-400 text-xs mb-1 flex items-center">
+              <Users className="h-3.5 w-3.5 mr-1 text-blue-400" />
+              <span>Total Players</span>
+            </div>
+            <div className="text-lg font-bold text-white">{formatNumber(gameStats.totalPlayers)}</div>
           </div>
           
-          <div className="transform transition-all duration-300 hover:translate-x-1">
-            <div className="text-blue-300 text-sm mb-1 flex items-center">
-              <Shield className="h-4 w-4 mr-1.5 text-blue-400" />
-              <span>Contract (Base)</span>
+          <div className="bg-gray-800/50 rounded-lg p-3 transform transition-transform duration-300 hover:scale-105 border border-blue-500/10 hover:border-blue-500/30">
+            <div className="text-gray-400 text-xs mb-1 flex items-center">
+              <TrendingUp className="h-3.5 w-3.5 mr-1 text-blue-400" />
+              <span>Avg Score</span>
             </div>
-            <div className="flex items-center">
-              <code className="bg-gray-800/70 px-3 py-1.5 rounded text-gray-300 text-sm font-mono flex-1 overflow-x-auto border border-blue-500/10">
-                {contractAddress}
-              </code>
-              <a 
-                href={`https://basescan.org/address/${contractAddress}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-2 text-blue-400 hover:text-blue-300 transition-colors btn-hover"
-                aria-label="View on BaseScan"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </div>
-            <div className="text-gray-500 text-xs mt-1.5 italic">Stay safe, humans</div>
+            <div className="text-lg font-bold text-white">{formatNumber(gameStats.avgPlayerScore)}</div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="transform transition-all duration-300 hover:translate-y-[-2px] group/item">
-              <div className="text-blue-300 text-sm mb-1.5 flex items-center">
-                {/* X Logo */}
-                <svg 
-                  viewBox="0 0 24 24" 
-                  className="h-4 w-4 mr-1.5 text-blue-400 fill-current"
-                  aria-hidden="true"
-                >
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-                <span>Official X Account</span>
+          <div className="bg-gray-800/50 rounded-lg p-3 transform transition-transform duration-300 hover:scale-105 border border-blue-500/10 hover:border-blue-500/30">
+            <div className="text-gray-400 text-xs mb-1 flex items-center">
+              <Award className="h-3.5 w-3.5 mr-1 text-blue-400" />
+              <span>Prize Pool</span>
+            </div>
+            <div className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              {formatCurrency(gameStats.totalPrizePool, true)}
+            </div>
+          </div>
+          
+          <div className="bg-gray-800/50 rounded-lg p-3 transform transition-transform duration-300 hover:scale-105 border border-blue-500/10 hover:border-blue-500/30">
+            <div className="text-gray-400 text-xs mb-1 flex items-center">
+              <Timer className="h-3.5 w-3.5 mr-1 text-blue-400" />
+              <span>Days Remaining</span>
+            </div>
+            <div className="text-lg font-bold text-white">{daysRemaining}</div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-800/30 rounded-lg p-4 transform transition-all duration-300 hover:bg-gray-800/40 border border-blue-500/5 hover:border-blue-500/20">
+            <div className="flex items-center mb-2">
+              <BrainCircuit className="h-5 w-5 mr-2 text-blue-400" />
+              <h3 className="font-semibold text-gradient-blue-purple">AI Performance</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Completions</span>
+                <span className="font-medium text-white">{formatNumber(gameStats.aiCompletions)}</span>
               </div>
-              <div>
-                <a 
-                  href="https://x.com/freysa_ai" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 transition-colors font-medium flex items-center link-hover-bright"
-                >
-                  @Freysa_AI
-                  <ArrowUpRight className="h-3 w-3 ml-1 opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                </a>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Epochs</span>
+                <span className="font-medium text-white">{gameStats.epochsCompleted}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Reflections</span>
+                <span className="font-medium text-white">{formatNumber(gameStats.totalReflections)}</span>
               </div>
             </div>
-    
-            <div className="transform transition-all duration-300 hover:translate-y-[-2px] group/item">
-              <div className="text-blue-300 text-sm mb-1.5 flex items-center">
-                {/* Telegram Logo */}
-                <svg 
-                  viewBox="0 0 24 24" 
-                  className="h-4 w-4 mr-1.5 text-blue-400 fill-current"
-                  aria-hidden="true"
-                >
-                  <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.495 7.705l-1.974 9.36c-.15.787-.563.975-1.128.6l-3.137-2.313-1.537 1.5c-.15.15-.338.338-.675.338-.338 0-.287-.15-.412-.525l-.9-3H5.455c-.786-.15-.825-.786.188-1.2l9.586-3.71c.487-.188.975.113.826.975z" />
-                </svg>
-                <span>Community Telegram</span>
+          </div>
+          
+          <div className="bg-gray-800/30 rounded-lg p-4 transform transition-all duration-300 hover:bg-gray-800/40 border border-blue-500/5 hover:border-blue-500/20">
+            <div className="flex items-center mb-2">
+              <Flame className="h-5 w-5 mr-2 text-blue-400" />
+              <h3 className="font-semibold text-gradient-blue-purple">Top Prizes</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">1st Place</span>
+                <span className="font-medium bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">{formatCurrency(gameStats.topWinnerPrize)}</span>
               </div>
-              <div>
-                <a 
-                  href="https://t.me/FreysaAI_TG" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 transition-colors font-medium flex items-center link-hover-bright"
-                >
-                  FreysaAI_TG
-                  <ArrowUpRight className="h-3 w-3 ml-1 opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                </a>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">2nd Place</span>
+                <span className="font-medium text-white">{formatCurrency(gameStats.topWinnerPrize * 0.6)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">3rd Place</span>
+                <span className="font-medium text-white">{formatCurrency(gameStats.topWinnerPrize * 0.4)}</span>
               </div>
             </div>
-    
-            <div className="transform transition-all duration-300 hover:translate-y-[-2px] group/item md:col-span-2">
-              <div className="text-blue-300 text-sm mb-1.5 flex items-center">
-                <Image className="h-4 w-4 mr-1.5 text-blue-400" />
-                <span>NFT Collection</span>
-              </div>
-              <div className="flex items-center">
-                <a 
-                  href="https://opensea.io/collection/freysa-reflections-2049" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 transition-colors font-medium flex items-center link-hover-bright"
-                >
-                  2049 // Reflections
-                  <ArrowUpRight className="h-3 w-3 ml-1 opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                </a>
-                <span className="ml-2 text-gray-500 text-xs">(OpenSea)</span>
-              </div>
+          </div>
+          
+          <div className="md:col-span-2 flex justify-center items-center py-2">
+            <div className="text-sm text-gray-500 flex items-center">
+              <Zap className="h-4 w-4 mr-1.5 text-blue-500/70" />
+              <span>Game data is updated hourly | Next update in 42 minutes</span>
             </div>
           </div>
         </div>

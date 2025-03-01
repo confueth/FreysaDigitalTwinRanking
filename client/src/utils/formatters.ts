@@ -172,18 +172,18 @@ export function formatWalletAddress(address?: string): string {
  * Format a number as currency with 2 decimal places or as a rounded dollar amount
  */
 export function formatCurrency(value: number | undefined | null, roundToDollar: boolean = false): string {
-  if (value === undefined || value === null) return '0';
+  if (value === undefined || value === null) return '$0';
   
   if (roundToDollar) {
     // Round to nearest dollar with no decimal places
-    return new Intl.NumberFormat('en-US', {
+    return '$' + new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(Math.round(value));
   }
   
   // Regular currency format with 2 decimal places
-  return new Intl.NumberFormat('en-US', {
+  return '$' + new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value);
