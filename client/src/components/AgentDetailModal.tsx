@@ -276,7 +276,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="agent-detail-modal bg-gray-800 border border-gray-700 text-white p-0 w-[calc(100vw-16px)] sm:w-auto max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto rounded-lg">
+      <DialogContent className="bg-gray-800 border border-gray-700 text-white p-0 w-[calc(100vw-16px)] sm:w-auto max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto rounded-lg">
         <DialogTitle className="sr-only">Agent Details for {username}</DialogTitle>
         <DialogDescription className="sr-only">
           Detailed information about this agent including stats and recent activity
@@ -284,15 +284,6 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
         
         <div className="relative">
           <div className="h-32 sm:h-40 bg-gradient-to-r from-purple-900 to-indigo-900" />
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute top-2 right-2 sm:top-4 sm:right-4 text-white hover:text-gray-200" 
-            onClick={onClose}
-          >
-            <X className="h-5 w-5 sm:h-6 sm:w-6" />
-            <span className="sr-only">Close</span>
-          </Button>
           <div className="absolute bottom-0 transform translate-y-1/2 left-4 sm:left-8">
             {isLoading ? (
               <Skeleton className="h-16 w-16 sm:h-24 sm:w-24 rounded-full border-3 sm:border-4 border-gray-800" />

@@ -8,11 +8,6 @@
               0 0 20px rgba(74, 222, 128, 0.3);
 }
 
-/* Hide default close button in custom modals */
-.agent-detail-modal [data-radix-collection-item] {
-  display: none !important;
-}
-
 @layer base {
   * {
     @apply border-border;
