@@ -108,9 +108,11 @@ const AgentPerformanceChart: React.FC<AgentPerformanceChartProps> = ({
     <div className="bg-gray-800 rounded-lg p-4 sm:p-6">
       <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-200">Performance History</h3>
       <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
           <LineChart
             data={chartData}
+            width={500}
+            height={300}
             margin={{ top: 5, right: 20, left: isMobile ? 0 : 20, bottom: 5 }}
           >
             <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
