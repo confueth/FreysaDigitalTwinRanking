@@ -92,8 +92,18 @@ export default function Analytics({}: AnalyticsProps) {
         // Create a link to download the CSV
         const link = document.createElement("a");
         const timestamp = new Date().toISOString().slice(0, 10);
+        
+        // Get snapshot description if available
+        let description = "";
+        if (snapshots) {
+          const snapshotData = snapshots.find((s: Snapshot) => s.id === snapshotId);
+          if (snapshotData?.description) {
+            description = `-${snapshotData.description.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          }
+        }
+        
         link.setAttribute("href", url);
-        link.setAttribute("download", `leaderboard-snapshot-${snapshotId}-${timestamp}.csv`);
+        link.setAttribute("download", `leaderboard-snapshot-${snapshotId}${description}-${timestamp}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
