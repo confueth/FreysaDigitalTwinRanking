@@ -7,6 +7,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { clearApiCache } from "@/hooks/use-api-with-retry";
+import Footer from "@/components/Footer";
 
 // Lazy load components for better performance
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -70,31 +71,34 @@ const PageErrorBoundary = ({ children }: { children: React.ReactNode }) => {
 
 function Router() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <Suspense fallback={<LoadingFallback />}>
-        <Switch>
-          <Route path="/">
-            <PageErrorBoundary>
-              <Home />
-            </PageErrorBoundary>
-          </Route>
-          <Route path="/agent/:username">
-            <PageErrorBoundary>
-              <AgentDetail />
-            </PageErrorBoundary>
-          </Route>
-          <Route path="/analytics">
-            <PageErrorBoundary>
-              <Analytics />
-            </PageErrorBoundary>
-          </Route>
-          <Route>
-            <PageErrorBoundary>
-              <NotFound />
-            </PageErrorBoundary>
-          </Route>
-        </Switch>
-      </Suspense>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      <div className="flex-1">
+        <Suspense fallback={<LoadingFallback />}>
+          <Switch>
+            <Route path="/">
+              <PageErrorBoundary>
+                <Home />
+              </PageErrorBoundary>
+            </Route>
+            <Route path="/agent/:username">
+              <PageErrorBoundary>
+                <AgentDetail />
+              </PageErrorBoundary>
+            </Route>
+            <Route path="/analytics">
+              <PageErrorBoundary>
+                <Analytics />
+              </PageErrorBoundary>
+            </Route>
+            <Route>
+              <PageErrorBoundary>
+                <NotFound />
+              </PageErrorBoundary>
+            </Route>
+          </Switch>
+        </Suspense>
+      </div>
+      <Footer />
     </div>
   );
 }
