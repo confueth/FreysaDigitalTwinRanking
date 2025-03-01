@@ -123,16 +123,27 @@ async function hasSnapshotForToday(storage: IStorage): Promise<boolean> {
  * @param storage Storage implementation
  */
 export function scheduleSnapshots(storage: IStorage): void {
-  // Run a check every hour to see if we have a snapshot for today
-  cron.schedule('0 * * * *', async () => {
-    console.log('Running hourly snapshot check');
+  // Create a snapshot at the end of each day (11:55 PM)
+  cron.schedule('55 23 * * *', async () => {
+    console.log('Running end-of-day snapshot creation');
     const hasSnapshotToday = await hasSnapshotForToday(storage);
     
     if (!hasSnapshotToday) {
-      console.log('No snapshot for today found, creating one now');
-      await createSnapshot(storage, `Daily snapshot - ${new Date().toLocaleDateString()}`);
+      console.log('Creating end-of-day snapshot');
+      await createSnapshot(storage, `End of day snapshot - ${new Date().toLocaleDateString()}`);
     } else {
-      console.log('Snapshot for today already exists, skipping');
+      console.log('Snapshot already exists for today, updating it');
+      // Get the most recent snapshot
+      const snapshots = await storage.getSnapshots();
+      if (snapshots && snapshots.length > 0) {
+        const latestSnapshot = snapshots[0];
+        
+        // Delete the existing snapshot
+        await storage.deleteSnapshot(latestSnapshot.id);
+        
+        // Create a new one for today with updated data
+        await createSnapshot(storage, `End of day snapshot (updated) - ${new Date().toLocaleDateString()}`);
+      }
     }
   });
   
