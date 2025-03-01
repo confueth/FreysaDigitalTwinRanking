@@ -141,7 +141,7 @@ export default function Sidebar({
       {/* Desktop search and filters */}
       <div className="hidden md:block">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold mb-2">Search</h2>
+          <h2 className="text-lg font-semibold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Search</h2>
           <div className="relative mb-2">
             <Input
               id="searchInput"
@@ -149,13 +149,13 @@ export default function Sidebar({
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              className="w-full bg-gray-800 border border-gray-700 text-white"
+              className="w-full bg-gray-800 border border-gray-700 text-white focus:border-blue-500/50 transition-colors duration-200"
             />
             <Button 
               id="searchButton"
               variant="ghost"
               size="icon"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-300 transition-colors duration-200 btn-hover"
               onClick={handleSearch}
             >
               <Search className="h-4 w-4" />
@@ -166,11 +166,11 @@ export default function Sidebar({
         {/* Desktop filter header with toggle */}
         <div className="mb-2 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold">Filters</h2>
+            <h2 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Filters</h2>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-gray-400 hover:text-white"
+              className="h-8 w-8 text-blue-400 hover:text-blue-300 transition-colors duration-200 btn-hover"
               onClick={toggleDesktopFilters}
             >
               {desktopFiltersExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -181,7 +181,7 @@ export default function Sidebar({
           {!desktopFiltersExpanded && (
             <div className="flex items-center gap-1 text-xs">
               {(filters.minScore || filters.maxScore || filters.city || filters.sortBy !== 'score') && (
-                <Badge variant="secondary" className="px-2 py-0.5 text-xs">
+                <Badge variant="secondary" className="px-2 py-0.5 text-xs bg-gradient-to-r from-blue-600 to-purple-600 text-white border-none shadow-sm animate-pulse-soft">
                   {[
                     filters.city ? 1 : 0,
                     filters.minScore ? 1 : 0,
@@ -198,22 +198,22 @@ export default function Sidebar({
         {!desktopFiltersExpanded && (
           <div className="mb-3 flex flex-wrap gap-1 text-xs">
             {filters.city && (
-              <Badge variant="outline" className="bg-gray-800 text-gray-300">
+              <Badge variant="outline" className="bg-gray-800/80 text-blue-300 border-blue-500/30 hover:bg-gray-700 transition-colors duration-200">
                 City: {filters.city}
               </Badge>
             )}
             {filters.minScore && (
-              <Badge variant="outline" className="bg-gray-800 text-gray-300">
+              <Badge variant="outline" className="bg-gray-800/80 text-blue-300 border-blue-500/30 hover:bg-gray-700 transition-colors duration-200">
                 Min: {filters.minScore}
               </Badge>
             )}
             {filters.maxScore && (
-              <Badge variant="outline" className="bg-gray-800 text-gray-300">
+              <Badge variant="outline" className="bg-gray-800/80 text-blue-300 border-blue-500/30 hover:bg-gray-700 transition-colors duration-200">
                 Max: {filters.maxScore}
               </Badge>
             )}
             {filters.sortBy && filters.sortBy !== 'score' && (
-              <Badge variant="outline" className="bg-gray-800 text-gray-300">
+              <Badge variant="outline" className="bg-gray-800/80 text-blue-300 border-blue-500/30 hover:bg-gray-700 transition-colors duration-200">
                 Sort: {filters.sortBy.replace('_', ' ')}
               </Badge>
             )}
@@ -224,38 +224,43 @@ export default function Sidebar({
       {/* Filter controls - conditionally visible based on device and toggle state */}
       <div className={`${(isMobile && !filtersVisible) || (!isMobile && !desktopFiltersExpanded) ? 'hidden' : 'block'} mb-4`}>
         {/* Only show this heading on mobile */}
-        {isMobile && <h2 className="text-lg font-semibold mb-2">Filters</h2>}
+        {isMobile && (
+          <h2 className="text-lg font-semibold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center">
+            <SlidersHorizontal className="h-4 w-4 mr-1.5 text-blue-400" />
+            Filters
+          </h2>
+        )}
         
         <div className="mb-3">
-          <Label className="block text-sm font-medium mb-1">Score Range</Label>
+          <Label className="block text-sm font-medium mb-1 text-blue-300">Score Range</Label>
           <div className="flex space-x-2">
             <Input
               type="number"
               placeholder="Min"
               value={minScore}
               onChange={(e) => setMinScore(e.target.value)}
-              className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm"
+              className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm focus:border-blue-500/50 transition-colors duration-200"
             />
             <Input
               type="number"
               placeholder="Max"
               value={maxScore}
               onChange={(e) => setMaxScore(e.target.value)}
-              className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm"
+              className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm focus:border-blue-500/50 transition-colors duration-200"
             />
           </div>
         </div>
         
         <div className="mb-3">
-          <Label className="block text-sm font-medium mb-1">City</Label>
+          <Label className="block text-sm font-medium mb-1 text-blue-300">City</Label>
           <Select value={city} onValueChange={setCity}>
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm">
+            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200">
               <SelectValue placeholder="All Cities" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700 text-white">
-              <SelectItem value="all">All Cities</SelectItem>
+            <SelectContent className="bg-gray-900 border-gray-700">
+              <SelectItem value="all" className="focus:bg-blue-900/20 focus:text-blue-400">All Cities</SelectItem>
               {cities.map((city) => (
-                <SelectItem key={city} value={city}>
+                <SelectItem key={city} value={city} className="focus:bg-blue-900/20 focus:text-blue-400">
                   {city}
                 </SelectItem>
               ))}
@@ -264,34 +269,34 @@ export default function Sidebar({
         </div>
         
         <div className="mb-3">
-          <Label className="block text-sm font-medium mb-1">Sort By</Label>
+          <Label className="block text-sm font-medium mb-1 text-blue-300">Sort By</Label>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm">
+            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700 text-white">
-              <SelectItem value="score">Score (High to Low)</SelectItem>
-              <SelectItem value="score_asc">Score (Low to High)</SelectItem>
-              <SelectItem value="followers">Followers (High to Low)</SelectItem>
-              <SelectItem value="likes">Likes (High to Low)</SelectItem>
-              <SelectItem value="retweets">Retweets (High to Low)</SelectItem>
+            <SelectContent className="bg-gray-900 border-gray-700">
+              <SelectItem value="score" className="focus:bg-blue-900/20 focus:text-blue-400">Score (High to Low)</SelectItem>
+              <SelectItem value="score_asc" className="focus:bg-blue-900/20 focus:text-blue-400">Score (Low to High)</SelectItem>
+              <SelectItem value="followers" className="focus:bg-blue-900/20 focus:text-blue-400">Followers (High to Low)</SelectItem>
+              <SelectItem value="likes" className="focus:bg-blue-900/20 focus:text-blue-400">Likes (High to Low)</SelectItem>
+              <SelectItem value="retweets" className="focus:bg-blue-900/20 focus:text-blue-400">Retweets (High to Low)</SelectItem>
             </SelectContent>
           </Select>
         </div>
         
         <div className="flex gap-2">
           <Button 
-            className="flex-1 bg-secondary hover:bg-indigo-700 text-sm py-1 h-8"
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all duration-300 text-sm py-1 h-8 shadow-md"
             onClick={handleApplyFilters}
           >
             Apply
           </Button>
           
           <Button 
-            className="flex-1 bg-red-800 hover:bg-red-700 text-white text-sm py-1 h-8"
+            className="flex-1 bg-gray-800 hover:bg-red-800/70 text-white text-sm py-1 h-8 transition-colors duration-300 border border-red-600/30"
             onClick={handleResetFilters}
-            variant="destructive"
           >
+            <FilterX className="h-3.5 w-3.5 mr-1 text-red-400" />
             Reset
           </Button>
         </div>
