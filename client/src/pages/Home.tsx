@@ -8,6 +8,7 @@ import LeaderboardCards from '@/components/LeaderboardCards';
 import LeaderboardTimeline from '@/components/LeaderboardTimeline';
 import StatCards from '@/components/StatCards';
 import CityStatistics from '@/components/CityStatistics';
+import TokenInfo from '@/components/TokenInfo';
 import AgentDetailModal from '@/components/AgentDetailModal';
 import { Agent, AgentFilters, Snapshot, SnapshotStats } from '@/types/agent';
 import { formatDate } from '@/utils/formatters';
@@ -302,6 +303,11 @@ export default function Home() {
                   agents={agents}
                   isLoading={agentsLoading}
                 />
+                
+                {/* Token Information */}
+                <div className="mt-6">
+                  <TokenInfo />
+                </div>
               </div>
             )}
           </div>
@@ -374,6 +380,11 @@ export default function Home() {
                   agents={agents}
                   isLoading={agentsLoading}
                 />
+                
+                {/* Token Information for Mobile */}
+                <div className="mt-4">
+                  <TokenInfo />
+                </div>
               </div>
             )}
           </div>
