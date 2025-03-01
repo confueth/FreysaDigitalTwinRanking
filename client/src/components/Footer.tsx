@@ -22,18 +22,17 @@ export default function Footer() {
             href="https://freysa.ai" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="mx-1.5 font-bold text-gradient-animated hover:from-blue-300 hover:to-purple-300 group relative transition-transform duration-300"
+            className="mx-1.5 font-bold text-gradient-animated hover:from-blue-300 hover:to-purple-300 transition-transform duration-300"
           >
-            <span className="relative z-10">Freysa.ai</span>
-            <Sparkles className="h-3 w-3 inline ml-0.5 text-blue-400 group-hover:animate-pulse-soft" />
-            <div className="absolute inset-0 -m-1 animate-shimmer-slow rounded opacity-30 pointer-events-none"></div>
+            Freysa.ai
+            <Sparkles className="h-3 w-3 inline ml-0.5 text-blue-400" />
           </a>
           <span>community</span>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-6 w-full max-w-2xl">
           <div className="flex flex-col items-center md:items-start">
-            <h4 className="text-sm font-semibold mb-2 text-gradient-blue-purple">Community</h4>
+            <h4 className="text-sm font-semibold mb-2 text-gradient-animated">Community</h4>
             <div className="flex flex-col gap-1.5 text-xs">
               <a 
                 href="https://twitter.com/freysa_ai" 
@@ -70,7 +69,7 @@ export default function Footer() {
           </div>
           
           <div className="flex flex-col items-center">
-            <h4 className="text-sm font-semibold mb-2 text-gradient-blue-purple">Token</h4>
+            <h4 className="text-sm font-semibold mb-2 text-gradient-animated">Token</h4>
             <div className="flex flex-col gap-1.5 text-xs">
               <div className="flex items-center">
                 <TerminalSquare className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
@@ -89,7 +88,7 @@ export default function Footer() {
           </div>
           
           <div className="flex flex-col items-center md:items-end">
-            <h4 className="text-sm font-semibold mb-2 text-gradient-blue-purple">Resources</h4>
+            <h4 className="text-sm font-semibold mb-2 text-gradient-animated">Resources</h4>
             <div className="flex flex-col gap-1.5 text-xs">
               <a 
                 href="https://github.com/confueth/FreysaDigitalTwinRanking" 
