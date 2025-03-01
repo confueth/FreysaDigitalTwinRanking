@@ -353,23 +353,23 @@ export default function Home() {
                 onPageChange={handlePageChange}
                 totalAgents={totalAgentsCount}
                 pageSize={filters.limit || 25}
-                isLoading={agentsLoading}
+                isLoading={isLoading}
               />
             )}
             
             {selectedView === 'timeline' && (
               <LeaderboardTimeline 
                 stats={stats} 
-                isLoading={!stats || agentsLoading}
+                isLoading={!stats || isLoading}
               />
             )}
             
             {/* City Statistics */}
-            {agents && agents.length > 0 && (
+            {displayDataSource.length > 0 && (
               <div className="mt-6">
                 <CityStatistics 
-                  agents={agents}
-                  isLoading={agentsLoading}
+                  agents={displayDataSource}
+                  isLoading={isLoading}
                 />
                 
               </div>
