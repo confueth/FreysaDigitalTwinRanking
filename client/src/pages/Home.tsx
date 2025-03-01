@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import LeaderboardTable from '@/components/LeaderboardTable';
@@ -17,6 +18,7 @@ import { applyAllFilters } from '@/utils/FilterUtils';
 type ViewMode = 'table' | 'cards' | 'timeline';
 
 export default function Home() {
+  const { toast } = useToast();
   const [selectedView, setSelectedView] = useState<ViewMode>('table');
   const [filters, setFilters] = useState<AgentFilters>({
     page: 1,
@@ -50,11 +52,12 @@ export default function Home() {
     description: "Loading snapshot data..."
   };
 
-  // Query agents with filters - use live data by default for regular views
+  // Query agents with filters - use live data by default for regular views with fallback to last snapshot
   const { 
     data: agents, 
     isLoading: agentsLoading,
-    refetch: refetchAgents
+    refetch: refetchAgents,
+    error: liveDataError
   } = useQuery<Agent[]>({
     queryKey: [
       `/api/agents`, 
@@ -79,29 +82,52 @@ export default function Home() {
         }
       }
       
-      console.log('Fetching fresh leaderboard data');
-      const response = await fetch(`${baseUrl}?limit=2000`, {
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch agents');
-      }
-      
-      const data = await response.json();
-      
-      // Cache the results
       try {
-        sessionStorage.setItem(cacheKey, JSON.stringify(data));
-        sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
-      } catch (e) {
-        console.warn('Failed to cache leaderboard data', e);
+        console.log('Fetching fresh leaderboard data');
+        const response = await fetch(`${baseUrl}?limit=2000`, {
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch live agents data');
+        }
+        
+        const data = await response.json();
+        
+        // Cache the results
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(data));
+          sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+        } catch (e) {
+          console.warn('Failed to cache leaderboard data', e);
+        }
+        
+        return data as Agent[];
+      } catch (error) {
+        console.error('Error fetching live data, will attempt to use snapshot data', error);
+        // We'll try fallback to the latest snapshot data
+        throw error;
       }
-      
-      return data as Agent[];
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - more frequent updates for live data
     gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1, // Only retry once to quickly fall back to snapshots if live data fails
+  });
+  
+  // Query agents from latest snapshot (used as fallback when live data fails)
+  const { 
+    data: snapshotAgents,
+    isLoading: snapshotAgentsLoading,
+  } = useQuery<Agent[]>({
+    queryKey: [
+      `/api/snapshots/${selectedSnapshot}/agents`, 
+      { 
+        limit: 2000
+      }
+    ],
+    enabled: !!selectedSnapshot && !!liveDataError, // Only run this query if live data fails
+    staleTime: 10 * 60 * 1000, // 10 minutes - snapshots change less frequently
+    gcTime: 20 * 60 * 1000, // 20 minutes
   });
 
   // Query stats for the selected snapshot - optimized with longer cache time
@@ -188,15 +214,40 @@ export default function Home() {
     });
   }, [selectedSnapshot, queryClient]);
   
+  // Show a toast notification when falling back to snapshot data
+  useEffect(() => {
+    if (liveDataError && snapshotAgents && snapshotAgents.length > 0) {
+      toast({
+        title: "Using snapshot data",
+        description: "Live data is currently unavailable. Showing latest snapshot data instead.",
+        variant: "default"
+      });
+    }
+  }, [liveDataError, snapshotAgents, toast]);
+  
+  // Determine which data source to use - live data or snapshot fallback
+  const displayDataSource = useMemo(() => {
+    // Use live data if available, otherwise use snapshot data as fallback
+    if (agents && agents.length > 0) {
+      return agents;
+    } else if (liveDataError && snapshotAgents && snapshotAgents.length > 0) {
+      return snapshotAgents;
+    }
+    return [];
+  }, [agents, liveDataError, snapshotAgents]);
+  
   // Apply client-side filtering to reduce server load
   const filteredResults = useMemo(() => {
-    if (!agents || !agents.length) return { filteredAgents: [], totalCount: 0 };
-    return applyAllFilters(agents, filters);
-  }, [agents, filters]);
+    if (!displayDataSource.length) return { filteredAgents: [], totalCount: 0 };
+    return applyAllFilters(displayDataSource, filters);
+  }, [displayDataSource, filters]);
   
   // Display data - this is now client-side filtered
   const displayAgents = filteredResults.filteredAgents || [];
   const totalAgentsCount = filteredResults.totalCount || 0;
+  
+  // Determine if we're in loading state
+  const isLoading = agentsLoading || (liveDataError && snapshotAgentsLoading);
   
   // Poll for new data infrequently to avoid excessive API calls
   useEffect(() => {
@@ -290,7 +341,7 @@ export default function Home() {
                 onPageChange={handlePageChange}
                 totalAgents={totalAgentsCount}
                 pageSize={filters.limit || 25}
-                isLoading={agentsLoading}
+                isLoading={isLoading}
               />
             )}
             
