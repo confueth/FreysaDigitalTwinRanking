@@ -41,6 +41,80 @@ export default function Analytics({}: AnalyticsProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
+  // CSV Generation function
+  const generateCsvForSnapshot = (snapshotId: number) => {
+    // Fetch the agents for this snapshot
+    fetch(`/api/snapshots/${snapshotId}/agents`)
+      .then(response => response.json())
+      .then(agents => {
+        if (!agents || agents.length === 0) {
+          toast({
+            title: "Error",
+            description: "No agents found for this snapshot",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Create CSV headers
+        const headers = [
+          "Username", 
+          "Score", 
+          "Rank", 
+          "City", 
+          "Likes", 
+          "Followers", 
+          "Retweets",
+          "Previous Score",
+          "Previous Rank"
+        ].join(",");
+        
+        // Convert agent data to CSV rows
+        const rows = agents.map((agent: Agent) => [
+          agent.mastodonUsername,
+          agent.score,
+          agent.rank,
+          agent.city || "N/A",
+          agent.likesCount || 0,
+          agent.followersCount || 0,
+          agent.retweetsCount || 0,
+          agent.prevScore || "N/A",
+          agent.prevRank || "N/A"
+        ].join(","));
+        
+        // Combine headers and rows
+        const csvContent = [headers, ...rows].join("\n");
+        
+        // Create a blob with the CSV content
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create a link to download the CSV
+        const link = document.createElement("a");
+        const timestamp = new Date().toISOString().slice(0, 10);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `leaderboard-snapshot-${snapshotId}-${timestamp}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Success",
+          description: `Snapshot #${snapshotId} downloaded successfully`,
+          variant: "default"
+        });
+      })
+      .catch(error => {
+        console.error("Error generating CSV:", error);
+        toast({
+          title: "Error",
+          description: "Failed to download snapshot data",
+          variant: "destructive"
+        });
+      });
+  };
+  
   // Fetch snapshots for historical trends
   const { 
     data: snapshots, 
@@ -699,6 +773,7 @@ export default function Analytics({}: AnalyticsProps) {
                           <th className="p-2 text-left">ID</th>
                           <th className="p-2 text-left">Date</th>
                           <th className="p-2 text-left">Description</th>
+                          <th className="p-2 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -707,6 +782,17 @@ export default function Analytics({}: AnalyticsProps) {
                             <td className="p-2">{snapshot.id}</td>
                             <td className="p-2">{formatDate(snapshot.timestamp)}</td>
                             <td className="p-2">{snapshot.description}</td>
+                            <td className="p-2 text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => generateCsvForSnapshot(snapshot.id)}
+                                className="text-gray-400 hover:text-white"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                <span className="sr-only sm:not-sr-only text-xs">CSV</span>
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
