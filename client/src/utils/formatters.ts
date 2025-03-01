@@ -146,3 +146,15 @@ export function formatWalletAddress(address?: string): string {
   
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
+
+/**
+ * Format a number as currency with 2 decimal places
+ */
+export function formatCurrency(value: number | undefined | null): string {
+  if (value === undefined || value === null) return '0.00';
+  
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
