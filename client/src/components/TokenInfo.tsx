@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatWalletAddress } from '@/utils/formatters';
-import { ExternalLink, DollarSign, Shield } from 'lucide-react';
+import { ExternalLink, DollarSign, Shield, Users } from 'lucide-react';
 
 export default function TokenInfo() {
   const contractAddress = '0xb33Ff54b9F7242EF1593d2C9Bcd8f9df46c77935';
@@ -8,8 +8,8 @@ export default function TokenInfo() {
   return (
     <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-5 border border-gray-700 mb-6">
       <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-        <DollarSign className="h-5 w-5 mr-2 text-green-400" />
-        Token Information
+        <Users className="h-5 w-5 mr-2 text-green-400" />
+        Freysa Community Info
       </h2>
       
       <div className="space-y-4">
@@ -60,6 +60,30 @@ export default function TokenInfo() {
               className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
             >
               @Freysa_AI
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div className="text-gray-400 text-sm mb-1 flex items-center">
+            {/* Telegram Logo */}
+            <svg 
+              viewBox="0 0 24 24" 
+              className="h-4 w-4 mr-1 text-blue-400 fill-current"
+              aria-hidden="true"
+            >
+              <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.495 7.705l-1.974 9.36c-.15.787-.563.975-1.128.6l-3.137-2.313-1.537 1.5c-.15.15-.338.338-.675.338-.338 0-.287-.15-.412-.525l-.9-3H5.455c-.786-.15-.825-.786.188-1.2l9.586-3.71c.487-.188.975.113.826.975z" />
+            </svg>
+            <span>Unofficial Telegram</span>
+          </div>
+          <div>
+            <a 
+              href="https://t.me/FreysaAI_TG" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
+            >
+              FreysaAI_TG
             </a>
           </div>
         </div>
