@@ -246,8 +246,8 @@ export default function Home() {
   const displayAgents = filteredResults.filteredAgents || [];
   const totalAgentsCount = filteredResults.totalCount || 0;
   
-  // Determine if we're in loading state
-  const isLoading = agentsLoading || (liveDataError && snapshotAgentsLoading);
+  // Determine if we're in loading state - ensure boolean type
+  const isLoading: boolean = agentsLoading || (liveDataError && snapshotAgentsLoading) ? true : false;
   
   // Poll for new data infrequently to avoid excessive API calls
   useEffect(() => {
@@ -413,7 +413,7 @@ export default function Home() {
                   onPageChange={handlePageChange}
                   totalAgents={totalAgentsCount}
                   pageSize={filters.limit || 25}
-                  isLoading={agentsLoading}
+                  isLoading={isLoading}
                 />
               </div>
             )}
@@ -426,23 +426,23 @@ export default function Home() {
                 onPageChange={handlePageChange}
                 totalAgents={totalAgentsCount}
                 pageSize={filters.limit || 25}
-                isLoading={agentsLoading}
+                isLoading={isLoading}
               />
             )}
             
             {selectedView === 'timeline' && (
               <LeaderboardTimeline 
                 stats={stats} 
-                isLoading={!stats || agentsLoading}
+                isLoading={!stats || isLoading}
               />
             )}
             
             {/* City Statistics for Mobile */}
-            {agents && agents.length > 0 && (
+            {displayDataSource.length > 0 && (
               <div className="mt-4">
                 <CityStatistics 
-                  agents={agents}
-                  isLoading={agentsLoading}
+                  agents={displayDataSource}
+                  isLoading={isLoading}
                 />
                 
               </div>
