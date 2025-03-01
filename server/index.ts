@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { importAllCSVFiles } from "./csv-import";
+// CSV import removed as it's no longer needed
 import { storage } from "./storage";
 import { scheduleSnapshots } from "./snapshot-service";
 
@@ -45,20 +45,7 @@ app.use((req, res, next) => {
   // Set up daily snapshots
   scheduleSnapshots(storage);
   
-  // Import CSV data on startup
-  setTimeout(async () => {
-    try {
-      // Check if we already have snapshots from the CSV data
-      const snapshots = await storage.getSnapshots();
-      if (snapshots.length <= 1) { // Only the initial snapshot exists
-        console.log("Importing CSV data on application startup...");
-        await importAllCSVFiles(storage);
-        console.log("CSV data import completed successfully");
-      }
-    } catch (error) {
-      console.error("Error importing CSV data on startup:", error);
-    }
-  }, 5000); // Wait 5 seconds before importing
+  // CSV data import has been removed as it's no longer needed
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
