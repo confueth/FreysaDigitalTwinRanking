@@ -202,10 +202,12 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
         </TabsList>
         
         <TabsContent value="bar" className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
             <BarChart
               data={cityData}
               margin={{ top: 5, right: 20, left: isMobile ? 0 : 20, bottom: 5 }}
+              width={500}
+              height={300}
             >
               <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
               <XAxis 
@@ -230,8 +232,8 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
         </TabsContent>
         
         <TabsContent value="pie" className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+          <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
+            <PieChart width={500} height={300}>
               <Pie
                 data={cityData}
                 cx="50%"
