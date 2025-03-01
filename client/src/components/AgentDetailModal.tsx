@@ -153,8 +153,6 @@ const agentCache = new LRUCache<string, ExternalAgentData>(20);
 
 export default function AgentDetailModal({ username, isOpen, onClose }: AgentDetailModalProps) {
   const { toast } = useToast();
-  const [useExternalApi, setUseExternalApi] = useState(true);
-
   // No need to manually clean up cache as our LRUCache handles this automatically
   useEffect(() => {
     // Do any component initialization work here if needed
@@ -163,58 +161,54 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
     };
   }, []);
 
-  // Query agent details from internal API first - optimized with longer cache times
-  const { data: internalAgent, isLoading: isInternalLoading, error: internalError } = useQuery({
+  // Query agent details from our API for the latest live data
+  const { data: agent, isLoading, error } = useQuery({
     queryKey: [`/api/agents/${username}`],
-    enabled: isOpen && !useExternalApi,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
-  });
-  
-  // Use external API to get fresh data directly from Digital Clone API - with caching
-  const { data: externalAgent, isLoading: isExternalLoading, error: externalError } = useQuery({
-    queryKey: [`direct-agent-${username}`],
     queryFn: async () => {
       try {
-        // Check if we have a cached version first
-        if (agentCache.has(username)) {
+        // Check if we have a cached version first with a shorter validity (5 minutes)
+        // for live agent data to ensure we get fresh information
+        const cacheKey = `agent_${username}`;
+        if (agentCache.has(cacheKey)) {
           console.log(`Using cached data for agent ${username}`);
-          const cachedData = agentCache.get(username);
-          return cachedData || null;
+          const cachedData = agentCache.get(cacheKey);
+          
+          // Check if cache is fresh enough (5 minutes)
+          const cacheTime = (cachedData as any)?.cacheTime || 0;
+          if (Date.now() - cacheTime < 5 * 60 * 1000) {
+            return cachedData;
+          }
         }
         
         console.log(`Fetching fresh data for agent ${username}`);
-        const response = await axios.get(
-          `https://digital-clone-production.onrender.com/digital-clones/clones/${username}`
-        );
+        const response = await fetch(`/api/agents/${username}`, {
+          credentials: 'include',
+        });
         
-        // Cache the response
-        const data = response.data as ExternalAgentData;
-        
-        // Only keep the most recent 10 tweets to reduce memory usage
-        if (data.tweets && data.tweets.length > 10) {
-          data.tweets = data.tweets.slice(0, 10);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch agent details: ${response.statusText}`);
         }
         
-        // Store in cache
-        agentCache.set(username, data);
+        const data = await response.json();
+        
+        // Store in cache with timestamp
+        agentCache.set(cacheKey, {
+          ...data,
+          cacheTime: Date.now()
+        });
         
         return data;
       } catch (error) {
-        console.error("Failed to fetch from external API, falling back to internal data", error);
-        setUseExternalApi(false);
-        return null;
+        console.error("Failed to fetch agent data", error);
+        throw error;
       }
     },
-    enabled: isOpen && useExternalApi,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    enabled: isOpen,
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
   
-  // Get the appropriate agent data based on which API we're using
-  const agent = useExternalApi ? externalAgent as ExternalAgentData | null : internalAgent as ExternalAgentData | null;
-  const isLoading = useExternalApi ? isExternalLoading : isInternalLoading;
-  const error = useExternalApi ? externalError : internalError;
+  // We no longer need to switch between APIs - only use our direct API which uses live data
 
   // Format wallet balance to 3 decimal places if available - memoized to avoid recalculation
   const formattedWalletBalance = useMemo(() => 
@@ -252,23 +246,13 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
   // Handle error
   useEffect(() => {
     if (error) {
-      if (useExternalApi) {
-        // If external API fails, try internal API
-        setUseExternalApi(false);
-        toast({
-          title: 'Switching to cached data',
-          description: 'Could not fetch latest data, using cached data instead.',
-          variant: 'default',
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to load agent details. Please try again.',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Error',
+        description: 'Failed to load agent details. Please try again.',
+        variant: 'destructive',
+      });
     }
-  }, [error, toast, useExternalApi]);
+  }, [error, toast]);
 
   if (!isOpen) {
     return null;
