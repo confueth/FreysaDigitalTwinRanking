@@ -41,7 +41,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">Prize Pool</p>
-                <h3 className="text-xl font-bold">${formatNumber(gameStatus?.prizePool || 0)}</h3>
+                <h3 className="text-xl font-bold">${formatNumber(gameStatus?.prizePool || 0, true)}</h3>
               </div>
               <div className="rounded-full bg-yellow-500 bg-opacity-20 p-1.5">
                 <Award className="h-4 w-4 text-yellow-500" />
@@ -56,7 +56,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">ETH/USD Price</p>
-                <h3 className="text-xl font-bold">${formatNumber(gameStatus?.ethUsdPrice || 0)}</h3>
+                <h3 className="text-xl font-bold">${formatNumber(gameStatus?.ethUsdPrice || 0, true)}</h3>
               </div>
               <div className="rounded-full bg-green-500 bg-opacity-20 p-1.5">
                 <TrendingUp className="h-4 w-4 text-green-500" />
@@ -78,7 +78,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
               </div>
             </div>
             <div className="mt-1 flex items-center text-xs text-gray-400">
-              <span>≈ ${formatCurrency(gameStatus ? gameStatus.entryPriceInEth * gameStatus.ethUsdPrice : 0)}</span>
+              <span>≈ ${formatCurrency(gameStatus ? gameStatus.entryPriceInEth * gameStatus.ethUsdPrice : 0, true)}</span>
             </div>
           </div>
 
@@ -86,7 +86,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">Game Ends</p>
-                <h3 className="text-lg font-bold truncate" id="gameEnds">{gameStatus?.endsAt ? formatDate(gameStatus.endsAt) : 'TBD'}</h3>
+                <h3 className="text-lg font-bold truncate" id="gameEnds">{gameStatus?.endsAt ? formatDate(gameStatus.endsAt, 'game-ends') : 'TBD'}</h3>
               </div>
               <div className="rounded-full bg-red-500 bg-opacity-20 p-1.5">
                 <Calendar className="h-4 w-4 text-red-500" />
@@ -137,7 +137,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">Snapshot Time</p>
-                <h3 className="text-xl font-bold" id="snapshotTime">{snapshotTime}</h3>
+                <h3 className="text-base font-bold" id="snapshotTime">{snapshotTime}</h3>
               </div>
               <div className="rounded-full bg-green-500 bg-opacity-20 p-1.5">
                 <Clock className="h-4 w-4 text-green-500" />
