@@ -645,6 +645,22 @@ export class DatabaseStorage implements IStorage {
       return;
     }
     
+    // Helper function to safely parse dates
+    const safeDate = (dateString: string | undefined) => {
+      if (!dateString) return null;
+      try {
+        // Validate if the string can be parsed to a valid date
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          return null;
+        }
+        return date;
+      } catch (e) {
+        console.error(`Invalid date value: ${dateString}`);
+        return null;
+      }
+    };
+    
     // Update agent with additional details
     await db
       .update(agents)
@@ -653,21 +669,30 @@ export class DatabaseStorage implements IStorage {
         walletBalance: details.walletBalance || null,
         mastodonBio: details.mastodonBio || null,
         repliesCount: details.repliesCount || null,
-        bioUpdatedAt: details.bioUpdatedAt ? new Date(details.bioUpdatedAt) : null,
-        ubiClaimedAt: details.ubiClaimedAt ? new Date(details.ubiClaimedAt) : null,
+        bioUpdatedAt: safeDate(details.bioUpdatedAt),
+        ubiClaimedAt: safeDate(details.ubiClaimedAt),
       })
       .where(eq(agents.id, agent.id));
     
     // Import tweets if available
     if (details.tweets) {
       for (const tweetData of details.tweets) {
-        await this.createTweet({
-          agentId: agent.id,
-          content: tweetData.content,
-          timestamp: new Date(tweetData.timestamp),
-          likesCount: tweetData.likesCount || 0,
-          retweetsCount: tweetData.retweetsCount || 0,
-        });
+        try {
+          // Validate tweet timestamp
+          const timestamp = safeDate(tweetData.timestamp);
+          if (timestamp) {
+            await this.createTweet({
+              agentId: agent.id,
+              content: tweetData.content,
+              timestamp,
+              likesCount: tweetData.likesCount || 0,
+              retweetsCount: tweetData.retweetsCount || 0,
+            });
+          }
+        } catch (e) {
+          console.error(`Error importing tweet: ${e.message}`);
+          // Continue with other tweets
+        }
       }
     }
   }
