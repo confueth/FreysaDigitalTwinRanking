@@ -336,9 +336,11 @@ export default function Analytics({}: AnalyticsProps) {
                   </div>
                 ) : (
                   <div className="h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
                       <LineChart
                         data={chartData}
+                        width={500}
+                        height={300}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -526,13 +528,15 @@ export default function Analytics({}: AnalyticsProps) {
                   </div>
                 ) : snapshots && snapshots.length > 1 ? (
                   <div className="h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
                       <LineChart
                         data={snapshots.map((snapshot: Snapshot) => ({
                           timestamp: formatDate(snapshot.timestamp),
                           date: new Date(snapshot.timestamp),
                           globalValue: Math.floor(Math.random() * 5000) + 1000
                         }))}
+                        width={500}
+                        height={300}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
