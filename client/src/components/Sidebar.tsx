@@ -3,10 +3,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Search, FilterX, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, FilterX, Filter, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import { AgentFilters } from '@/types/agent';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Badge } from '@/components/ui/badge';
 
 interface SidebarProps {
   filters: AgentFilters;
@@ -27,6 +28,7 @@ export default function Sidebar({
   const [city, setCity] = useState<string>(filters.city || 'all');
   const [sortBy, setSortBy] = useState<string>(filters.sortBy || 'score');
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const [desktopFiltersExpanded, setDesktopFiltersExpanded] = useState(true);
   
   const isMobile = useIsMobile();
 
@@ -84,6 +86,11 @@ export default function Sidebar({
   const toggleFilters = () => {
     setFiltersVisible(!filtersVisible);
   };
+  
+  // Toggle filters expansion on desktop
+  const toggleDesktopFilters = () => {
+    setDesktopFiltersExpanded(!desktopFiltersExpanded);
+  };
 
   return (
     <aside className={`w-full md:w-64 bg-gray-900 border-b md:border-b-0 md:border-r border-gray-800 p-4 md:h-[calc(100vh-64px)] md:sticky md:top-16 md:overflow-y-auto`}>
@@ -131,11 +138,11 @@ export default function Sidebar({
         )}
       </div>
       
-      {/* Desktop search and filters - always visible */}
+      {/* Desktop search and filters */}
       <div className="hidden md:block">
-        <div className="mb-6">
+        <div className="mb-4">
           <h2 className="text-lg font-semibold mb-2">Search</h2>
-          <div className="relative mb-4">
+          <div className="relative mb-2">
             <Input
               id="searchInput"
               placeholder="Username or city..."
@@ -151,17 +158,75 @@ export default function Sidebar({
               className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
               onClick={handleSearch}
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-4 w-4" />
             </Button>
           </div>
         </div>
+        
+        {/* Desktop filter header with toggle */}
+        <div className="mb-2 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Filters</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-gray-400 hover:text-white"
+              onClick={toggleDesktopFilters}
+            >
+              {desktopFiltersExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+          
+          {/* Show active filter count when collapsed */}
+          {!desktopFiltersExpanded && (
+            <div className="flex items-center gap-1 text-xs">
+              {(filters.minScore || filters.maxScore || filters.city || filters.sortBy !== 'score') && (
+                <Badge variant="secondary" className="px-2 py-0.5 text-xs">
+                  {[
+                    filters.city ? 1 : 0,
+                    filters.minScore ? 1 : 0,
+                    filters.maxScore ? 1 : 0,
+                    filters.sortBy !== 'score' ? 1 : 0
+                  ].reduce((a, b) => a + b, 0)} active
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Active filter pills when collapsed */}
+        {!desktopFiltersExpanded && (
+          <div className="mb-3 flex flex-wrap gap-1 text-xs">
+            {filters.city && (
+              <Badge variant="outline" className="bg-gray-800 text-gray-300">
+                City: {filters.city}
+              </Badge>
+            )}
+            {filters.minScore && (
+              <Badge variant="outline" className="bg-gray-800 text-gray-300">
+                Min: {filters.minScore}
+              </Badge>
+            )}
+            {filters.maxScore && (
+              <Badge variant="outline" className="bg-gray-800 text-gray-300">
+                Max: {filters.maxScore}
+              </Badge>
+            )}
+            {filters.sortBy && filters.sortBy !== 'score' && (
+              <Badge variant="outline" className="bg-gray-800 text-gray-300">
+                Sort: {filters.sortBy.replace('_', ' ')}
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Filter controls - conditionally visible on mobile */}
-      <div className={`${isMobile && !filtersVisible ? 'hidden' : 'block'} mb-6`}>
-        <h2 className="text-lg font-semibold mb-2">Filters</h2>
+      {/* Filter controls - conditionally visible based on device and toggle state */}
+      <div className={`${(isMobile && !filtersVisible) || (!isMobile && !desktopFiltersExpanded) ? 'hidden' : 'block'} mb-4`}>
+        {/* Only show this heading on mobile */}
+        {isMobile && <h2 className="text-lg font-semibold mb-2">Filters</h2>}
         
-        <div className="mb-4">
+        <div className="mb-3">
           <Label className="block text-sm font-medium mb-1">Score Range</Label>
           <div className="flex space-x-2">
             <Input
@@ -169,22 +234,22 @@ export default function Sidebar({
               placeholder="Min"
               value={minScore}
               onChange={(e) => setMinScore(e.target.value)}
-              className="w-1/2 bg-gray-800 border border-gray-700 text-white"
+              className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm"
             />
             <Input
               type="number"
               placeholder="Max"
               value={maxScore}
               onChange={(e) => setMaxScore(e.target.value)}
-              className="w-1/2 bg-gray-800 border border-gray-700 text-white"
+              className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm"
             />
           </div>
         </div>
         
-        <div className="mb-4">
+        <div className="mb-3">
           <Label className="block text-sm font-medium mb-1">City</Label>
           <Select value={city} onValueChange={setCity}>
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
+            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm">
               <SelectValue placeholder="All Cities" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
@@ -198,10 +263,10 @@ export default function Sidebar({
           </Select>
         </div>
         
-        <div className="mb-4">
+        <div className="mb-3">
           <Label className="block text-sm font-medium mb-1">Sort By</Label>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
+            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700 text-white">
@@ -216,14 +281,14 @@ export default function Sidebar({
         
         <div className="flex gap-2">
           <Button 
-            className="flex-1 bg-secondary hover:bg-indigo-700"
+            className="flex-1 bg-secondary hover:bg-indigo-700 text-sm py-1 h-8"
             onClick={handleApplyFilters}
           >
-            Apply Filters
+            Apply
           </Button>
           
           <Button 
-            className="flex-1 bg-red-800 hover:bg-red-700 text-white"
+            className="flex-1 bg-red-800 hover:bg-red-700 text-white text-sm py-1 h-8"
             onClick={handleResetFilters}
             variant="destructive"
           >
