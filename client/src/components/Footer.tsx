@@ -22,10 +22,11 @@ export default function Footer() {
             href="https://freysa.ai" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="mx-1.5 font-bold text-gradient-animated hover:from-blue-300 hover:to-purple-300 group transition-transform duration-300"
+            className="mx-1.5 font-bold text-gradient-animated hover:from-blue-300 hover:to-purple-300 group relative transition-transform duration-300"
           >
-            Freysa.ai
-            <Sparkles className="h-3 w-3 inline ml-0.5 text-blue-400 group-hover:animate-pulse" />
+            <span className="relative z-10">Freysa.ai</span>
+            <Sparkles className="h-3 w-3 inline ml-0.5 text-blue-400 group-hover:animate-pulse-soft" />
+            <div className="absolute inset-0 -m-1 animate-shimmer-slow rounded opacity-30 pointer-events-none"></div>
           </a>
           <span>community</span>
         </div>
