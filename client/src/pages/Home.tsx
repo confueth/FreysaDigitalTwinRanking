@@ -22,7 +22,7 @@ export default function Home() {
   const [selectedSnapshot, setSelectedSnapshot] = useState<number>(1);
   const [filters, setFilters] = useState<AgentFilters>({
     page: 1,
-    limit: 50,
+    limit: 25,
     sortBy: 'score'
   });
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
@@ -272,7 +272,7 @@ export default function Home() {
                 currentPage={filters.page || 1}
                 onPageChange={handlePageChange}
                 totalAgents={totalAgentsCount}
-                pageSize={filters.limit || 50}
+                pageSize={filters.limit || 25}
                 isLoading={agentsLoading}
               />
             )}
@@ -284,7 +284,7 @@ export default function Home() {
                 currentPage={filters.page || 1}
                 onPageChange={handlePageChange}
                 totalAgents={totalAgentsCount}
-                pageSize={filters.limit || 50}
+                pageSize={filters.limit || 25}
                 isLoading={agentsLoading}
               />
             )}
@@ -348,7 +348,7 @@ export default function Home() {
                   currentPage={filters.page || 1}
                   onPageChange={handlePageChange}
                   totalAgents={totalAgentsCount}
-                  pageSize={filters.limit || 50}
+                  pageSize={filters.limit || 25}
                   isLoading={agentsLoading}
                 />
               </div>
@@ -361,7 +361,7 @@ export default function Home() {
                 currentPage={filters.page || 1}
                 onPageChange={handlePageChange}
                 totalAgents={totalAgentsCount}
-                pageSize={filters.limit || 50}
+                pageSize={filters.limit || 25}
                 isLoading={agentsLoading}
               />
             )}
