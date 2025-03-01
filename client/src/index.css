@@ -179,7 +179,7 @@
   
   /* Animated gradient text */
   .text-gradient-animated {
-    @apply bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400 bg-clip-text text-transparent bg-size-200 animate-gradient;
+    @apply bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400 bg-clip-text text-transparent bg-size-200 animate-gradient-slow;
   }
   
   .text-gradient-blue-purple {

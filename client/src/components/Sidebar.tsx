@@ -141,7 +141,7 @@ export default function Sidebar({
       {/* Desktop search and filters */}
       <div className="hidden md:block">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Search</h2>
+          <h2 className="text-lg font-semibold mb-2 text-gradient-animated">Search</h2>
           <div className="relative mb-2">
             <Input
               id="searchInput"
@@ -166,7 +166,7 @@ export default function Sidebar({
         {/* Desktop filter header with toggle */}
         <div className="mb-2 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Filters</h2>
+            <h2 className="text-lg font-semibold text-gradient-animated">Filters</h2>
             <Button
               variant="ghost"
               size="icon"
@@ -225,7 +225,7 @@ export default function Sidebar({
       <div className={`${(isMobile && !filtersVisible) || (!isMobile && !desktopFiltersExpanded) ? 'hidden' : 'block'} mb-4`}>
         {/* Only show this heading on mobile */}
         {isMobile && (
-          <h2 className="text-lg font-semibold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center">
+          <h2 className="text-lg font-semibold mb-2 text-gradient-animated flex items-center">
             <SlidersHorizontal className="h-4 w-4 mr-1.5 text-blue-400" />
             Filters
           </h2>
