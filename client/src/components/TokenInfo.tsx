@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatWalletAddress } from '@/utils/formatters';
-import { ExternalLink, DollarSign, Shield, Twitter } from 'lucide-react';
+import { ExternalLink, DollarSign, Shield } from 'lucide-react';
 
 export default function TokenInfo() {
   const contractAddress = '0xb33Ff54b9F7242EF1593d2C9Bcd8f9df46c77935';
@@ -42,7 +42,14 @@ export default function TokenInfo() {
         
         <div>
           <div className="text-gray-400 text-sm mb-1 flex items-center">
-            <Twitter className="h-4 w-4 mr-1 text-blue-400" />
+            {/* X Logo */}
+            <svg 
+              viewBox="0 0 24 24" 
+              className="h-4 w-4 mr-1 text-white fill-current"
+              aria-hidden="true"
+            >
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
             <span>Official Account</span>
           </div>
           <div>
