@@ -26,14 +26,15 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 ### Data Management
 - **Automated Daily Snapshots**: System automatically creates daily snapshots of leaderboard data
 - **Historical Data Analysis**: Compare performance across different time periods
-- **CSV Data Import**: Support for importing historical data from CSV files
 - **Robust Caching**: Optimized performance with intelligent caching strategies
+- **Fallback Mechanism**: Graceful transition to snapshot data when live API fails
 
 ### Technical Implementation
 - **Type Safety**: Comprehensive TypeScript schema validation
 - **Graceful Error Handling**: Using safeParse() for validation with fallbacks
-- **Multiple Data Sources**: Integration with external APIs and CSV imports
+- **Multiple Data Sources**: Integration with external APIs and historical snapshots
 - **Memory Optimization**: Efficient data structures to handle large datasets
+- **Toast Notifications**: User-friendly alerts for data source changes
 
 ## Technical Stack
 
@@ -60,7 +61,7 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - ✅ **Debugging**: Added runtime data structure debugging for better error tracing
 - ✅ **Type Safety**: Fixed TypeScript validation errors in live-api.ts
 - ✅ **Performance**: Optimized data fetching with caching to reduce API calls
-- ✅ **Resilience**: Added fallback mechanisms for API failures
+- ✅ **Resilience**: Added fallback mechanisms for API failures with toast notifications
 - ✅ **Schema Flexibility**: Updated Zod schemas to better match API response variability
 - ✅ **City Statistics**: Added comprehensive city-based analytics with color-coded visualizations
 - ✅ **Enhanced Timeline Views**: Implemented score change tracking over time
@@ -71,6 +72,7 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - ✅ **Dark Mode Support**: Enhanced UI with consistent dark theme
 - ✅ **Error Boundary Implementation**: Graceful handling of runtime exceptions
 - ✅ **Optimized Rendering**: Reduced unnecessary component re-renders
+- ✅ **Code Cleanup**: Removed unused CSV import functionality
 
 ## Architecture
 
@@ -83,8 +85,8 @@ The application follows a modern web application pattern with these key componen
 
 2. **Backend Services**:
    - `server/routes.ts`: Defines REST API endpoints for the client
-   - `server/snapshot-service.ts`: Manages scheduled snapshots and historical data 
-   - `server/csv-import.ts`: Handles importing data from CSV files
+   - `server/snapshot-service.ts`: Manages scheduled snapshots and historical data
+   - `server/live-api.ts`: Handles external API communication with fallback mechanisms
 
 3. **Frontend Views**:
    - `client/src/pages`: Contains the main application pages
@@ -138,13 +140,12 @@ Potential areas for future enhancement:
 │       ├── lib          # Utility functions
 │       ├── pages        # Application pages
 │       └── utils        # Helper utilities
-├── data                 # CSV and data files
+├── data                 # Data files for the application
 ├── scripts              # Utility scripts
 ├── server               # Backend Express server
-│   ├── csv-import.ts    # CSV import functionality 
-│   ├── live-api.ts      # External API integration
-│   ├── routes.ts        # API routes
-│   ├── snapshot-service.ts # Snapshot management
+│   ├── live-api.ts      # External API integration with fallback logic
+│   ├── routes.ts        # API routes with error handling
+│   ├── snapshot-service.ts # Snapshot management for data persistence
 │   └── storage.ts       # Data storage interface
 └── shared               # Shared code between client and server
     └── schema.ts        # Data models and validation schemas
