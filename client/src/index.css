@@ -2,18 +2,185 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles */
-.glow {
-  box-shadow: 0 0 10px rgba(74, 222, 128, 0.6),
-              0 0 20px rgba(74, 222, 128, 0.3);
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+    
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217.2 91.2% 59.8%;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pulse-soft {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Custom utility classes */
+@layer components {
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-1;
+  }
+  
+  /* Button hover effects */
+  .btn-hover {
+    @apply hover:scale-105 transition-transform duration-200;
+  }
+  
+  /* Gradient backgrounds */
+  .bg-gradient-blue-purple {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-size-200 animate-gradient-slow;
+  }
+  
+  /* Animated gradient text */
+  .text-gradient-animated {
+    @apply bg-gradient-to-r from-blue-400 via-purple-500 to-blue-400 bg-clip-text text-transparent bg-size-200 animate-gradient;
+  }
+  
+  /* Glowing effects */
+  .glow-on-hover {
+    @apply transition-all duration-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)];
+  }
+  
+  /* Floating animation */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  /* Pulse animation */
+  .animate-pulse-soft {
+    animation: pulse-soft 2s infinite;
+  }
+  
+  /* Gradient shift animation */
+  .animate-gradient {
+    animation: gradient-shift 3s ease infinite;
+  }
+  
+  .animate-gradient-slow {
+    animation: gradient-shift 6s ease infinite;
+  }
+  
+  /* Background size utility for gradient animations */
+  .bg-size-200 {
+    background-size: 200% 200%;
+  }
+  
+  /* Enhanced table rows */
+  .table-row-hover {
+    @apply transition-colors duration-200 hover:bg-gray-800/50;
+  }
+  
+  /* Enhanced data cards */
+  .data-card {
+    @apply bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg border border-gray-700 p-4 transition-all duration-300 hover:shadow-lg hover:shadow-blue-900/30 hover:border-blue-800/50;
+  }
+  
+  /* Enhanced links */
+  .link-hover {
+    @apply relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-blue-400 after:transition-all after:duration-300 hover:after:w-full;
+  }
+  
+  /* Custom scrollbar */
+  .custom-scrollbar {
+    @apply scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900;
   }
 }
