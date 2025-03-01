@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import { Home, RefreshCw, Loader2 } from 'lucide-react';
+import { Home, RefreshCw, Loader2, Download } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer 
@@ -789,7 +789,22 @@ export default function Analytics({}: AnalyticsProps) {
                                 onClick={() => generateCsvForSnapshot(snapshot.id)}
                                 className="text-gray-400 hover:text-white"
                               >
-                                <Download className="h-4 w-4 mr-1" />
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  width="16" 
+                                  height="16" 
+                                  viewBox="0 0 24 24" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  strokeWidth="2" 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  className="h-4 w-4 mr-1"
+                                >
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
                                 <span className="sr-only sm:not-sr-only text-xs">CSV</span>
                               </Button>
                             </td>
