@@ -252,7 +252,42 @@ export default function Analytics({}: AnalyticsProps) {
   
   // Prepare chart data with optimized performance and improved interpolation
   const prepareChartData = () => {
-    if (!agentHistories || Object.keys(agentHistories).length === 0) return [];
+    // Immediately return an empty array if no agents are selected
+    if (selectedAgents.length === 0) return [];
+    
+    // Also return early if there are no histories but gracefully handle this case
+    if (!agentHistories || Object.keys(agentHistories).length === 0) {
+      // If we have at least one selected agent but no history, create a fallback point
+      if (selectedAgents.length > 0 && topAgents?.length) {
+        const now = new Date().toISOString();
+        const result = [{ timestamp: 'Today (Live)', originalTimestamp: now }];
+        
+        // Add a data point for each selected agent using live data
+        selectedAgents.forEach(username => {
+          const agent = topAgents.find((a: Agent) => a.mastodonUsername === username);
+          if (agent) {
+            switch (metric) {
+              case 'score':
+                result[0][username] = agent.score;
+                break;
+              case 'followers':
+                result[0][username] = agent.followersCount || 0;
+                break;
+              case 'likes':
+                result[0][username] = agent.likesCount || 0;
+                break;
+              case 'retweets':
+                result[0][username] = agent.retweetsCount || 0;
+                break;
+            }
+          }
+        });
+        
+        return result;
+      }
+      
+      return [];
+    }
     
     // Create a map of all timestamps, ensuring we include today's live data
     const allTimestamps = new Set<string>();
