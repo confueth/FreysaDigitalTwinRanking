@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { Home, RefreshCw, Loader2, Download } from 'lucide-react';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, 
+  LineChart, Line, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import { CustomXAxisNoFormatter } from '@/components/CustomXAxisNoFormatter';
