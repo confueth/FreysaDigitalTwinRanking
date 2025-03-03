@@ -253,8 +253,11 @@ export default function Analytics({}: AnalyticsProps) {
   const prepareChartData = () => {
     if (!agentHistories || Object.keys(agentHistories).length === 0) return [];
     
-    // Create a map of all timestamps
+    // Create a map of all timestamps, ensuring we include today's live data
     const allTimestamps = new Set<string>();
+    const today = new Date();
+    const now = today.toISOString();
+    allTimestamps.add(now); // Add today's date
     
     // Keep track of agents with sparse data
     const agentDataPoints = new Map<string, Map<string, number>>();
@@ -264,7 +267,31 @@ export default function Analytics({}: AnalyticsProps) {
       agentDataPoints.set(username, new Map<string, number>());
     });
     
-    // Collect all timestamps and map data points
+    // Get latest agent data (live data) for today's values
+    topAgents?.forEach((agent: Agent) => {
+      if (selectedAgents.includes(agent.mastodonUsername)) {
+        const dataMap = agentDataPoints.get(agent.mastodonUsername);
+        if (dataMap) {
+          // Set today's live data value
+          switch (metric) {
+            case 'score':
+              dataMap.set(now, agent.score);
+              break;
+            case 'followers':
+              dataMap.set(now, agent.followersCount || 0);
+              break;
+            case 'likes':
+              dataMap.set(now, agent.likesCount || 0);
+              break;
+            case 'retweets':
+              dataMap.set(now, agent.retweetsCount || 0);
+              break;
+          }
+        }
+      }
+    });
+    
+    // Collect all timestamps and map data points from historical data
     Object.entries(agentHistories).forEach(([username, history]) => {
       // Sort history by timestamp to ensure chronological order
       const sortedHistory = [...history].sort((a, b) => 
@@ -349,9 +376,14 @@ export default function Analytics({}: AnalyticsProps) {
     
     // Create data points for each timestamp
     return sortedTimestamps.map(timestamp => {
+      // Format the timestamp for display
+      const date = new Date(timestamp);
+      const isToday = new Date().toDateString() === date.toDateString();
+      
       const dataPoint: any = {
-        timestamp: formatDate(timestamp),
-        date: new Date(timestamp)
+        timestamp: isToday ? 'Today (Live)' : formatDate(timestamp, 'short'),
+        originalDate: date,
+        date // For sorting
       };
       
       // Add data for each agent at this timestamp
