@@ -266,16 +266,29 @@ export default function MyAgents() {
       a => a.mastodonUsername.toLowerCase() === cleanUsername.toLowerCase()
     );
     
+    // Update state and localStorage based on whether agent exists
+    let updatedAgents: string[];
+    
     if (existingAgent) {
       // If agent exists in our data, use their full profile
-      setMyAgents(prev => [...prev, existingAgent.mastodonUsername]);
+      updatedAgents = [...myAgents, existingAgent.mastodonUsername];
+      setMyAgents(updatedAgents);
+      
+      // Update localStorage directly
+      localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
+      
       toast({
         title: 'Agent Added',
         description: `${existingAgent.mastodonUsername} has been added to your agents.`
       });
     } else {
       // If agent doesn't exist, add the custom username
-      setMyAgents(prev => [...prev, cleanUsername]);
+      updatedAgents = [...myAgents, cleanUsername];
+      setMyAgents(updatedAgents);
+      
+      // Update localStorage directly
+      localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
+      
       toast({
         variant: 'default',
         title: 'Custom Agent Added',
@@ -286,7 +299,13 @@ export default function MyAgents() {
 
   // Remove an agent from my agents list
   const removeFromMyAgents = (username: string) => {
-    setMyAgents(prev => prev.filter(name => name !== username));
+    // Update state with filtered list
+    const updatedAgents = myAgents.filter(name => name !== username);
+    setMyAgents(updatedAgents);
+    
+    // Directly update localStorage to ensure consistency across pages
+    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
+    
     toast({
       title: 'Agent Removed',
       description: `${username} has been removed from your agents.`
@@ -303,10 +322,18 @@ export default function MyAgents() {
       return;
     }
     
+    // Count before clearing for toast message
+    const count = myAgents.length;
+    
+    // Update state
     setMyAgents([]);
+    
+    // Update localStorage directly to ensure consistency across pages
+    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify([]));
+    
     toast({
       title: 'All Agents Removed',
-      description: `${myAgents.length} agents have been removed from your list.`
+      description: `${count} agents have been removed from your list.`
     });
   };
 
