@@ -15,6 +15,9 @@ import { Agent, AgentFilters, Snapshot, SnapshotStats } from '@/types/agent';
 import { formatDate } from '@/utils/formatters';
 import { applyAllFilters } from '@/utils/FilterUtils';
 
+// Constants
+const MY_AGENTS_KEY = 'freysa_my_agents';
+
 type ViewMode = 'table' | 'cards' | 'timeline';
 
 export default function Home() {
@@ -27,6 +30,8 @@ export default function Home() {
   });
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [showAgentModal, setShowAgentModal] = useState(false);
+  const [showMyAgentsOnly, setShowMyAgentsOnly] = useState(false);
+  const [myAgents, setMyAgents] = useState<string[]>([]);
   
   // Query available snapshots 
   const { data: snapshots, isLoading: snapshotsLoading } = useQuery<Snapshot[]>({
@@ -45,6 +50,18 @@ export default function Home() {
       setSelectedSnapshot(latestSnapshot.id);
     }
   }, [latestSnapshot]);
+  
+  // Load saved agents from localStorage
+  useEffect(() => {
+    try {
+      const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
+      if (savedAgents) {
+        setMyAgents(JSON.parse(savedAgents));
+      }
+    } catch (error) {
+      console.error('Error loading saved agents:', error);
+    }
+  }, []);
   
   // Current snapshot object for display
   const currentSnapshot = latestSnapshot || {

@@ -3,24 +3,31 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Search, FilterX, Filter, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { Search, FilterX, Filter, ChevronDown, ChevronUp, SlidersHorizontal, User, Users } from 'lucide-react';
 import { AgentFilters } from '@/types/agent';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 
 interface SidebarProps {
   filters: AgentFilters;
   onFilterChange: (filters: Partial<AgentFilters>) => void;
   cities: string[];
   isLoading: boolean;
+  showMyAgents?: boolean;
+  onToggleMyAgents?: () => void;
+  myAgents?: string[];
 }
 
 export default function Sidebar({ 
   filters, 
   onFilterChange, 
   cities,
-  isLoading
+  isLoading,
+  showMyAgents = false,
+  onToggleMyAgents = () => {},
+  myAgents = []
 }: SidebarProps) {
   const [searchValue, setSearchValue] = useState(filters.search || '');
   const [minScore, setMinScore] = useState<string>(filters.minScore?.toString() || '');
@@ -284,6 +291,30 @@ export default function Sidebar({
           </Select>
         </div>
         
+                {/* My Agents Toggle */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {showMyAgents ? (
+                <User className="h-4 w-4 text-emerald-400" />
+              ) : (
+                <Users className="h-4 w-4 text-gray-400" />
+              )}
+              <Label className="text-sm font-medium text-blue-300">Show My Agents Only</Label>
+            </div>
+            <Switch
+              checked={showMyAgents}
+              onCheckedChange={onToggleMyAgents}
+              className={showMyAgents ? "bg-emerald-600" : ""}
+            />
+          </div>
+          {myAgents.length > 0 && (
+            <div className="mt-2 text-xs text-gray-400">
+              {myAgents.length} saved agent{myAgents.length !== 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-2">
           <Button 
             className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all duration-300 text-sm py-1 h-8 shadow-md"
