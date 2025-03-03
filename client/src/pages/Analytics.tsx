@@ -571,87 +571,133 @@ export default function Analytics({}: AnalyticsProps) {
                 
                 {/* Key Insights */}
                 {selectedAgents.length > 0 && chartData.length > 0 && (
-                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {selectedAgents.map((username, index) => {
-                      // Calculate the growth
-                      const agentData = agentHistories?.[username] || [];
-                      
-                      // For agents with only one data point, we'll show current value without comparison
-                      const newestEntry = agentData[0];
-                      if (!newestEntry) return null;
-                      
-                      // Get the current value based on the selected metric
-                      let newValue, oldValue, showChange = false;
-                      switch (metric) {
-                        case 'score':
-                          newValue = newestEntry.score;
-                          break;
-                        case 'followers':
-                          newValue = newestEntry.followersCount || 0;
-                          break;
-                        case 'likes':
-                          newValue = newestEntry.likesCount || 0;
-                          break;
-                        case 'retweets':
-                          newValue = newestEntry.retweetsCount || 0;
-                          break;
-                      }
-                      
-                      // Only calculate change if we have more than one data point
-                      let change = 0, percentChange = 0;
-                      if (agentData.length > 1) {
-                        const oldestEntry = agentData[agentData.length - 1];
+                  <div className="mt-6">
+                    <h3 className="font-medium text-lg mb-3">Historical Summary</h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {selectedAgents.map((username, index) => {
+                        // Get all historical data points
+                        const agentData = agentHistories?.[username] || [];
+                        if (agentData.length === 0) return null;
                         
-                        // Get the old value for the selected metric
+                        // For agents with only one data point, we'll show current value without comparison
+                        const newestEntry = agentData[0];
+                        if (!newestEntry) return null;
+                        
+                        // Get the current value based on the selected metric
+                        let currentValue = 0;
                         switch (metric) {
                           case 'score':
-                            oldValue = oldestEntry.score;
+                            currentValue = newestEntry.score;
                             break;
                           case 'followers':
-                            oldValue = oldestEntry.followersCount || 0;
+                            currentValue = newestEntry.followersCount || 0;
                             break;
                           case 'likes':
-                            oldValue = oldestEntry.likesCount || 0;
+                            currentValue = newestEntry.likesCount || 0;
                             break;
                           case 'retweets':
-                            oldValue = oldestEntry.retweetsCount || 0;
+                            currentValue = newestEntry.retweetsCount || 0;
                             break;
                         }
                         
-                        if (oldValue !== undefined) {
-                          change = newValue - oldValue;
-                          percentChange = oldValue !== 0 ? (change / oldValue) * 100 : 0;
-                          showChange = true;
+                        // Calculate overall change if we have more than one data point
+                        let overallChange = 0, percentChange = 0, showOverallChange = false;
+                        if (agentData.length > 1) {
+                          const oldestEntry = agentData[agentData.length - 1];
+                          
+                          // Get the oldest value for the selected metric
+                          let oldestValue = 0;
+                          switch (metric) {
+                            case 'score':
+                              oldestValue = oldestEntry.score;
+                              break;
+                            case 'followers':
+                              oldestValue = oldestEntry.followersCount || 0;
+                              break;
+                            case 'likes':
+                              oldestValue = oldestEntry.likesCount || 0;
+                              break;
+                            case 'retweets':
+                              oldestValue = oldestEntry.retweetsCount || 0;
+                              break;
+                          }
+                          
+                          if (oldestValue !== undefined) {
+                            overallChange = currentValue - oldestValue;
+                            percentChange = oldestValue !== 0 ? (overallChange / oldestValue) * 100 : 0;
+                            showOverallChange = true;
+                          }
                         }
-                      }
-                      
-                      return (
-                        <div 
-                          key={username}
-                          className="p-4 rounded-md border border-gray-700 bg-gray-800"
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-                            ></div>
-                            <h3 className="font-semibold">{username}</h3>
+                        
+                        // Extract data points for each snapshot
+                        const snapshotData = agentData.map(entry => {
+                          let value = 0;
+                          switch (metric) {
+                            case 'score':
+                              value = entry.score;
+                              break;
+                            case 'followers':
+                              value = entry.followersCount || 0;
+                              break;
+                            case 'likes':
+                              value = entry.likesCount || 0;
+                              break;
+                            case 'retweets':
+                              value = entry.retweetsCount || 0;
+                              break;
+                          }
+                          
+                          return {
+                            timestamp: entry.timestamp,
+                            value,
+                            formattedDate: formatDate(entry.timestamp, 'short', true)
+                          };
+                        });
+                        
+                        return (
+                          <div 
+                            key={username}
+                            className="p-4 rounded-md border border-gray-700 bg-gray-800"
+                          >
+                            <div className="flex items-center gap-2 mb-4">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                              ></div>
+                              <h3 className="font-semibold">{username}</h3>
+                            </div>
+                            
+                            <div className="flex flex-col space-y-3">
+                              <div>
+                                <span className="text-sm font-medium text-gray-300">Current Value:</span>
+                                <span className="text-base text-white ml-2">{formatNumber(currentValue)}</span>
+                              </div>
+                              
+                              {showOverallChange && (
+                                <div>
+                                  <span className="text-sm font-medium text-gray-300">Overall Change:</span>
+                                  <span className={`text-sm ml-2 ${overallChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                    {overallChange >= 0 ? '+' : ''}{formatNumber(overallChange)} ({percentChange.toFixed(2)}%)
+                                  </span>
+                                </div>
+                              )}
+                              
+                              <div className="pt-3 border-t border-gray-700">
+                                <h4 className="text-sm font-medium text-gray-300 mb-2">Historical Snapshots</h4>
+                                <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                                  {snapshotData.map((point, i) => (
+                                    <div key={i} className="flex justify-between text-xs">
+                                      <span className="text-gray-400">{point.formattedDate}</span>
+                                      <span className="font-medium">{formatNumber(point.value)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm text-gray-400">Current: {formatNumber(newValue)}</span>
-                            {showChange ? (
-                              <span className={`text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                {change >= 0 ? '+' : ''}{formatNumber(change)} ({percentChange.toFixed(2)}%)
-                              </span>
-                            ) : (
-                              <span className="text-sm text-gray-500">
-                                No historical data for comparison
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </CardContent>
