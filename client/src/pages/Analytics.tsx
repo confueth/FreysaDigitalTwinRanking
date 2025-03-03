@@ -272,8 +272,9 @@ export default function Analytics({}: AnalyticsProps) {
 
     // Create a map of all timestamps, always including Feb 22 and today
     const allTimestamps = new Set<string>();
-    const today = new Date();
-    const now = today.toISOString();
+    const todayDate = new Date();
+    const now = todayDate.toISOString();
+    const todayDateString = todayDate.toDateString();
 
     // Always add Feb 22 as the baseline date
     allTimestamps.add(startDateStr);
@@ -298,7 +299,7 @@ export default function Analytics({}: AnalyticsProps) {
             timestamp: 'Today (Live)', 
             dateString: 'Today',
             originalTimestamp: now,
-            sortValue: today.getTime(),
+            sortValue: todayDate.getTime(),
             index: 1
           }
         ];
@@ -407,7 +408,13 @@ export default function Analytics({}: AnalyticsProps) {
     });
 
     // Sort timestamps chronologically
-    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => 
+    // Filter out today's snapshot if it exists - we'll only use live data for today
+    const filteredTimestamps = Array.from(allTimestamps).filter(timestamp => {
+      const date = new Date(timestamp);
+      // Keep if it's not from today (except for our explicit "now" timestamp)
+      return date.toDateString() !== todayDateString || timestamp === now;
+    });
+    const sortedTimestamps = filteredTimestamps.sort((a, b) => 
       new Date(a).getTime() - new Date(b).getTime()
     );
 
@@ -461,7 +468,7 @@ export default function Analytics({}: AnalyticsProps) {
       const date = new Date(timestamp);
       const month = date.getMonth() + 1; // 1-12
       const day = date.getDate(); // 1-31
-      const isToday = new Date().toDateString() === date.toDateString();
+      const isToday = todayDateString === date.toDateString();
 
       // Format for display, ensuring each date is properly visible
       let formattedDate = `${month}/${day}`;
