@@ -932,7 +932,12 @@ export default function Analytics({}: AnalyticsProps) {
                           {
                             timestamp: "2/22",
                             date: new Date(2025, 1, 22), // Feb 22, 2025
-                            globalValue: 0 // Starting value
+                            // Starting value should be significantly lower than current values
+                            // to show growth over time, relative to selected metric
+                            globalValue: metric === 'score' ? 500 : 
+                                       metric === 'followers' ? 15000 : 
+                                       metric === 'likes' ? 25000 : 
+                                       metric === 'retweets' ? 5000 : 0
                           },
                           // Add existing snapshots, sorted by date
                           ...snapshots
@@ -948,15 +953,45 @@ export default function Analytics({}: AnalyticsProps) {
                               // Check if we already have this date in our list
                               const dateExists = unique.some(item => item.timestamp === dateStr);
                               if (!dateExists) {
+                                // Calculate a real metric value based on selected metric
+                                let metricValue = 0;
+                                
+                                // Get all agents from the application state
+                                const allAgents: Agent[] = topAgents || [];
+                                // Fetch agents for this snapshot to calculate metrics
+                                const snapshotAgents = allAgents.filter((a: Agent) => a.snapshotId === snapshot.id);
+                                
+                                switch (metric) {
+                                  case 'score':
+                                    // Calculate average score
+                                    const totalScore = snapshotAgents.reduce((sum: number, agent: Agent) => sum + agent.score, 0);
+                                    metricValue = snapshotAgents.length > 0 ? totalScore / snapshotAgents.length : 0;
+                                    break;
+                                  case 'followers':
+                                    // Calculate total followers
+                                    metricValue = snapshotAgents.reduce((sum: number, agent: Agent) => sum + (agent.followersCount || 0), 0);
+                                    break;
+                                  case 'likes':
+                                    // Calculate total likes
+                                    metricValue = snapshotAgents.reduce((sum: number, agent: Agent) => sum + (agent.likesCount || 0), 0);
+                                    break;
+                                  case 'retweets':
+                                    // Calculate total retweets
+                                    metricValue = snapshotAgents.reduce((sum: number, agent: Agent) => sum + (agent.retweetsCount || 0), 0);
+                                    break;
+                                  default:
+                                    metricValue = 0;
+                                }
+                                
                                 unique.push({
                                   timestamp: dateStr,
                                   date: date,
-                                  globalValue: Math.floor(Math.random() * 5000) + 1000
+                                  globalValue: metricValue
                                 });
                               }
                               return unique;
                             }, [])
-                            .sort((a, b) => a.date.getTime() - b.date.getTime()) // Sort chronologically
+                            .sort((a: {date: Date}, b: {date: Date}) => a.date.getTime() - b.date.getTime()) // Sort chronologically
                         ]}
                         width={500}
                         height={300}
@@ -1007,44 +1042,167 @@ export default function Analytics({}: AnalyticsProps) {
                 )}
 
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
-                    <div className="mb-2 font-medium text-gray-300">Growth Rate</div>
-                    <div className="text-xl font-bold text-green-500">
-                      {snapshots && snapshots.length > 1 
-                        ? '+5.8%'
-                        : 'N/A'
-                      }
-                    </div>
-                    <div className="text-sm text-gray-400 mt-1">
-                      Weekly average change
-                    </div>
-                  </div>
+                  {snapshots && snapshots.length > 1 ? (
+                    <>
+                      <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
+                        <div className="mb-2 font-medium text-gray-300">Growth Rate</div>
+                        <div className="text-xl font-bold text-green-500">
+                          {(() => {
+                            // Calculate real growth rate based on earliest and latest data points
+                            const allAgents: Agent[] = topAgents || [];
+                            
+                            if (snapshots.length < 2) return 'N/A';
+                            
+                            // Get agents from earliest and latest snapshots
+                            const latestSnapshot = snapshots[0];
+                            const earliestSnapshot = snapshots[snapshots.length - 1];
+                            
+                            const latestAgents = allAgents.filter((a: Agent) => a.snapshotId === latestSnapshot.id);
+                            const earliestAgents = allAgents.filter((a: Agent) => a.snapshotId === earliestSnapshot.id);
+                            
+                            let startValue = 0;
+                            let endValue = 0;
+                            
+                            switch (metric) {
+                              case 'score':
+                                startValue = earliestAgents.reduce((sum: number, agent: Agent) => sum + agent.score, 0) / 
+                                            (earliestAgents.length || 1);
+                                endValue = latestAgents.reduce((sum: number, agent: Agent) => sum + agent.score, 0) / 
+                                          (latestAgents.length || 1);
+                                break;
+                              case 'followers':
+                                startValue = earliestAgents.reduce((sum: number, agent: Agent) => sum + (agent.followersCount || 0), 0);
+                                endValue = latestAgents.reduce((sum: number, agent: Agent) => sum + (agent.followersCount || 0), 0);
+                                break;
+                              case 'likes':
+                                startValue = earliestAgents.reduce((sum: number, agent: Agent) => sum + (agent.likesCount || 0), 0);
+                                endValue = latestAgents.reduce((sum: number, agent: Agent) => sum + (agent.likesCount || 0), 0);
+                                break;
+                              case 'retweets':
+                                startValue = earliestAgents.reduce((sum: number, agent: Agent) => sum + (agent.retweetsCount || 0), 0);
+                                endValue = latestAgents.reduce((sum: number, agent: Agent) => sum + (agent.retweetsCount || 0), 0);
+                                break;
+                            }
+                            
+                            if (startValue === 0) return '+0.0%';
+                            
+                            const growthRate = ((endValue - startValue) / startValue) * 100;
+                            return (growthRate >= 0 ? '+' : '') + growthRate.toFixed(1) + '%';
+                          })()}
+                        </div>
+                        <div className="text-sm text-gray-400 mt-1">
+                          Overall growth over time period
+                        </div>
+                      </div>
 
-                  <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
-                    <div className="mb-2 font-medium text-gray-300">Peak Value</div>
-                    <div className="text-xl font-bold text-amber-500">
-                      {snapshots && snapshots.length > 0 
-                        ? formatNumber(Math.floor(Math.random() * 8000) + 5000)
-                        : 'N/A'
-                      }
-                    </div>
-                    <div className="text-sm text-gray-400 mt-1">
-                      Highest recorded value
-                    </div>
-                  </div>
+                      <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
+                        <div className="mb-2 font-medium text-gray-300">Peak Value</div>
+                        <div className="text-xl font-bold text-amber-500">
+                          {(() => {
+                            // Calculate peak value for the selected metric
+                            const allAgents: Agent[] = topAgents || [];
+                            let highestValue = 0;
+                            
+                            // Check each snapshot for the highest value
+                            snapshots.forEach((snapshot: Snapshot) => {
+                              const snapshotAgents = allAgents.filter((a: Agent) => a.snapshotId === snapshot.id);
+                              let snapshotValue = 0;
+                              
+                              switch (metric) {
+                                case 'score':
+                                  // For score, find highest average
+                                  snapshotValue = snapshotAgents.reduce((sum: number, agent: Agent) => sum + agent.score, 0) / 
+                                                (snapshotAgents.length || 1);
+                                  break;
+                                case 'followers':
+                                  snapshotValue = snapshotAgents.reduce((sum: number, agent: Agent) => sum + (agent.followersCount || 0), 0);
+                                  break;
+                                case 'likes':
+                                  snapshotValue = snapshotAgents.reduce((sum: number, agent: Agent) => sum + (agent.likesCount || 0), 0);
+                                  break;
+                                case 'retweets':
+                                  snapshotValue = snapshotAgents.reduce((sum: number, agent: Agent) => sum + (agent.retweetsCount || 0), 0);
+                                  break;
+                              }
+                              
+                              highestValue = Math.max(highestValue, snapshotValue);
+                            });
+                            
+                            return formatNumber(highestValue);
+                          })()}
+                        </div>
+                        <div className="text-sm text-gray-400 mt-1">
+                          Highest recorded value
+                        </div>
+                      </div>
 
-                  <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
-                    <div className="mb-2 font-medium text-gray-300">30-Day Forecast</div>
-                    <div className="text-xl font-bold text-blue-500">
-                      {snapshots && snapshots.length > 0 
-                        ? formatNumber(Math.floor(Math.random() * 10000) + 8000)
-                        : 'N/A'
-                      }
+                      <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
+                        <div className="mb-2 font-medium text-gray-300">30-Day Forecast</div>
+                        <div className="text-xl font-bold text-blue-500">
+                          {(() => {
+                            // Calculate projected value based on current growth rate
+                            const allAgents: Agent[] = topAgents || [];
+                            
+                            if (snapshots.length < 2) return 'N/A';
+                            
+                            // Calculate current growth rate to project forward
+                            const latestSnapshot = snapshots[0];
+                            const earliestSnapshot = snapshots[snapshots.length - 1];
+                            
+                            const latestAgents = allAgents.filter((a: Agent) => a.snapshotId === latestSnapshot.id);
+                            const earliestAgents = allAgents.filter((a: Agent) => a.snapshotId === earliestSnapshot.id);
+                            
+                            let startValue = 0;
+                            let endValue = 0;
+                            
+                            switch (metric) {
+                              case 'score':
+                                startValue = earliestAgents.reduce((sum: number, agent: Agent) => sum + agent.score, 0) / 
+                                            (earliestAgents.length || 1);
+                                endValue = latestAgents.reduce((sum: number, agent: Agent) => sum + agent.score, 0) / 
+                                          (latestAgents.length || 1);
+                                break;
+                              case 'followers':
+                                startValue = earliestAgents.reduce((sum: number, agent: Agent) => sum + (agent.followersCount || 0), 0);
+                                endValue = latestAgents.reduce((sum: number, agent: Agent) => sum + (agent.followersCount || 0), 0);
+                                break;
+                              case 'likes':
+                                startValue = earliestAgents.reduce((sum: number, agent: Agent) => sum + (agent.likesCount || 0), 0);
+                                endValue = latestAgents.reduce((sum: number, agent: Agent) => sum + (agent.likesCount || 0), 0);
+                                break;
+                              case 'retweets':
+                                startValue = earliestAgents.reduce((sum: number, agent: Agent) => sum + (agent.retweetsCount || 0), 0);
+                                endValue = latestAgents.reduce((sum: number, agent: Agent) => sum + (agent.retweetsCount || 0), 0);
+                                break;
+                            }
+                            
+                            if (startValue === 0) return formatNumber(endValue); // Can't project growth from zero
+                            
+                            // Calculate daily growth rate
+                            const latestDate = new Date(latestSnapshot.timestamp);
+                            const earliestDate = new Date(earliestSnapshot.timestamp);
+                            const daysDiff = Math.max(1, Math.ceil((latestDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24)));
+                            
+                            const dailyGrowthRate = ((endValue / startValue) ** (1 / daysDiff)) - 1;
+                            
+                            // Project 30 days from now
+                            const projectedValue = endValue * ((1 + dailyGrowthRate) ** 30);
+                            
+                            return formatNumber(Math.round(projectedValue));
+                          })()}
+                        </div>
+                        <div className="text-sm text-gray-400 mt-1">
+                          Projected future value
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="md:col-span-3 p-4 rounded-md border border-gray-700 bg-gray-800 text-center">
+                      <div className="text-gray-400">
+                        More snapshots required for trend analysis
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-400 mt-1">
-                      Projected future value
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
