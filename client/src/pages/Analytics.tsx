@@ -35,6 +35,15 @@ const CHART_COLORS = [
   "#ec4899", // Pink
 ];
 
+// Define type for chart data point
+interface ChartDataPoint {
+  timestamp: string;
+  originalTimestamp: string;
+  dateString?: string;
+  sortValue?: number;
+  [key: string]: any; // Allow dynamic agent usernames as keys
+}
+
 export default function Analytics({}: AnalyticsProps) {
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -260,7 +269,13 @@ export default function Analytics({}: AnalyticsProps) {
       // If we have at least one selected agent but no history, create a fallback point
       if (selectedAgents.length > 0 && topAgents?.length) {
         const now = new Date().toISOString();
-        const result = [{ timestamp: 'Today (Live)', originalTimestamp: now }];
+        // Initialize the result with proper typing to avoid TS errors
+        const result = [{
+          timestamp: 'Today (Live)', 
+          originalTimestamp: now,
+          // Add an index signature to allow dynamic property assignment
+          [selectedAgents[0]]: 0, // Will be overwritten in the loop
+        }];
         
         // Add a data point for each selected agent using live data
         selectedAgents.forEach(username => {
