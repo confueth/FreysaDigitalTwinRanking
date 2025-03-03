@@ -15,14 +15,14 @@ export function CustomXAxisNoFormatter({ dataKey = "dateString", ...props }: Cus
   return (
     <XAxis 
       dataKey={dataKey}
-      interval={0}
+      interval="preserveStartEnd"
       tick={{ fill: '#9ca3af', fontSize: 12 }}
       allowDataOverflow={false}
       angle={0}
       textAnchor="middle"
       height={60}
-      minTickGap={-10}
-      padding={{ left: 10, right: 10 }}
+      minTickGap={5}
+      padding={{ left: 20, right: 20 }}
       tickMargin={10}
       tickSize={8}
       hide={false}
