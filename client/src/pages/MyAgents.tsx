@@ -95,45 +95,48 @@ export default function MyAgents() {
     const timeoutId = setTimeout(() => {
       const searchTerm = searchQuery.toLowerCase().trim();
       
-      // Function to calculate fuzzy match score
-      const calculateSimilarity = (agentName: string, searchTerm: string): number => {
-        const name = agentName.toLowerCase();
-        
-        // Exact match gets highest score
-        if (name === searchTerm) return 1.0;
-        
-        // Direct inclusion scores high
-        if (name.includes(searchTerm)) return 0.8;
-        
-        // Check for fuzzy match - calculate how many characters match in sequence
-        let matchCount = 0;
-        let searchIndex = 0;
-        
-        for (let i = 0; i < name.length && searchIndex < searchTerm.length; i++) {
-          if (name[i] === searchTerm[searchIndex]) {
-            matchCount++;
-            searchIndex++;
-          }
-        }
-        
-        // Calculate similarity as percentage of characters matched
-        return searchTerm.length > 0 ? matchCount / searchTerm.length : 0;
-      };
-      
       // Apply filters
       let filtered = [...allAgents];
       
       // Apply search filter if we have a search term
       if (searchTerm) {
-        const scoredAgents = filtered.map(agent => ({
-          agent,
-          score: calculateSimilarity(agent.mastodonUsername || '', searchTerm)
-        }));
+        filtered = filtered.filter(agent => {
+          const username = agent.mastodonUsername?.toLowerCase() || '';
+          
+          // Simple substring matching - if the username contains the search term at all
+          if (username.includes(searchTerm)) {
+            return true;
+          }
+          
+          // Compute levenshtein distance for fuzzy matching
+          // This will catch typos and slight variations in spelling
+          const distance = levenshteinDistance(username, searchTerm);
+          
+          // Allow matches that are close enough based on string length
+          const threshold = Math.max(2, Math.floor(searchTerm.length / 3));
+          return distance <= threshold;
+        });
         
-        filtered = scoredAgents
-          .filter(item => item.score > 0.3) // Keep only reasonably similar matches
-          .sort((a, b) => b.score - a.score) // Sort by score descending
-          .map(item => item.agent);
+        // Sort by relevance - exact matches first, then partial matches
+        filtered.sort((a, b) => {
+          const usernameA = a.mastodonUsername?.toLowerCase() || '';
+          const usernameB = b.mastodonUsername?.toLowerCase() || '';
+          
+          // Exact matches get priority
+          if (usernameA === searchTerm && usernameB !== searchTerm) return -1;
+          if (usernameB === searchTerm && usernameA !== searchTerm) return 1;
+          
+          // Then starts-with matches
+          if (usernameA.startsWith(searchTerm) && !usernameB.startsWith(searchTerm)) return -1;
+          if (usernameB.startsWith(searchTerm) && !usernameA.startsWith(searchTerm)) return 1;
+          
+          // Then contains matches
+          if (usernameA.includes(searchTerm) && !usernameB.includes(searchTerm)) return -1;
+          if (usernameB.includes(searchTerm) && !usernameA.includes(searchTerm)) return 1;
+          
+          // Finally sort alphabetically
+          return usernameA.localeCompare(usernameB);
+        });
       }
       
       // Apply my agents filter if toggled
@@ -147,6 +150,36 @@ export default function MyAgents() {
     
     return () => clearTimeout(timeoutId);
   }, [searchQuery, allAgents, myAgents, showMyAgentsOnly]);
+  
+  // Levenshtein distance implementation for fuzzy matching
+  const levenshteinDistance = (a: string, b: string): number => {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    
+    const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+    
+    // Initialize the first row and column
+    for (let i = 0; i <= a.length; i++) {
+      matrix[0][i] = i;
+    }
+    for (let j = 0; j <= b.length; j++) {
+      matrix[j][0] = j;
+    }
+    
+    // Calculate the edit distance
+    for (let j = 1; j <= b.length; j++) {
+      for (let i = 1; i <= a.length; i++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1,      // Deletion
+          matrix[j - 1][i] + 1,      // Insertion
+          matrix[j - 1][i - 1] + cost // Substitution
+        );
+      }
+    }
+    
+    return matrix[b.length][a.length];
+  };
 
   // Add an agent to my agents list
   const addToMyAgents = (username: string) => {
