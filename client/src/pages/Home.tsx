@@ -407,6 +407,7 @@ export default function Home() {
                 totalAgents={totalAgentsCount}
                 pageSize={filters.limit || 25}
                 isLoading={isLoading}
+                savedAgents={myAgents}
               />
             )}
             
@@ -482,6 +483,7 @@ export default function Home() {
                   totalAgents={totalAgentsCount}
                   pageSize={filters.limit || 25}
                   isLoading={isLoading}
+                  savedAgents={myAgents}
                 />
               </div>
             )}
