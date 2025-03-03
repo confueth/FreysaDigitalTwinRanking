@@ -292,6 +292,23 @@ export default function MyAgents() {
       description: `${username} has been removed from your agents.`
     });
   };
+  
+  // Remove all agents from my agents list
+  const removeAllAgents = () => {
+    if (myAgents.length === 0) {
+      toast({
+        title: 'No Agents',
+        description: 'You have no saved agents to remove.'
+      });
+      return;
+    }
+    
+    setMyAgents([]);
+    toast({
+      title: 'All Agents Removed',
+      description: `${myAgents.length} agents have been removed from your list.`
+    });
+  };
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -342,9 +359,22 @@ export default function MyAgents() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-400">
-                {myAgents.length} agent{myAgents.length !== 1 ? 's' : ''} saved
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-400">
+                  {myAgents.length} agent{myAgents.length !== 1 ? 's' : ''} saved
+                </div>
+                {myAgents.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="border-red-800 hover:bg-red-900/30 text-red-400 flex items-center gap-1"
+                    onClick={removeAllAgents}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Remove All</span>
+                  </Button>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-400">Show my agents only</span>
