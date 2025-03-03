@@ -14,10 +14,13 @@ export async function createSnapshot(
   storage: IStorage, 
   description?: string
 ): Promise<number | null> {
-  // If no description is provided, generate one with the current date
+  // If no description is provided, generate one with the current date (in UTC)
   if (!description) {
     const date = new Date();
-    description = `Daily snapshot - ${date.toLocaleDateString()}`;
+    const month = date.getUTCMonth() + 1;
+    const day = date.getUTCDate();
+    const year = date.getUTCFullYear();
+    description = `Daily snapshot - ${month}/${day}/${year}`;
   }
   if (isSnapshotInProgress) {
     console.log('A snapshot is already in progress. Skipping...');
@@ -135,7 +138,11 @@ export function scheduleSnapshots(storage: IStorage): void {
     
     if (!hasSnapshotToday) {
       console.log('Creating end-of-day snapshot');
-      await createSnapshot(storage, `End of day snapshot - ${new Date().toLocaleDateString()}`);
+      const date = new Date();
+      const month = date.getUTCMonth() + 1;
+      const day = date.getUTCDate();
+      const year = date.getUTCFullYear();
+      await createSnapshot(storage, `End of day snapshot - ${month}/${day}/${year}`);
     } else {
       console.log('Snapshot already exists for today, updating it');
       // Get the most recent snapshot
@@ -147,7 +154,11 @@ export function scheduleSnapshots(storage: IStorage): void {
         await storage.deleteSnapshot(latestSnapshot.id);
         
         // Create a new one for today with updated data
-        await createSnapshot(storage, `End of day snapshot (updated) - ${new Date().toLocaleDateString()}`);
+        const date = new Date();
+        const month = date.getUTCMonth() + 1;
+        const day = date.getUTCDate();
+        const year = date.getUTCFullYear();
+        await createSnapshot(storage, `End of day snapshot (updated) - ${month}/${day}/${year}`);
       }
     }
   });

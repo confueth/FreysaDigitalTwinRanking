@@ -581,7 +581,7 @@ export default function Analytics({}: AnalyticsProps) {
                       <div className="mb-2 font-medium text-gray-300">Latest Capture</div>
                       <div className="text-xl font-bold text-green-500">
                         {snapshots && snapshots.length > 0 
-                          ? formatDate(snapshots[0].timestamp)
+                          ? formatDate(snapshots[0].timestamp, 'full', true)
                           : 'No data'
                         }
                       </div>
@@ -615,7 +615,7 @@ export default function Analytics({}: AnalyticsProps) {
                     <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
                       <LineChart
                         data={snapshots.map((snapshot: Snapshot) => ({
-                          timestamp: formatDate(snapshot.timestamp),
+                          timestamp: formatDate(snapshot.timestamp, 'full', true),
                           date: new Date(snapshot.timestamp),
                           globalValue: Math.floor(Math.random() * 5000) + 1000
                         }))}
@@ -790,7 +790,9 @@ export default function Analytics({}: AnalyticsProps) {
                         {snapshots.map((snapshot: Snapshot) => (
                           <tr key={snapshot.id} className="border-b border-gray-800 hover:bg-gray-800">
                             <td className="p-2">{snapshot.id}</td>
-                            <td className="p-2">{snapshot.timestamp ? formatDate(snapshot.timestamp, 'full') : 'N/A'}</td>
+                            <td className="p-2">
+                              {snapshot.timestamp ? formatDate(snapshot.timestamp, 'full', true) : 'N/A'}
+                            </td>
                             <td className="p-2">{snapshot.description}</td>
                             <td className="p-2 text-right">
                               <Button 
