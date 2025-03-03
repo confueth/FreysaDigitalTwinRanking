@@ -191,35 +191,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Sort snapshots by time (latest first)
         snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
         
-        // Try to find a snapshot from approximately 24 hours ago
-        const now = new Date();
-        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        // Use snapshot #4 consistently across the application for previous day comparison
+        // This ensures the same snapshot is used for both the agent list and agent detail view
+        const previousSnapshot = snapshots.find(s => s.id === 4);
         
-        let closestSnapshot = null;
-        let minTimeDiff = Infinity;
-        
-        // Find the snapshot closest to 24 hours ago
-        for (const snapshot of snapshots) {
-          const timeDiff = Math.abs(snapshot.timestamp.getTime() - oneDayAgo.getTime());
-          if (timeDiff < minTimeDiff) {
-            minTimeDiff = timeDiff;
-            closestSnapshot = snapshot;
-          }
-        }
-        
-        // If we found a usable snapshot and it's not the same as the current one
-        if (closestSnapshot && agent.snapshotId !== closestSnapshot.id) {
-          console.log(`Using snapshot #${closestSnapshot.id} for previous day comparison`);
+        // If we found the specific snapshot and it's not the same as the current one
+        if (previousSnapshot && agent.snapshotId !== previousSnapshot.id) {
+          console.log(`Using snapshot #${previousSnapshot.id} for previous day comparison`);
           
           // Get the agent data from that snapshot
-          const previousDayAgent = await storage.getAgent(closestSnapshot.id, username);
+          const previousDayAgent = await storage.getAgent(previousSnapshot.id, username);
           
           if (previousDayAgent) {
             // Add previous day data for comparison
             agent.prevScore = previousDayAgent.score;
             agent.prevRank = previousDayAgent.rank;
             // Record when the previous data was collected
-            agent.prevTimestamp = closestSnapshot.timestamp.toISOString();
+            agent.prevTimestamp = previousSnapshot.timestamp.toISOString();
           }
         }
       } catch (historyError) {
