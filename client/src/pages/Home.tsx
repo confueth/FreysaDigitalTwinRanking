@@ -16,7 +16,7 @@ import { formatDate } from '@/utils/formatters';
 import { applyAllFilters } from '@/utils/FilterUtils';
 
 // Constants
-const MY_AGENTS_KEY = 'freysa_my_agents';
+const MY_AGENTS_KEY = 'freysa-my-agents';
 
 export default function Home() {
   const { toast } = useToast();
@@ -208,12 +208,16 @@ export default function Home() {
       });
     }
     
-    // Update localStorage
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(
-      myAgents.includes(username) 
-        ? myAgents.filter(agent => agent !== username) 
-        : [...myAgents, username]
-    ));
+    // Calculate the new list of saved agents
+    const updatedAgents = myAgents.includes(username)
+      ? myAgents.filter(agent => agent !== username)
+      : [...myAgents, username];
+      
+    // Update state with new list
+    setMyAgents(updatedAgents);
+      
+    // Update localStorage with new list
+    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
   };
 
   // Handle agent selection
