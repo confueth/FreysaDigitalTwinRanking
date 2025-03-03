@@ -936,20 +936,27 @@ export default function Analytics({}: AnalyticsProps) {
                           },
                           // Add existing snapshots, sorted by date
                           ...snapshots
-                            .map((snapshot: Snapshot) => {
-                              // Format date consistently with agent comparison chart
+                            // First deduplicate by date
+                            .reduce((unique: {timestamp: string; date: Date; globalValue: number}[], snapshot: Snapshot) => {
+                              // Format date
                               const date = new Date(snapshot.timestamp);
                               const month = date.getMonth() + 1; // 1-12
                               const day = date.getDate(); // 1-31
                               const isToday = new Date().toDateString() === date.toDateString();
+                              const dateStr = isToday ? "Today" : `${month}/${day}`;
                               
-                              return {
-                                timestamp: isToday ? "Today" : `${month}/${day}`,
-                                date: date,
-                                globalValue: Math.floor(Math.random() * 5000) + 1000
-                              };
-                            })
-                            .sort((a: any, b: any) => a.date.getTime() - b.date.getTime()) // Sort chronologically
+                              // Check if we already have this date in our list
+                              const dateExists = unique.some(item => item.timestamp === dateStr);
+                              if (!dateExists) {
+                                unique.push({
+                                  timestamp: dateStr,
+                                  date: date,
+                                  globalValue: Math.floor(Math.random() * 5000) + 1000
+                                });
+                              }
+                              return unique;
+                            }, [])
+                            .sort((a, b) => a.date.getTime() - b.date.getTime()) // Sort chronologically
                         ]}
                         width={500}
                         height={300}
