@@ -55,11 +55,12 @@ export default function MyAgents() {
     localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(myAgents));
   }, [myAgents]);
 
-  // Fetch all agents from the API
+  // Fetch all agents from the API, using limit=0 to get all agents
   const fetchAllAgents = async () => {
     setIsLoadingAgents(true);
     try {
-      const response = await fetch('/api/agents');
+      // Use limit=0 to get all agents (not just top agents)
+      const response = await fetch('/api/agents?limit=0');
       if (response.ok) {
         const data = await response.json();
         setAllAgents(data);
