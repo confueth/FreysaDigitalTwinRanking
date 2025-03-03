@@ -9,7 +9,7 @@ import { XAxis } from 'recharts';
 export function CustomXAxisNoFormatter(props: any) {
   return (
     <XAxis 
-      dataKey="dateString"
+      interval={0}
       tick={{ fill: '#9ca3af' }}
       allowDataOverflow={false}
       {...props}
