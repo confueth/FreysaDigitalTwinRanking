@@ -51,7 +51,7 @@ export default function Analytics({}: AnalyticsProps) {
   const [metric, setMetric] = useState<'score' | 'followers' | 'likes' | 'retweets'>('score');
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   // CSV Generation function
   const generateCsvForSnapshot = (snapshotId: number) => {
     // Fetch the agents for this snapshot - add limit=0 to get all agents
@@ -66,7 +66,7 @@ export default function Analytics({}: AnalyticsProps) {
           });
           return;
         }
-        
+
         // Create CSV headers
         const headers = [
           "Username", 
@@ -79,7 +79,7 @@ export default function Analytics({}: AnalyticsProps) {
           "Previous Score",
           "Previous Rank"
         ].join(",");
-        
+
         // Convert agent data to CSV rows
         const rows = agents.map((agent: Agent) => [
           agent.mastodonUsername,
@@ -92,18 +92,18 @@ export default function Analytics({}: AnalyticsProps) {
           agent.prevScore || "N/A",
           agent.prevRank || "N/A"
         ].join(","));
-        
+
         // Combine headers and rows
         const csvContent = [headers, ...rows].join("\n");
-        
+
         // Create a blob with the CSV content
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        
+
         // Create a link to download the CSV
         const link = document.createElement("a");
         const timestamp = new Date().toISOString().slice(0, 10);
-        
+
         // Get snapshot description if available
         let description = "";
         if (snapshots) {
@@ -112,14 +112,14 @@ export default function Analytics({}: AnalyticsProps) {
             description = `-${snapshotData.description.replace(/[^a-zA-Z0-9]/g, '_')}`;
           }
         }
-        
+
         link.setAttribute("href", url);
         link.setAttribute("download", `leaderboard-snapshot-${snapshotId}${description}-${timestamp}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         toast({
           title: "Success",
           description: `Snapshot #${snapshotId} downloaded successfully`,
@@ -135,7 +135,7 @@ export default function Analytics({}: AnalyticsProps) {
         });
       });
   };
-  
+
   // Fetch snapshots for historical trends
   const { 
     data: snapshots, 
@@ -149,12 +149,12 @@ export default function Analytics({}: AnalyticsProps) {
       return response.json();
     }
   });
-  
+
   // Create snapshot mutation
   const createSnapshotMutation = useMutation({
     mutationFn: async () => {
       const description = `Manual snapshot - ${new Date().toLocaleString()}`;
-      
+
       return fetch('/api/snapshots', {
         method: 'POST',
         body: JSON.stringify({ description }),
@@ -183,7 +183,7 @@ export default function Analytics({}: AnalyticsProps) {
       console.error("Snapshot creation error:", error);
     }
   });
-  
+
   // Fetch top agents for selection
   const { data: topAgents, isLoading: isLoadingTopAgents } = useQuery({
     queryKey: ['/api/agents'],
@@ -193,21 +193,21 @@ export default function Analytics({}: AnalyticsProps) {
       return response.json();
     }
   });
-  
+
   // Fetch history data for selected agents with optimized performance
   const { data: agentHistories, isLoading: isLoadingHistories } = useQuery({
     queryKey: ['/api/agents/history', selectedAgents],
     queryFn: async () => {
       if (selectedAgents.length === 0) return {};
-      
+
       const results: Record<string, Agent[]> = {};
       const controller = new AbortController();
       const signal = controller.signal;
-      
+
       try {
         // Use Promise.all for parallel requests but with a timeout
         const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-        
+
         await Promise.all(
           selectedAgents.map(async (username) => {
             try {
@@ -225,7 +225,7 @@ export default function Analytics({}: AnalyticsProps) {
             }
           })
         );
-        
+
         clearTimeout(timeoutId);
       } catch (error) {
         console.error('Error fetching agent histories:', error);
@@ -236,14 +236,14 @@ export default function Analytics({}: AnalyticsProps) {
           }
         });
       }
-      
+
       return results;
     },
     enabled: selectedAgents.length > 0,
     staleTime: 60000, // Cache for 1 minute to improve performance
     refetchOnWindowFocus: false, // Don't refetch on window focus to reduce unnecessary API calls
   });
-  
+
   const handleAgentSelect = (username: string) => {
     if (selectedAgents.includes(username)) {
       setSelectedAgents(selectedAgents.filter(agent => agent !== username));
@@ -251,35 +251,35 @@ export default function Analytics({}: AnalyticsProps) {
       setSelectedAgents([...selectedAgents, username]);
     }
   };
-  
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-  
+
   const filteredAgents = topAgents?.filter((agent: Agent) => 
     agent.mastodonUsername.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
-  
+
   // Prepare chart data with optimized performance and improved interpolation
   const prepareChartData = (): ChartDataPoint[] => {
     // Immediately return an empty array if no agents are selected
     if (selectedAgents.length === 0) return [];
-    
+
     // Define Feb 22 as the start date for all charts
     const startDate = new Date('2025-02-22T00:00:00Z');
     const startDateStr = startDate.toISOString();
-    
+
     // Create a map of all timestamps, always including Feb 22 and today
     const allTimestamps = new Set<string>();
     const today = new Date();
     const now = today.toISOString();
-    
+
     // Always add Feb 22 as the baseline date
     allTimestamps.add(startDateStr);
-    
+
     // Also add today's date
     allTimestamps.add(now);
-    
+
     // Return early with minimal data if no histories
     if (!agentHistories || Object.keys(agentHistories).length === 0) {
       // If we have at least one selected agent but no history, create minimal points (Feb 22 + today)
@@ -301,12 +301,12 @@ export default function Analytics({}: AnalyticsProps) {
             index: 1
           }
         ];
-        
+
         // Initialize all agent values to zero for Feb 22
         selectedAgents.forEach(username => {
           result[0][username] = 0; // All agents start at 0 on Feb 22
         });
-        
+
         // Add today's data point for each selected agent using live data
         selectedAgents.forEach(username => {
           const agent = topAgents.find((a: Agent) => a.mastodonUsername === username);
@@ -329,21 +329,21 @@ export default function Analytics({}: AnalyticsProps) {
             result[1][username] = 0; // Default to 0 if agent not found
           }
         });
-        
+
         return result;
       }
-      
+
       return [];
     }
-    
+
     // Keep track of agents with sparse data
     const agentDataPoints = new Map<string, Map<string, number>>();
-    
+
     // Initialize the agent data maps
     selectedAgents.forEach(username => {
       agentDataPoints.set(username, new Map<string, number>());
     });
-    
+
     // Get latest agent data (live data) for today's values
     topAgents?.forEach((agent: Agent) => {
       if (selectedAgents.includes(agent.mastodonUsername)) {
@@ -351,7 +351,7 @@ export default function Analytics({}: AnalyticsProps) {
         if (dataMap) {
           // Always set Feb 22 to zero as the baseline
           dataMap.set(startDateStr, 0);
-          
+
           // Set today's live data value
           switch (metric) {
             case 'score':
@@ -370,19 +370,19 @@ export default function Analytics({}: AnalyticsProps) {
         }
       }
     });
-    
+
     // Collect all timestamps and map data points from historical data
     Object.entries(agentHistories).forEach(([username, history]) => {
       // Sort history by timestamp to ensure chronological order
       const sortedHistory = [...history].sort((a, b) => 
         new Date(a.timestamp || '').getTime() - new Date(b.timestamp || '').getTime()
       );
-      
+
       // Add all timestamps to the set
       sortedHistory.forEach(snapshot => {
         if (snapshot.timestamp) {
           allTimestamps.add(snapshot.timestamp);
-          
+
           // Store the metric value for this timestamp
           const dataMap = agentDataPoints.get(username);
           if (dataMap) {
@@ -404,12 +404,12 @@ export default function Analytics({}: AnalyticsProps) {
         }
       });
     });
-    
+
     // Sort timestamps chronologically
     const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => 
       new Date(a).getTime() - new Date(b).getTime()
     );
-    
+
     // Perform data interpolation for sparse datasets
     selectedAgents.forEach(username => {
       const dataMap = agentDataPoints.get(username);
@@ -417,7 +417,7 @@ export default function Analytics({}: AnalyticsProps) {
         // Find missing timestamps and interpolate values
         let lastKnownValue: number | null = null;
         let lastTimestamp: string | null = null;
-        
+
         sortedTimestamps.forEach(timestamp => {
           if (!dataMap.has(timestamp)) {
             // If we have a previous value, use linear interpolation
@@ -426,19 +426,19 @@ export default function Analytics({}: AnalyticsProps) {
               const nextTimestampIndex = sortedTimestamps.findIndex(t => 
                 t > timestamp && dataMap.has(t)
               );
-              
+
               if (nextTimestampIndex !== -1) {
                 const nextTimestamp = sortedTimestamps[nextTimestampIndex];
                 const nextValue = dataMap.get(nextTimestamp) || 0;
-                
+
                 // Perform linear interpolation
                 const lastTime = new Date(lastTimestamp).getTime();
                 const currentTime = new Date(timestamp).getTime();
                 const nextTime = new Date(nextTimestamp).getTime();
-                
+
                 const ratio = (currentTime - lastTime) / (nextTime - lastTime);
                 const interpolatedValue = lastKnownValue + (ratio * (nextValue - lastKnownValue));
-                
+
                 dataMap.set(timestamp, Math.round(interpolatedValue));
               } else {
                 // If no future data point, use the last known value
@@ -453,7 +453,7 @@ export default function Analytics({}: AnalyticsProps) {
         });
       }
     });
-    
+
     // Create data points for each timestamp
     return sortedTimestamps.map((timestamp, index) => {
       // Format the timestamp for display
@@ -461,17 +461,17 @@ export default function Analytics({}: AnalyticsProps) {
       const month = date.getMonth() + 1; // 1-12
       const day = date.getDate(); // 1-31
       const isToday = new Date().toDateString() === date.toDateString();
-      
+
       // Format for display, ensuring each date is properly visible
       let formattedDate = `${month}/${day}`;
-      
+
       // For Feb 22, make it explicitly clear
       if (date.getMonth() === 1 && date.getDate() === 22) {
         formattedDate = "2/22 (Start)";
       } else if (isToday) {
         formattedDate = "Today";
       }
-      
+
       const dataPoint: any = {
         timestamp: timestamp, // Keep the original ISO timestamp
         originalTimestamp: timestamp, // For reference
@@ -479,7 +479,7 @@ export default function Analytics({}: AnalyticsProps) {
         sortValue: date.getTime(), // For sorting
         index: index, // Preserve the order for display
       };
-      
+
       // Add data for each agent at this timestamp
       selectedAgents.forEach(username => {
         const dataMap = agentDataPoints.get(username);
@@ -487,13 +487,13 @@ export default function Analytics({}: AnalyticsProps) {
           dataPoint[username] = dataMap.get(timestamp);
         }
       });
-      
+
       return dataPoint;
     });
   };
 
   const chartData = prepareChartData();
-  
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -508,18 +508,18 @@ export default function Analytics({}: AnalyticsProps) {
           </Button>
         </Link>
       </div>
-      
+
       <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
         Advanced Analytics
       </h1>
-      
+
       <Tabs defaultValue="comparison" className="mb-8">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="comparison">Agent Comparison</TabsTrigger>
           <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
           <TabsTrigger value="snapshots">Snapshot Management</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="comparison" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Agent Selection Panel */}
@@ -549,7 +549,7 @@ export default function Analytics({}: AnalyticsProps) {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="search">Search Agents</Label>
                     <Input
@@ -559,7 +559,7 @@ export default function Analytics({}: AnalyticsProps) {
                       onChange={handleSearchChange}
                     />
                   </div>
-                  
+
                   <div className="h-[400px] overflow-y-auto border rounded-md p-2">
                     {isLoadingTopAgents ? (
                       Array(10).fill(0).map((_, i) => (
@@ -590,14 +590,14 @@ export default function Analytics({}: AnalyticsProps) {
                         </div>
                       ))
                     )}
-                    
+
                     {!isLoadingTopAgents && filteredAgents.length === 0 && (
                       <div className="p-4 text-center text-gray-400">
                         No agents found
                       </div>
                     )}
                   </div>
-                  
+
                   {selectedAgents.length > 0 && (
                     <div className="mt-4">
                       <Button 
@@ -612,7 +612,7 @@ export default function Analytics({}: AnalyticsProps) {
                 </div>
               </CardContent>
             </Card>
-            
+
             {/* Chart Panel */}
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -700,7 +700,7 @@ export default function Analytics({}: AnalyticsProps) {
                     </ResponsiveContainer>
                   </div>
                 )}
-                
+
                 {/* Key Insights */}
                 {selectedAgents.length > 0 && chartData.length > 0 && (
                   <div className="mt-6">
@@ -710,11 +710,11 @@ export default function Analytics({}: AnalyticsProps) {
                         // Get all historical data points
                         const agentData = agentHistories?.[username] || [];
                         if (agentData.length === 0) return null;
-                        
+
                         // For agents with only one data point, we'll show current value without comparison
                         const newestEntry = agentData[0];
                         if (!newestEntry) return null;
-                        
+
                         // Get the current value based on the selected metric
                         let currentValue = 0;
                         switch (metric) {
@@ -731,12 +731,12 @@ export default function Analytics({}: AnalyticsProps) {
                             currentValue = newestEntry.retweetsCount || 0;
                             break;
                         }
-                        
+
                         // Calculate overall change if we have more than one data point
                         let overallChange = 0, percentChange = 0, showOverallChange = false;
                         if (agentData.length > 1) {
                           const oldestEntry = agentData[agentData.length - 1];
-                          
+
                           // Get the oldest value for the selected metric
                           let oldestValue = 0;
                           switch (metric) {
@@ -753,14 +753,14 @@ export default function Analytics({}: AnalyticsProps) {
                               oldestValue = oldestEntry.retweetsCount || 0;
                               break;
                           }
-                          
+
                           if (oldestValue !== undefined) {
                             overallChange = currentValue - oldestValue;
                             percentChange = oldestValue !== 0 ? (overallChange / oldestValue) * 100 : 0;
                             showOverallChange = true;
                           }
                         }
-                        
+
                         // Extract data points for each snapshot
                         const snapshotData = agentData.map(entry => {
                           let value = 0;
@@ -778,14 +778,14 @@ export default function Analytics({}: AnalyticsProps) {
                               value = entry.retweetsCount || 0;
                               break;
                           }
-                          
+
                           return {
                             timestamp: entry.timestamp,
                             value,
                             formattedDate: formatDate(entry.timestamp, 'short', true)
                           };
                         });
-                        
+
                         return (
                           <div 
                             key={username}
@@ -798,13 +798,13 @@ export default function Analytics({}: AnalyticsProps) {
                               ></div>
                               <h3 className="font-semibold">{username}</h3>
                             </div>
-                            
+
                             <div className="flex flex-col space-y-3">
                               <div>
                                 <span className="text-sm font-medium text-gray-300">Current Value:</span>
                                 <span className="text-base text-white ml-2">{formatNumber(currentValue)}</span>
                               </div>
-                              
+
                               {showOverallChange && (
                                 <div>
                                   <span className="text-sm font-medium text-gray-300">Overall Change:</span>
@@ -813,7 +813,7 @@ export default function Analytics({}: AnalyticsProps) {
                                   </span>
                                 </div>
                               )}
-                              
+
                               <div className="pt-3 border-t border-gray-700">
                                 <h4 className="text-sm font-medium text-gray-300 mb-2">Historical Snapshots</h4>
                                 <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
@@ -836,12 +836,12 @@ export default function Analytics({}: AnalyticsProps) {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="trends" className="mt-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-medium">Trend Analysis</h3>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-1">
               <CardHeader>
@@ -876,7 +876,7 @@ export default function Analytics({}: AnalyticsProps) {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
                       <div className="mb-2 font-medium text-gray-300">Data Points</div>
                       <div className="text-2xl font-bold text-green-500">
@@ -886,7 +886,7 @@ export default function Analytics({}: AnalyticsProps) {
                         Historical data snapshots available
                       </div>
                     </div>
-                    
+
                     <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
                       <div className="mb-2 font-medium text-gray-300">Latest Capture</div>
                       <div className="text-xl font-bold text-green-500">
@@ -903,7 +903,7 @@ export default function Analytics({}: AnalyticsProps) {
                 )}
               </CardContent>
             </Card>
-            
+
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle>
@@ -933,6 +933,7 @@ export default function Analytics({}: AnalyticsProps) {
                         height={300}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                         <CustomXAxisNoFormatter 
                           dataKey="timestamp"
                           height={50}
@@ -971,7 +972,7 @@ export default function Analytics({}: AnalyticsProps) {
                     </p>
                   </div>
                 )}
-                
+
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
                     <div className="mb-2 font-medium text-gray-300">Growth Rate</div>
@@ -985,7 +986,7 @@ export default function Analytics({}: AnalyticsProps) {
                       Weekly average change
                     </div>
                   </div>
-                  
+
                   <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
                     <div className="mb-2 font-medium text-gray-300">Peak Value</div>
                     <div className="text-xl font-bold text-amber-500">
@@ -998,7 +999,7 @@ export default function Analytics({}: AnalyticsProps) {
                       Highest recorded value
                     </div>
                   </div>
-                  
+
                   <div className="p-4 rounded-md border border-gray-700 bg-gray-800">
                     <div className="mb-2 font-medium text-gray-300">30-Day Forecast</div>
                     <div className="text-xl font-bold text-blue-500">
@@ -1016,12 +1017,12 @@ export default function Analytics({}: AnalyticsProps) {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="snapshots" className="mt-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-medium">Snapshot Management</h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="md:col-span-1">
               <CardHeader>
@@ -1042,7 +1043,7 @@ export default function Analytics({}: AnalyticsProps) {
                       <p>Daily snapshots are automatically created at midnight UTC</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col space-y-2">
                     <Label>Automatic Updates</Label>
                     <div className="text-sm text-gray-400">
@@ -1052,7 +1053,7 @@ export default function Analytics({}: AnalyticsProps) {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="md:col-span-2">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div>
