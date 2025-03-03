@@ -108,16 +108,19 @@ export async function createSnapshot(
  */
 async function hasSnapshotForToday(storage: IStorage): Promise<boolean> {
   try {
+    // Get today's date in UTC
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Beginning of today
+    // Set to beginning of the day in UTC
+    today.setUTCHours(0, 0, 0, 0);
     
     // Get all snapshots
     const snapshots = await storage.getSnapshots();
     
-    // Check if any snapshot was created today
+    // Check if any snapshot was created today (using UTC)
     return snapshots.some(snapshot => {
       const snapshotDate = new Date(snapshot.timestamp);
-      snapshotDate.setHours(0, 0, 0, 0); // Beginning of the snapshot day
+      // Set to beginning of the snapshot day in UTC
+      snapshotDate.setUTCHours(0, 0, 0, 0);
       return snapshotDate.getTime() === today.getTime();
     });
   } catch (error) {
@@ -187,7 +190,11 @@ async function initializeSnapshot(storage: IStorage): Promise<void> {
     
     if (!hasSnapshotToday) {
       console.log('No snapshot for today found. Creating initial snapshot for today...');
-      await createSnapshot(storage, `Initial snapshot - ${new Date().toLocaleDateString()}`);
+      const date = new Date();
+      const month = date.getUTCMonth() + 1;
+      const day = date.getUTCDate();
+      const year = date.getUTCFullYear();
+      await createSnapshot(storage, `Initial snapshot - ${month}/${day}/${year}`);
     } else {
       console.log('Snapshot for today already exists. No initialization needed.');
     }

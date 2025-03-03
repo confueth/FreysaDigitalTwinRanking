@@ -86,7 +86,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">Game Ends</p>
-                <h3 className="text-lg font-bold truncate" id="gameEnds">{gameStatus?.endsAt ? formatDate(gameStatus.endsAt, 'game-ends') : 'TBD'}</h3>
+                <h3 className="text-lg font-bold truncate" id="gameEnds">{gameStatus?.endsAt ? formatDate(gameStatus.endsAt, 'game-ends', true) : 'TBD'}</h3>
               </div>
               <div className="rounded-full bg-red-500 bg-opacity-20 p-1.5">
                 <Calendar className="h-4 w-4 text-red-500" />
@@ -137,7 +137,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">Snapshot Time</p>
-                <h3 className="text-base font-bold" id="snapshotTime">{formatDate(snapshotTime, 'short')}</h3>
+                <h3 className="text-base font-bold" id="snapshotTime">{formatDate(snapshotTime, 'short', true)}</h3>
               </div>
               <div className="rounded-full bg-green-500 bg-opacity-20 p-1.5">
                 <Clock className="h-4 w-4 text-green-500" />
