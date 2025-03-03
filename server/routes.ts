@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get agent history data
+  // Get agent history data with enhanced performance and data completeness
   app.get("/api/agents/:username/history", async (req: Request, res: Response) => {
     try {
       const username = req.params.username;
@@ -234,15 +234,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // First check if we have this agent in our database
       const historyData = await storage.getAgentHistory(username);
       
+      // Create a map to eliminate duplicates and ensure consistent data
+      const historyMap = new Map();
+      
+      // Add history data from the database if available
       if (historyData && historyData.length > 0) {
-        // Convert agent data to expected API format
-        const formattedData = historyData.map(agent => {
+        // Process and format each historical entry
+        historyData.forEach(agent => {
           // Create snapshot timestamp from creation time if available, or use current time
           const timestamp = agent.bioUpdatedAt 
-            ? agent.bioUpdatedAt.toISOString() 
-            : new Date().toISOString();
-          
-          return {
+            ? agent.bioUpdatedAt.toISOString()
+            : agent.timestamp 
+              ? new Date(agent.timestamp).toISOString()
+              : new Date().toISOString();
+              
+          // Use the timestamp as the key to avoid duplicates
+          historyMap.set(timestamp, {
             id: agent.id.toString(),
             mastodonUsername: agent.mastodonUsername,
             score: agent.score,
@@ -261,61 +268,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
             bioUpdatedAt: agent.bioUpdatedAt?.toISOString(),
             ubiClaimedAt: agent.ubiClaimedAt?.toISOString(),
             timestamp: timestamp
-          };
+          });
         });
-        
-        return res.json(formattedData);
       }
       
-      // If we don't have historical data, get at least the current agent
-      let currentAgent;
-      try {
-        currentAgent = await getLiveAgentDetail(username);
-      } catch (apiError) {
-        console.error(`Error fetching live agent data for ${username}, will try snapshot fallback`, apiError);
-        
-        // Try to get the agent from the most recent snapshot
-        const latestSnapshot = await storage.getLatestSnapshot();
-        if (latestSnapshot) {
-          const agentFromSnapshot = await storage.getAgent(latestSnapshot.id, username);
-          if (agentFromSnapshot) {
-            console.log(`Using agent data from snapshot #${latestSnapshot.id}`);
+      // If we have very few data points, try to get more from snapshots
+      if (historyMap.size < 5) {
+        try {
+          // Get all available snapshots
+          const snapshots = await storage.getSnapshots();
+          
+          // Sort snapshots by timestamp (newest first)
+          snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+          
+          // Get agent data from each snapshot to add more historical points
+          for (const snapshot of snapshots) {
+            // Skip if we already processed this snapshot in the historyData
+            if (historyData.some(h => h.snapshotId === snapshot.id)) {
+              continue;
+            }
             
-            // Convert to the expected format
-            currentAgent = {
-              id: agentFromSnapshot.id.toString(),
-              mastodonUsername: agentFromSnapshot.mastodonUsername,
-              score: agentFromSnapshot.score,
-              prevScore: agentFromSnapshot.prevScore,
-              avatarUrl: agentFromSnapshot.avatarUrl,
-              city: agentFromSnapshot.city,
-              likesCount: agentFromSnapshot.likesCount,
-              followersCount: agentFromSnapshot.followersCount,
-              retweetsCount: agentFromSnapshot.retweetsCount,
-              repliesCount: agentFromSnapshot.repliesCount,
-              rank: agentFromSnapshot.rank,
-              prevRank: agentFromSnapshot.prevRank,
-              walletAddress: agentFromSnapshot.walletAddress,
-              walletBalance: agentFromSnapshot.walletBalance,
-              mastodonBio: agentFromSnapshot.mastodonBio,
-              bioUpdatedAt: agentFromSnapshot.bioUpdatedAt?.toISOString(),
-              ubiClaimedAt: agentFromSnapshot.ubiClaimedAt?.toISOString()
-            };
+            try {
+              const agentFromSnapshot = await storage.getAgent(snapshot.id, username);
+              if (agentFromSnapshot) {
+                const timestamp = snapshot.timestamp.toISOString();
+                
+                // Use the timestamp as the key to avoid duplicates
+                if (!historyMap.has(timestamp)) {
+                  historyMap.set(timestamp, {
+                    id: agentFromSnapshot.id.toString(),
+                    mastodonUsername: agentFromSnapshot.mastodonUsername,
+                    score: agentFromSnapshot.score,
+                    prevScore: agentFromSnapshot.prevScore,
+                    avatarUrl: agentFromSnapshot.avatarUrl,
+                    city: agentFromSnapshot.city,
+                    likesCount: agentFromSnapshot.likesCount,
+                    followersCount: agentFromSnapshot.followersCount,
+                    retweetsCount: agentFromSnapshot.retweetsCount,
+                    repliesCount: agentFromSnapshot.repliesCount,
+                    rank: agentFromSnapshot.rank,
+                    prevRank: agentFromSnapshot.prevRank,
+                    walletAddress: agentFromSnapshot.walletAddress,
+                    walletBalance: agentFromSnapshot.walletBalance,
+                    mastodonBio: agentFromSnapshot.mastodonBio,
+                    bioUpdatedAt: agentFromSnapshot.bioUpdatedAt?.toISOString(),
+                    ubiClaimedAt: agentFromSnapshot.ubiClaimedAt?.toISOString(),
+                    timestamp: timestamp
+                  });
+                }
+              }
+            } catch (snapshotError) {
+              console.error(`Error fetching agent from snapshot #${snapshot.id}:`, snapshotError);
+              // Continue with other snapshots
+            }
+          }
+        } catch (snapshotError) {
+          console.error(`Error fetching snapshots for historical data:`, snapshotError);
+          // Continue with what we have
+        }
+      }
+      
+      // If we still don't have any data points, try live data
+      if (historyMap.size === 0) {
+        try {
+          const currentAgent = await getLiveAgentDetail(username);
+          if (currentAgent) {
+            const timestamp = new Date().toISOString();
+            historyMap.set(timestamp, {
+              ...currentAgent,
+              timestamp: timestamp
+            });
+          }
+        } catch (apiError) {
+          console.error(`Error fetching live agent data for ${username}:`, apiError);
+          // Try to get from latest snapshot as last resort
+          const latestSnapshot = await storage.getLatestSnapshot();
+          if (latestSnapshot) {
+            const agentFromSnapshot = await storage.getAgent(latestSnapshot.id, username);
+            if (agentFromSnapshot) {
+              console.log(`Using agent data from snapshot #${latestSnapshot.id}`);
+              const timestamp = latestSnapshot.timestamp.toISOString();
+              historyMap.set(timestamp, {
+                id: agentFromSnapshot.id.toString(),
+                mastodonUsername: agentFromSnapshot.mastodonUsername,
+                score: agentFromSnapshot.score,
+                prevScore: agentFromSnapshot.prevScore,
+                avatarUrl: agentFromSnapshot.avatarUrl,
+                city: agentFromSnapshot.city,
+                likesCount: agentFromSnapshot.likesCount,
+                followersCount: agentFromSnapshot.followersCount,
+                retweetsCount: agentFromSnapshot.retweetsCount,
+                repliesCount: agentFromSnapshot.repliesCount,
+                rank: agentFromSnapshot.rank,
+                prevRank: agentFromSnapshot.prevRank,
+                walletAddress: agentFromSnapshot.walletAddress,
+                walletBalance: agentFromSnapshot.walletBalance,
+                mastodonBio: agentFromSnapshot.mastodonBio,
+                bioUpdatedAt: agentFromSnapshot.bioUpdatedAt?.toISOString(),
+                ubiClaimedAt: agentFromSnapshot.ubiClaimedAt?.toISOString(),
+                timestamp: timestamp
+              });
+            }
           }
         }
       }
       
-      if (!currentAgent) {
+      // Convert our map to an array
+      const formattedData = Array.from(historyMap.values());
+      
+      // Sort by timestamp (newest first)
+      formattedData.sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      
+      // Check if we have any data
+      if (formattedData.length === 0) {
         return res.status(404).json({ error: "Agent not found" });
       }
       
-      // Return just the current data point
-      const current = {
-        ...currentAgent,
-        timestamp: new Date().toISOString()
-      };
-      
-      res.json([current]);
+      // Return the formatted data
+      res.json(formattedData);
     } catch (error) {
       console.error(`Error fetching agent history ${req.params.username}:`, error);
       res.status(500).json({ 
