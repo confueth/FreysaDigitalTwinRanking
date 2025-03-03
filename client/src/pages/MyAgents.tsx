@@ -55,21 +55,61 @@ export default function MyAgents() {
     localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(myAgents));
   }, [myAgents]);
 
-  // Fetch all agents from the API, using limit=0 to get all agents
+  // Fetch all agents from the API
   const fetchAllAgents = async () => {
     setIsLoadingAgents(true);
     try {
-      // Use limit=0 to get all agents (not just top agents)
-      const response = await fetch('/api/agents?limit=0');
-      if (response.ok) {
-        const data = await response.json();
-        setAllAgents(data);
-        setFilteredAgents(data);
+      // First try to get the latest snapshot ID
+      const snapshotsResponse = await fetch('/api/snapshots');
+      let allAgentData: Agent[] = [];
+      
+      if (snapshotsResponse.ok) {
+        const snapshots = await snapshotsResponse.json();
+        
+        if (snapshots && snapshots.length > 0) {
+          const latestSnapshotId = snapshots[0].id;
+          
+          // Use the snapshot ID to get ALL agents from that snapshot
+          // This endpoint should return all agents without limits
+          const response = await fetch(`/api/snapshots/${latestSnapshotId}/agents`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`Loaded ${data.length} agents from snapshot`);
+            allAgentData = data;
+          } else {
+            // Fallback to regular agents endpoint with explicit high limit
+            console.warn('Failed to load agents from snapshot, trying fallback method');
+            const fallbackResponse = await fetch('/api/agents?limit=10000');
+            if (fallbackResponse.ok) {
+              const fallbackData = await fallbackResponse.json();
+              console.log(`Loaded ${fallbackData.length} agents from fallback method`);
+              allAgentData = fallbackData;
+            }
+          }
+        }
+      }
+      
+      // If we still don't have data, try one last attempt with direct API
+      if (allAgentData.length === 0) {
+        console.warn('Both snapshot and fallback methods failed, trying direct API');
+        const lastAttemptResponse = await fetch('/api/agents?limit=5000');
+        if (lastAttemptResponse.ok) {
+          const lastAttemptData = await lastAttemptResponse.json();
+          console.log(`Loaded ${lastAttemptData.length} agents from last attempt`);
+          allAgentData = lastAttemptData;
+        }
+      }
+      
+      // Update state with whatever data we have
+      if (allAgentData.length > 0) {
+        setAllAgents(allAgentData);
+        setFilteredAgents(allAgentData);
       } else {
         toast({
-          title: 'Error',
-          description: 'Failed to load agents',
-          variant: 'destructive'
+          title: 'Warning',
+          description: 'Limited agent data available. Search may not include all agents.',
+          variant: 'default'
         });
       }
     } catch (error) {
@@ -376,9 +416,20 @@ export default function MyAgents() {
                       }
                     </p>
                     {searchQuery.trim() && (
-                      <p className="text-sm text-gray-500">
-                        Try a different search term or browse the full list
-                      </p>
+                      <>
+                        <p className="text-sm text-gray-500 mb-3">
+                          Agent not found in the dataset? You can still add them manually:
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-emerald-900/30 text-emerald-400 border-emerald-700"
+                          onClick={() => addToMyAgents(searchQuery.trim())}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add "{searchQuery.trim()}" to My Agents
+                        </Button>
+                      </>
                     )}
                     {showMyAgentsOnly && myAgents.length === 0 && (
                       <Button
