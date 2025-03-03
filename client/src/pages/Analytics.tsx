@@ -303,19 +303,64 @@ export default function Analytics({}: AnalyticsProps) {
     setSearchQuery(e.target.value);
   };
 
-  // Improved agent filtering with more accurate search
+  // Enhanced agent filtering for maximum discoverability
   const filteredAgents = React.useMemo(() => {
     if (!topAgents || topAgents.length === 0) return [];
     if (!searchQuery.trim()) return topAgents;
     
     const searchTermLower = searchQuery.toLowerCase().trim();
     
-    return topAgents.filter((agent: Agent) => {
-      // Case-insensitive username search
+    // First look for exact matches to prioritize them
+    const exactMatches = topAgents.filter((agent: Agent) => {
       const username = agent.mastodonUsername?.toLowerCase() || '';
-      return username.includes(searchTermLower);
+      return username === searchTermLower;
     });
+    
+    // Then look for partial matches
+    const partialMatches = topAgents.filter((agent: Agent) => {
+      const username = agent.mastodonUsername?.toLowerCase() || '';
+      return username.includes(searchTermLower) && username !== searchTermLower;
+    });
+    
+    // If we have exact matches, return them first followed by partial matches
+    // Otherwise, return all partial matches
+    return [...exactMatches, ...partialMatches];
   }, [topAgents, searchQuery]);
+  
+  // Handle special case when an agent isn't found but user wants to add them
+  const handleCustomAgentSelect = async () => {
+    if (!searchQuery.trim()) return;
+    
+    // Check if the agent already exists in the selection
+    if (selectedAgents.includes(searchQuery)) {
+      toast({
+        title: "Already Selected",
+        description: `${searchQuery} is already in your comparison.`,
+      });
+      return;
+    }
+    
+    // Check if we've reached the maximum number of agents
+    if (selectedAgents.length >= 5) {
+      toast({
+        title: "Maximum Reached",
+        description: "You can only compare up to 5 agents at once.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Add the custom agent to the selection
+    setSelectedAgents([...selectedAgents, searchQuery]);
+    
+    // Clear the search query
+    setSearchQuery('');
+    
+    toast({
+      title: "Agent Added",
+      description: `${searchQuery} has been added to your comparison.`,
+    });
+  };
 
   // Prepare chart data with optimized performance and improved interpolation
   const prepareChartData = (): ChartDataPoint[] => {
@@ -696,12 +741,23 @@ export default function Analytics({}: AnalyticsProps) {
 
                   <div className="space-y-2">
                     <Label htmlFor="search">Search Agents</Label>
-                    <Input
-                      id="search"
-                      placeholder="Search by username"
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="search"
+                        placeholder="Search by username"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                      />
+                      {searchQuery.trim() && filteredAgents.length === 0 && (
+                        <Button
+                          className="whitespace-nowrap"
+                          onClick={handleCustomAgentSelect}
+                          disabled={selectedAgents.length >= 5}
+                        >
+                          Add
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="h-[400px] overflow-y-auto border rounded-md p-2">
@@ -711,7 +767,7 @@ export default function Analytics({}: AnalyticsProps) {
                           <Skeleton className="h-8 w-full" />
                         </div>
                       ))
-                    ) : (
+                    ) : filteredAgents.length > 0 ? (
                       filteredAgents.map((agent: Agent) => (
                         <div 
                           key={agent.mastodonUsername}
@@ -726,6 +782,9 @@ export default function Analytics({}: AnalyticsProps) {
                                 src={agent.avatarUrl} 
                                 alt={agent.mastodonUsername}
                                 className="w-6 h-6 rounded-full mr-2"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                                }}
                               />
                             )}
                             <span>{agent.mastodonUsername}</span>
@@ -733,13 +792,23 @@ export default function Analytics({}: AnalyticsProps) {
                           <span className="text-sm text-gray-400">{formatNumber(agent.score)}</span>
                         </div>
                       ))
-                    )}
-
-                    {!isLoadingTopAgents && filteredAgents.length === 0 && (
-                      <div className="p-4 text-center text-gray-400">
-                        No agents found
+                    ) : searchQuery.trim() ? (
+                      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+                        <p className="text-gray-400 mb-4">No agents found with the name "{searchQuery}"</p>
+                        <Button
+                          onClick={handleCustomAgentSelect}
+                          disabled={selectedAgents.length >= 5}
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          Add "{searchQuery}" to Compare
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-gray-400 text-center p-4">
+                        {topAgents?.length > 0 ? `${topAgents.length} agents available. Start typing to filter.` : "No agents available."}
                       </div>
                     )}
+                  
                   </div>
 
                   {selectedAgents.length > 0 && (
