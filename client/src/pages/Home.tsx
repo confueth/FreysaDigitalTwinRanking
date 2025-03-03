@@ -272,9 +272,15 @@ export default function Home() {
     
     // If showing only My Agents, further filter by myAgents list
     if (showMyAgentsOnly && myAgents.length > 0) {
+      // Debug log to check the filter is being applied
+      console.log(`Filtering to show only ${myAgents.length} saved agents`);
+      
       const myAgentsFiltered = filtered.filteredAgents.filter(agent => 
         myAgents.includes(agent.mastodonUsername)
       );
+      
+      console.log(`Found ${myAgentsFiltered.length} matching agents from my list`);
+      
       return {
         filteredAgents: myAgentsFiltered,
         totalCount: myAgentsFiltered.length
