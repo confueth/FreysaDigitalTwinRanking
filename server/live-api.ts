@@ -540,8 +540,9 @@ export async function getLiveStats() {
 
 /**
  * Get available cities from the data
+ * @returns Array of city names
  */
-export function getAvailableCities() {
+export function getAvailableCities(): string[] {
   if (cachedCities) {
     // Convert Set to Array for API response
     return Array.from(cachedCities);
