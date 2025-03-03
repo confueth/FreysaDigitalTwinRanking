@@ -31,8 +31,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
       };
       
-      // Get live data from API
-      const liveData = await getLiveLeaderboardData();
+      // Get live data from API with fallback to snapshot data
+      let liveData;
+      try {
+        console.log("Fetching fresh leaderboard data");
+        liveData = await getLiveLeaderboardData();
+      } catch (apiError) {
+        console.error("Error fetching live data, will attempt to use snapshot data", apiError);
+        
+        // Fallback to latest snapshot data if live API fails
+        const latestSnapshot = await storage.getLatestSnapshot();
+        if (latestSnapshot) {
+          console.log(`Falling back to snapshot #${latestSnapshot.id} data`);
+          liveData = await storage.getAgents(latestSnapshot.id);
+        } else {
+          throw new Error("No fallback data available");
+        }
+      }
       
       // Apply filters
       const { agents, totalCount } = filterAgents(liveData, filters);
@@ -45,7 +60,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(agents);
     } catch (error) {
       console.error("Error fetching agents:", error);
-      res.status(500).json({ error: "Failed to fetch agents data" });
+      res.status(500).json({ 
+        error: "Failed to fetch agents data",
+        message: "Please try again later. Using fallback snapshot data when available." 
+      });
     }
   });
 
@@ -53,7 +71,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/agents/:username", async (req: Request, res: Response) => {
     try {
       const username = req.params.username;
-      const agent = await getLiveAgentDetail(username);
+      let agent;
+      
+      try {
+        // First attempt to get live data
+        agent = await getLiveAgentDetail(username);
+      } catch (apiError) {
+        console.error(`Error fetching live agent data for ${username}, attempting to use snapshot data`, apiError);
+        
+        // Fallback to latest snapshot data
+        const latestSnapshot = await storage.getLatestSnapshot();
+        if (latestSnapshot) {
+          console.log(`Falling back to snapshot #${latestSnapshot.id} data for agent ${username}`);
+          agent = await storage.getAgent(latestSnapshot.id, username);
+        } else {
+          throw new Error("No fallback data available");
+        }
+      }
       
       if (!agent) {
         return res.status(404).json({ error: "Agent not found" });
@@ -62,7 +96,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(agent);
     } catch (error) {
       console.error(`Error fetching agent ${req.params.username}:`, error);
-      res.status(500).json({ error: "Failed to fetch agent data" });
+      res.status(500).json({ 
+        error: "Failed to fetch agent data",
+        message: "Please try again later. Using fallback snapshot data when available."
+      });
     }
   });
 
@@ -108,7 +145,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // If we don't have historical data, get at least the current agent
-      const currentAgent = await getLiveAgentDetail(username);
+      let currentAgent;
+      try {
+        currentAgent = await getLiveAgentDetail(username);
+      } catch (apiError) {
+        console.error(`Error fetching live agent data for ${username}, will try snapshot fallback`, apiError);
+        
+        // Try to get the agent from the most recent snapshot
+        const latestSnapshot = await storage.getLatestSnapshot();
+        if (latestSnapshot) {
+          const agentFromSnapshot = await storage.getAgent(latestSnapshot.id, username);
+          if (agentFromSnapshot) {
+            console.log(`Using agent data from snapshot #${latestSnapshot.id}`);
+            
+            // Convert to the expected format
+            currentAgent = {
+              id: agentFromSnapshot.id.toString(),
+              mastodonUsername: agentFromSnapshot.mastodonUsername,
+              score: agentFromSnapshot.score,
+              prevScore: agentFromSnapshot.prevScore,
+              avatarUrl: agentFromSnapshot.avatarUrl,
+              city: agentFromSnapshot.city,
+              likesCount: agentFromSnapshot.likesCount,
+              followersCount: agentFromSnapshot.followersCount,
+              retweetsCount: agentFromSnapshot.retweetsCount,
+              repliesCount: agentFromSnapshot.repliesCount,
+              rank: agentFromSnapshot.rank,
+              prevRank: agentFromSnapshot.prevRank,
+              walletAddress: agentFromSnapshot.walletAddress,
+              walletBalance: agentFromSnapshot.walletBalance,
+              mastodonBio: agentFromSnapshot.mastodonBio,
+              bioUpdatedAt: agentFromSnapshot.bioUpdatedAt?.toISOString(),
+              ubiClaimedAt: agentFromSnapshot.ubiClaimedAt?.toISOString()
+            };
+          }
+        }
+      }
       
       if (!currentAgent) {
         return res.status(404).json({ error: "Agent not found" });
@@ -123,7 +195,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json([current]);
     } catch (error) {
       console.error(`Error fetching agent history ${req.params.username}:`, error);
-      res.status(500).json({ error: "Failed to fetch agent history" });
+      res.status(500).json({ 
+        error: "Failed to fetch agent history",
+        message: "Please try again later. Using fallback snapshot data when available."
+      });
     }
   });
   
