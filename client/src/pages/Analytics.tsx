@@ -290,13 +290,13 @@ export default function Analytics({}: AnalyticsProps) {
         const result = [
           {
             timestamp: '2/22', 
-            dateString: '2/22 (Start)',
+            dateString: '2/22',
             originalTimestamp: startDateStr,
             sortValue: startDate.getTime(),
             index: 0
           },
           {
-            timestamp: 'Today (Live)', 
+            timestamp: 'Today', 
             dateString: 'Today',
             originalTimestamp: now,
             sortValue: todayDate.getTime(),
