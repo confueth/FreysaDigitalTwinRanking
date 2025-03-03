@@ -187,6 +187,34 @@ export default function Home() {
     // Reset to page 1 when switching views
     setFilters(prev => ({ ...prev, page: 1 }));
   };
+  
+  // Handle toggling save/unsave agent
+  const handleToggleSaveAgent = (username: string) => {
+    if (myAgents.includes(username)) {
+      // Remove from saved agents
+      setMyAgents(prev => prev.filter(agent => agent !== username));
+      
+      toast({
+        title: 'Agent Removed',
+        description: `${username} has been removed from your saved agents.`
+      });
+    } else {
+      // Add to saved agents
+      setMyAgents(prev => [...prev, username]);
+      
+      toast({
+        title: 'Agent Saved',
+        description: `${username} has been added to your saved agents.`
+      });
+    }
+    
+    // Update localStorage
+    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(
+      myAgents.includes(username) 
+        ? myAgents.filter(agent => agent !== username) 
+        : [...myAgents, username]
+    ));
+  };
 
   // Handle agent selection
   const handleAgentSelect = (username: string) => {
@@ -445,6 +473,7 @@ export default function Home() {
               pageSize={filters.limit || 25}
               isLoading={isLoading}
               savedAgents={myAgents}
+              onToggleSaveAgent={handleToggleSaveAgent}
             />
             
             {/* City Statistics */}
@@ -499,6 +528,7 @@ export default function Home() {
                 pageSize={filters.limit || 25}
                 isLoading={isLoading}
                 savedAgents={myAgents}
+                onToggleSaveAgent={handleToggleSaveAgent}
               />
             </div>
             

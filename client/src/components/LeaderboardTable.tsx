@@ -28,6 +28,7 @@ interface LeaderboardTableProps {
   pageSize: number;
   isLoading: boolean;
   savedAgents?: string[]; // Optional array of saved agent usernames to highlight
+  onToggleSaveAgent?: (username: string) => void; // Optional callback to toggle save/unsave
 }
 
 export default function LeaderboardTable({
@@ -38,7 +39,8 @@ export default function LeaderboardTable({
   totalAgents,
   pageSize,
   isLoading,
-  savedAgents = []
+  savedAgents = [],
+  onToggleSaveAgent
 }: LeaderboardTableProps) {
   // Calculate total pages
   const totalPages = Math.ceil(totalAgents / pageSize);
@@ -131,18 +133,36 @@ export default function LeaderboardTable({
           </div>
         </TableCell>
         <TableCell className="px-2 py-3 whitespace-nowrap text-right">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-primary hover:text-primary-dark p-1 h-7 w-7"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAgentSelect(agent.mastodonUsername);
-            }}
-          >
-            <Eye className="h-4 w-4" />
-            <span className="sr-only">View</span>
-          </Button>
+          <div className="flex justify-end space-x-1">
+            {/* Save/Unsave button */}
+            {onToggleSaveAgent && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`p-1 h-7 w-7 ${isSaved ? 'text-emerald-400 hover:text-emerald-300' : 'text-gray-400 hover:text-gray-300'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSaveAgent(agent.mastodonUsername);
+                }}
+              >
+                <span className="text-base">{isSaved ? '★' : '☆'}</span>
+                <span className="sr-only">{isSaved ? 'Remove from saved' : 'Save agent'}</span>
+              </Button>
+            )}
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary hover:text-primary-dark p-1 h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAgentSelect(agent.mastodonUsername);
+              }}
+            >
+              <Eye className="h-4 w-4" />
+              <span className="sr-only">View</span>
+            </Button>
+          </div>
         </TableCell>
       </TableRow>
     );
@@ -201,18 +221,36 @@ export default function LeaderboardTable({
           <div className="text-sm">{formatCompactNumber(agent.retweetsCount)}</div>
         </TableCell>
         <TableCell className="px-4 py-3 whitespace-nowrap text-right">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-primary hover:text-primary-dark"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAgentSelect(agent.mastodonUsername);
-            }}
-          >
-            <Eye className="h-5 w-5" />
-            <span className="sr-only">View</span>
-          </Button>
+          <div className="flex justify-end space-x-2">
+            {/* Save/Unsave button */}
+            {onToggleSaveAgent && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`${isSaved ? 'text-emerald-400 hover:text-emerald-300' : 'text-gray-400 hover:text-gray-300'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSaveAgent(agent.mastodonUsername);
+                }}
+              >
+                <span className="text-xl">{isSaved ? '★' : '☆'}</span>
+                <span className="sr-only">{isSaved ? 'Remove from saved' : 'Save agent'}</span>
+              </Button>
+            )}
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-primary hover:text-primary-dark"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAgentSelect(agent.mastodonUsername);
+              }}
+            >
+              <Eye className="h-5 w-5" />
+              <span className="sr-only">View</span>
+            </Button>
+          </div>
         </TableCell>
       </TableRow>
     );
