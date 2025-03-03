@@ -150,6 +150,51 @@ export default function Analytics({}: AnalyticsProps) {
       return response.json();
     }
   });
+  
+  // Cache snapshot agent data by snapshotId
+  const [snapshotAgentsCache, setSnapshotAgentsCache] = useState<Record<number, Agent[]>>({});
+  
+  // Fetch agents for each snapshot when snapshots are loaded
+  useEffect(() => {
+    const fetchSnapshotAgents = async () => {
+      if (!snapshots || snapshots.length === 0) return;
+      
+      const newCache: Record<number, Agent[]> = {};
+      
+      // Fetch agent data for each snapshot concurrently
+      await Promise.all(snapshots.map(async (snapshot: Snapshot) => {
+        if (snapshotAgentsCache[snapshot.id]) {
+          // Use cached data if available
+          newCache[snapshot.id] = snapshotAgentsCache[snapshot.id];
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/api/snapshots/${snapshot.id}/agents?limit=0`);
+          if (!response.ok) {
+            console.warn(`Failed to fetch agents for snapshot ${snapshot.id}`);
+            return;
+          }
+          
+          const agents = await response.json();
+          
+          // Add timestamp to agents for consistency with history data
+          const agentsWithTimestamp = agents.map((agent: Agent) => ({
+            ...agent,
+            timestamp: snapshot.timestamp
+          }));
+          
+          newCache[snapshot.id] = agentsWithTimestamp;
+        } catch (error) {
+          console.error(`Error fetching agents for snapshot ${snapshot.id}:`, error);
+        }
+      }));
+      
+      setSnapshotAgentsCache(prev => ({...prev, ...newCache}));
+    };
+    
+    fetchSnapshotAgents();
+  }, [snapshots]);
 
   // Create snapshot mutation
   const createSnapshotMutation = useMutation({
@@ -287,7 +332,14 @@ export default function Analytics({}: AnalyticsProps) {
       // If we have at least one selected agent but no history, create minimal points (Feb 22 + today)
       if (selectedAgents.length > 0 && topAgents?.length) {
         // Create a result array with Feb 22 (0 values) and today's values
-        const result = [
+        const result: Array<{
+          timestamp: string;
+          dateString: string;
+          originalTimestamp: string;
+          sortValue: number;
+          index: number;
+          [key: string]: string | number; // Allow dynamic agent usernames as keys
+        }> = [
           {
             timestamp: '2/22', 
             dateString: '2/22',
@@ -406,6 +458,50 @@ export default function Analytics({}: AnalyticsProps) {
         }
       });
     });
+    
+    // Add data from snapshots to fill any gaps
+    // This is crucial for ensuring March 2nd and other snapshots are properly represented
+    if (snapshots && snapshots.length > 0) {
+      // Process each snapshot
+      snapshots.forEach((snapshot: Snapshot) => {
+        const snapshotId = snapshot.id;
+        const timestamp = snapshot.timestamp;
+        
+        // Skip if we don't have agents for this snapshot
+        if (!snapshotAgentsCache[snapshotId]) return;
+        
+        // Add this timestamp to the set of all timestamps
+        allTimestamps.add(timestamp);
+        
+        // Look for selected agents in this snapshot
+        selectedAgents.forEach(username => {
+          const agent = snapshotAgentsCache[snapshotId]?.find(
+            (a: Agent) => a.mastodonUsername === username
+          );
+          
+          if (agent) {
+            // Found this agent in the snapshot, add data point
+            const dataMap = agentDataPoints.get(username);
+            if (dataMap) {
+              switch (metric) {
+                case 'score':
+                  dataMap.set(timestamp, agent.score);
+                  break;
+                case 'followers':
+                  dataMap.set(timestamp, agent.followersCount || 0);
+                  break;
+                case 'likes':
+                  dataMap.set(timestamp, agent.likesCount || 0);
+                  break;
+                case 'retweets':
+                  dataMap.set(timestamp, agent.retweetsCount || 0);
+                  break;
+              }
+            }
+          }
+        });
+      });
+    }
 
     // Sort timestamps chronologically
     // Filter out today's snapshot if it exists - we'll only use live data for today
@@ -502,7 +598,15 @@ export default function Analytics({}: AnalyticsProps) {
         formattedDate = "Today";
       }
 
-      const dataPoint: any = {
+      // Use a dynamic object with string indexing for agent data
+      const dataPoint: {
+        timestamp: string;
+        originalTimestamp: string;
+        dateString: string;
+        sortValue: number;
+        index: number;
+        [key: string]: string | number; // Allow dynamic agent usernames as keys
+      } = {
         timestamp: timestamp, // Keep the original ISO timestamp
         originalTimestamp: timestamp, // For reference
         dateString: formattedDate, // Human-readable format for the x-axis
@@ -514,7 +618,7 @@ export default function Analytics({}: AnalyticsProps) {
       selectedAgents.forEach(username => {
         const dataMap = agentDataPoints.get(username);
         if (dataMap && dataMap.has(timestamp)) {
-          dataPoint[username] = dataMap.get(timestamp);
+          dataPoint[username] = dataMap.get(timestamp) || 0;
         }
       });
 
