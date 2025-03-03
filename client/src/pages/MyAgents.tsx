@@ -76,7 +76,26 @@ export default function MyAgents() {
           if (response.ok) {
             const data = await response.json();
             console.log(`Loaded ${data.length} agents from snapshot`);
-            allAgentData = data;
+            
+            // If we got less than 1000 agents, the server might be applying a limit
+            // Let's make another request with a higher explicit limit
+            if (data.length < 1000) {
+              console.log(`Got only ${data.length} agents, trying with explicit high limit`);
+              const highLimitResponse = await fetch(`/api/snapshots/${latestSnapshotId}/agents?limit=10000`);
+              if (highLimitResponse.ok) {
+                const highLimitData = await highLimitResponse.json();
+                if (highLimitData.length > data.length) {
+                  console.log(`Got ${highLimitData.length} agents with high limit, using those instead`);
+                  allAgentData = highLimitData;
+                } else {
+                  allAgentData = data;
+                }
+              } else {
+                allAgentData = data;
+              }
+            } else {
+              allAgentData = data;
+            }
           } else {
             // Fallback to regular agents endpoint with explicit high limit
             console.warn('Failed to load agents from snapshot, trying fallback method');
@@ -223,19 +242,46 @@ export default function MyAgents() {
 
   // Add an agent to my agents list
   const addToMyAgents = (username: string) => {
-    if (myAgents.includes(username)) {
+    // Clean the username - remove @ if present and trim whitespace
+    const cleanUsername = username.trim().replace(/^@/, '');
+    
+    if (!cleanUsername) {
       toast({
-        title: 'Already Saved',
-        description: `${username} is already in your agents list.`
+        title: 'Invalid Username',
+        description: 'Please enter a valid username'
       });
       return;
     }
     
-    setMyAgents(prev => [...prev, username]);
-    toast({
-      title: 'Agent Added',
-      description: `${username} has been added to your agents.`
-    });
+    if (myAgents.includes(cleanUsername)) {
+      toast({
+        title: 'Already Saved',
+        description: `${cleanUsername} is already in your agents list.`
+      });
+      return;
+    }
+    
+    // Check if this agent exists in our dataset
+    const existingAgent = allAgents.find(
+      a => a.mastodonUsername.toLowerCase() === cleanUsername.toLowerCase()
+    );
+    
+    if (existingAgent) {
+      // If agent exists in our data, use their full profile
+      setMyAgents(prev => [...prev, existingAgent.mastodonUsername]);
+      toast({
+        title: 'Agent Added',
+        description: `${existingAgent.mastodonUsername} has been added to your agents.`
+      });
+    } else {
+      // If agent doesn't exist, add the custom username
+      setMyAgents(prev => [...prev, cleanUsername]);
+      toast({
+        variant: 'default',
+        title: 'Custom Agent Added',
+        description: `${cleanUsername} has been added to your agents. This agent may not appear in analytics until they join the leaderboard.`
+      });
+    }
   };
 
   // Remove an agent from my agents list

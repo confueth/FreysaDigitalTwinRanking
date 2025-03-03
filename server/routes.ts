@@ -28,7 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         city: req.query.city as string | undefined,
         sortBy: req.query.sortBy as "score" | "score_asc" | "followers" | "likes" | "retweets" | undefined,
         page: req.query.page ? parseInt(req.query.page as string) : 1,
-        limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
+        limit: req.query.limit ? (parseInt(req.query.limit as string) === 0 ? 100000 : parseInt(req.query.limit as string)) : 50,
       };
       
       // Get live data from API with fallback to snapshot data
@@ -639,7 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         city: req.query.city as string | undefined,
         sortBy: req.query.sortBy as "score" | "score_asc" | "followers" | "likes" | "retweets" | undefined,
         page: req.query.page ? parseInt(req.query.page as string) : 1,
-        limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
+        limit: req.query.limit ? (parseInt(req.query.limit as string) === 0 ? 100000 : parseInt(req.query.limit as string)) : 50,
       };
       
       // Check if the snapshot exists
