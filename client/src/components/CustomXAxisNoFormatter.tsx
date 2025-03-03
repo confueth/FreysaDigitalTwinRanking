@@ -1,4 +1,3 @@
-import React from 'react';
 import { XAxis } from 'recharts';
 
 /**
@@ -6,9 +5,9 @@ import { XAxis } from 'recharts';
  * This is used to fix the NaN/NaN error when displaying a single agent
  * while still showing formatted dates
  */
-export function CustomXAxisNoFormatter(props: React.ComponentProps<typeof XAxis>) {
+export function CustomXAxisNoFormatter(props: any) {
   // Helper function to safely format a date value
-  const safeFormatDate = (value: string | number): string => {
+  const safeFormatDate = (value: any): string => {
     // If value is already a formatted string, return it
     if (typeof value === 'string') {
       // If it contains a slash or is "Today", it's already formatted
@@ -32,13 +31,16 @@ export function CustomXAxisNoFormatter(props: React.ComponentProps<typeof XAxis>
     return String(value);
   };
   
+  // Create new props without type issues
+  const safeProps = { ...props };
+  
   return (
     <XAxis 
       dataKey="dateString"
       tick={{ fill: '#9ca3af' }}
-      // We use the preformatted dateString so no need for separate formatting
+      tickFormatter={safeFormatDate}
       allowDataOverflow={false}
-      {...props}
+      {...safeProps}
     />
   );
 }
