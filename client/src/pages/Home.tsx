@@ -34,9 +34,10 @@ export default function Home() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   
-  // Use the latest snapshot ID, fallback to 3 if not available yet
+  // Get the latest snapshot ID from the snapshots array
   const latestSnapshot = snapshots && snapshots.length > 0 ? snapshots[0] : null;
-  const [selectedSnapshot, setSelectedSnapshot] = useState<number>(3);
+  // Don't set a default value initially to avoid 404 errors
+  const [selectedSnapshot, setSelectedSnapshot] = useState<number | null>(null);
   
   // Update selected snapshot when snapshots data loads
   useEffect(() => {
@@ -125,7 +126,8 @@ export default function Home() {
         limit: 2000
       }
     ],
-    enabled: !!selectedSnapshot && !!liveDataError, // Only run this query if live data fails
+    // Only run this query if we have a valid snapshot ID AND live data fails
+    enabled: !!selectedSnapshot && !!liveDataError,
     staleTime: 10 * 60 * 1000, // 10 minutes - snapshots change less frequently
     gcTime: 20 * 60 * 1000, // 20 minutes
   });
@@ -133,6 +135,7 @@ export default function Home() {
   // Query stats for the selected snapshot - optimized with longer cache time
   const { data: stats } = useQuery<SnapshotStats | undefined>({
     queryKey: [`/api/snapshots/${selectedSnapshot}/stats`],
+    // Only run when we have a valid snapshot ID
     enabled: !!selectedSnapshot,
     staleTime: 5 * 60 * 1000, // 5 minutes - reduce repeated fetches
     gcTime: 10 * 60 * 1000, // Keep in memory longer
@@ -201,11 +204,14 @@ export default function Home() {
       queryKey: [`/api/agents`] 
     });
     
-    // Also invalidate stats if we have a selected snapshot for timeline view
-    if (selectedSnapshot) {
+    // Also invalidate stats if we have a valid selected snapshot
+    if (selectedSnapshot !== null) {
+      console.log(`Refreshing snapshot #${selectedSnapshot} stats`);
       queryClient.invalidateQueries({ 
         queryKey: [`/api/snapshots/${selectedSnapshot}/stats`] 
       });
+    } else {
+      console.log('No valid snapshot selected, skipping snapshot stats refresh');
     }
     
     // Invalidate cities list
