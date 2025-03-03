@@ -684,16 +684,7 @@ export default function Analytics({}: AnalyticsProps) {
                         />
                         <Tooltip 
                           formatter={(value: any) => [formatNumber(value), ""]}
-                          labelFormatter={(label) => {
-                            // Find the data point with this label
-                            const point = chartData.find(p => p.dateString === label);
-                            if (point && point.originalTimestamp) {
-                              const date = new Date(point.originalTimestamp);
-                              // Format a full date for the tooltip
-                              return `Date: ${date.toLocaleDateString()}`;
-                            }
-                            return `Date: ${label}`;
-                          }}
+                          labelFormatter={(label) => `Date: ${label}`}
                           contentStyle={{ backgroundColor: "#1f2937", borderColor: "#374151" }}
                         />
                         <Legend />
@@ -939,18 +930,26 @@ export default function Analytics({}: AnalyticsProps) {
                         data={[
                           // Add baseline data point for February 22
                           {
-                            timestamp: "2/22 (Start)",
+                            timestamp: "2/22",
                             date: new Date(2025, 1, 22), // Feb 22, 2025
                             globalValue: 0 // Starting value
                           },
                           // Add existing snapshots, sorted by date
                           ...snapshots
-                            .map((snapshot: Snapshot) => ({
-                              timestamp: formatDate(snapshot.timestamp, 'short', true).replace(/\d{4}$/, ''), // Remove year
-                              date: new Date(snapshot.timestamp),
-                              globalValue: Math.floor(Math.random() * 5000) + 1000
-                            }))
-                            .sort((a, b) => a.date.getTime() - b.date.getTime()) // Sort chronologically
+                            .map((snapshot: Snapshot) => {
+                              // Format date consistently with agent comparison chart
+                              const date = new Date(snapshot.timestamp);
+                              const month = date.getMonth() + 1; // 1-12
+                              const day = date.getDate(); // 1-31
+                              const isToday = new Date().toDateString() === date.toDateString();
+                              
+                              return {
+                                timestamp: isToday ? "Today" : `${month}/${day}`,
+                                date: date,
+                                globalValue: Math.floor(Math.random() * 5000) + 1000
+                              };
+                            })
+                            .sort((a: any, b: any) => a.date.getTime() - b.date.getTime()) // Sort chronologically
                         ]}
                         width={500}
                         height={300}
@@ -975,11 +974,7 @@ export default function Analytics({}: AnalyticsProps) {
                         />
                         <Tooltip 
                           formatter={(value: any) => [formatNumber(value), ""]}
-                          labelFormatter={(label) => {
-                            // For the trend analysis chart, we get date strings from formatDate
-                            // which already have a formatted appearance
-                            return `Date: ${label}`;
-                          }}
+                          labelFormatter={(label) => `Date: ${label}`}
                           contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151' }}
                         />
                         <Line 
