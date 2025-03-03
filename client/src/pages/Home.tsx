@@ -126,8 +126,10 @@ export default function Home() {
         limit: 2000
       }
     ],
-    // Only run this query if we have a valid snapshot ID AND live data fails
-    enabled: !!selectedSnapshot && !!liveDataError,
+    // Only run this query if we have a valid snapshot ID AND either:
+    // 1. The live data request failed with an error, OR
+    // 2. The live data returned an empty array (API down but returns empty)
+    enabled: !!selectedSnapshot && (!!liveDataError || (agents && agents.length === 0)),
     staleTime: 10 * 60 * 1000, // 10 minutes - snapshots change less frequently
     gcTime: 20 * 60 * 1000, // 20 minutes
   });
