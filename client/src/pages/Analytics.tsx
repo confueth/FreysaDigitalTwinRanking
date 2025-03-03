@@ -381,10 +381,14 @@ export default function Analytics({}: AnalyticsProps) {
       const date = new Date(timestamp);
       const isToday = new Date().toDateString() === date.toDateString();
       
+      // Use a simple string format instead of date objects to avoid NaN/NaN errors
+      const formattedDate = `${date.getMonth() + 1}/${date.getDate()}`;
+      
       const dataPoint: any = {
-        timestamp: isToday ? 'Today (Live)' : formatDate(timestamp, 'short'),
-        originalDate: date,
-        date // For sorting
+        timestamp: isToday ? 'Today (Live)' : formattedDate,
+        originalTimestamp: timestamp, // Keep the original timestamp for reference
+        dateString: formattedDate, // Use a simple string format for display
+        sortValue: date.getTime() // For sorting
       };
       
       // Add data for each agent at this timestamp
@@ -565,7 +569,7 @@ export default function Analytics({}: AnalyticsProps) {
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis 
+                        <CustomXAxisNoFormatter 
                           dataKey="timestamp" 
                           tick={{ fill: '#9ca3af' }}
                           tickFormatter={(value) => {
@@ -835,7 +839,7 @@ export default function Analytics({}: AnalyticsProps) {
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis 
+                        <CustomXAxisNoFormatter 
                           dataKey="timestamp" 
                           tick={{ fill: '#9ca3af' }}
                           tickFormatter={(value) => {
