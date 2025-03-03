@@ -646,15 +646,7 @@ export default function Analytics({}: AnalyticsProps) {
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                         <CustomXAxisNoFormatter 
-                          dataKey="timestamp" 
-                          tick={{ fill: '#9ca3af' }}
-                          tickFormatter={(value) => {
-                            if (typeof value === 'string') {
-                              const date = new Date(value);
-                              return `${date.getMonth() + 1}/${date.getDate()}`;
-                            }
-                            return value;
-                          }}
+                          dataKey="dateString" 
                         />
                         <YAxis 
                           tick={{ fill: '#9ca3af' }} 
@@ -916,15 +908,8 @@ export default function Analytics({}: AnalyticsProps) {
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                         <CustomXAxisNoFormatter 
-                          dataKey="timestamp" 
+                          dataKey="dateString" 
                           tick={{ fill: '#9ca3af' }}
-                          tickFormatter={(value) => {
-                            if (typeof value === 'string') {
-                              const date = new Date(value);
-                              return `${date.getMonth() + 1}/${date.getDate()}`;
-                            }
-                            return value;
-                          }}
                         />
                         <YAxis 
                           tick={{ fill: '#9ca3af' }} 
