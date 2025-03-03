@@ -204,13 +204,13 @@ export async function getLiveLeaderboardData() {
     console.error("API error during leaderboard fetch:", apiError.message);
     
     // Return cached data if any exists, even if expired
-    if (cachedLeaderboardData) {
+    if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
       console.log("Using expired cached data due to API error");
       return cachedLeaderboardData;
     }
     
-    // If no cache exists, throw the error
-    throw new Error("Failed to fetch leaderboard data and no cache available");
+    console.error("No cached leaderboard data available despite API error");
+    return []; // Return empty array instead of throwing error - routes.ts will handle fallback
   } finally {
     // Always reset the in-progress flag
     fetchInProgress = false;
