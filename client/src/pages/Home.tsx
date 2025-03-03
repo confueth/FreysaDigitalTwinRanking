@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/Header';
+import { Link } from 'wouter';
+import { LineChart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
 import LeaderboardTable from '@/components/LeaderboardTable';
-import LeaderboardCards from '@/components/LeaderboardCards';
-import LeaderboardTimeline from '@/components/LeaderboardTimeline';
 import StatCards from '@/components/StatCards';
 import CityStatistics from '@/components/CityStatistics';
 
@@ -18,11 +18,8 @@ import { applyAllFilters } from '@/utils/FilterUtils';
 // Constants
 const MY_AGENTS_KEY = 'freysa_my_agents';
 
-type ViewMode = 'table' | 'cards' | 'timeline';
-
 export default function Home() {
   const { toast } = useToast();
-  const [selectedView, setSelectedView] = useState<ViewMode>('table');
   const [filters, setFilters] = useState<AgentFilters>({
     page: 1,
     limit: 25,
@@ -167,12 +164,6 @@ export default function Home() {
     gcTime: 120 * 60 * 1000 // 2 hours
   });
 
-  // Handle view change
-  const handleViewChange = (view: ViewMode) => {
-    setSelectedView(view);
-  };
-
-
   // Handle filter change
   const handleFilterChange = (newFilters: Partial<AgentFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 })); // Reset to page 1 when filters change
@@ -204,12 +195,8 @@ export default function Home() {
     setFilters(prev => ({ ...prev, page }));
   };
 
-  // Determine the title based on selected view
-  const viewTitle = selectedView === 'table' 
-    ? 'Leaderboard Rankings' 
-    : selectedView === 'cards' 
-      ? 'Agent Cards' 
-      : 'Score Trends';
+  // Set fixed title for the leaderboard
+  const viewTitle = 'Leaderboard Rankings';
 
   // Memoized refreshData function
   const refreshData = useCallback(() => {
@@ -362,10 +349,36 @@ export default function Home() {
 
   return (
     <div>
-      <Header 
-        selectedView={selectedView}
-        onViewChange={handleViewChange}
-      />
+      <div className="bg-gray-900 border-b border-gray-800 py-4">
+        <div className="container mx-auto px-4 flex justify-between items-center">
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
+              Freysa Leaderboard
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Link to="/my-agents">
+              <Button 
+                variant="outline" 
+                className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
+              >
+                <span>My Agents</span>
+              </Button>
+            </Link>
+            
+            <Link to="/analytics">
+              <Button 
+                variant="outline" 
+                className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
+              >
+                <LineChart className="h-4 w-4 mr-1" />
+                <span>Analytics</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
       
       <main className="flex flex-col">
         {/* Desktop layout */}
@@ -398,37 +411,16 @@ export default function Home() {
               </div>
             </div>
             
-            {selectedView === 'table' && (
-              <LeaderboardTable 
-                agents={displayAgents}
-                onAgentSelect={handleAgentSelect}
-                currentPage={filters.page || 1}
-                onPageChange={handlePageChange}
-                totalAgents={totalAgentsCount}
-                pageSize={filters.limit || 25}
-                isLoading={isLoading}
-                savedAgents={myAgents}
-              />
-            )}
-            
-            {selectedView === 'cards' && (
-              <LeaderboardCards 
-                agents={displayAgents}
-                onAgentSelect={handleAgentSelect}
-                currentPage={filters.page || 1}
-                onPageChange={handlePageChange}
-                totalAgents={totalAgentsCount}
-                pageSize={filters.limit || 25}
-                isLoading={isLoading}
-              />
-            )}
-            
-            {selectedView === 'timeline' && (
-              <LeaderboardTimeline 
-                stats={stats} 
-                isLoading={!stats || isLoading}
-              />
-            )}
+            <LeaderboardTable 
+              agents={displayAgents}
+              onAgentSelect={handleAgentSelect}
+              currentPage={filters.page || 1}
+              onPageChange={handlePageChange}
+              totalAgents={totalAgentsCount}
+              pageSize={filters.limit || 25}
+              isLoading={isLoading}
+              savedAgents={myAgents}
+            />
             
             {/* City Statistics */}
             {displayDataSource.length > 0 && (
@@ -437,7 +429,6 @@ export default function Home() {
                   agents={displayDataSource}
                   isLoading={isLoading}
                 />
-                
               </div>
             )}
           </div>
@@ -473,23 +464,8 @@ export default function Home() {
               </div>
             </div>
             
-            {selectedView === 'table' && (
-              <div className="overflow-x-auto -mx-3">
-                <LeaderboardTable 
-                  agents={displayAgents}
-                  onAgentSelect={handleAgentSelect}
-                  currentPage={filters.page || 1}
-                  onPageChange={handlePageChange}
-                  totalAgents={totalAgentsCount}
-                  pageSize={filters.limit || 25}
-                  isLoading={isLoading}
-                  savedAgents={myAgents}
-                />
-              </div>
-            )}
-            
-            {selectedView === 'cards' && (
-              <LeaderboardCards 
+            <div className="overflow-x-auto -mx-3">
+              <LeaderboardTable 
                 agents={displayAgents}
                 onAgentSelect={handleAgentSelect}
                 currentPage={filters.page || 1}
@@ -497,15 +473,9 @@ export default function Home() {
                 totalAgents={totalAgentsCount}
                 pageSize={filters.limit || 25}
                 isLoading={isLoading}
+                savedAgents={myAgents}
               />
-            )}
-            
-            {selectedView === 'timeline' && (
-              <LeaderboardTimeline 
-                stats={stats} 
-                isLoading={!stats || isLoading}
-              />
-            )}
+            </div>
             
             {/* City Statistics for Mobile */}
             {displayDataSource.length > 0 && (
@@ -514,7 +484,6 @@ export default function Home() {
                   agents={displayDataSource}
                   isLoading={isLoading}
                 />
-                
               </div>
             )}
           </div>
