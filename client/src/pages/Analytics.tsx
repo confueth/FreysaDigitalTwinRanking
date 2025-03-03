@@ -266,38 +266,64 @@ export default function Analytics({}: AnalyticsProps) {
     
     // Define Feb 22 as the start date for all charts
     const startDate = new Date('2025-02-22T00:00:00Z');
+    const startDateStr = startDate.toISOString();
     
-    // Also return early if there are no histories but gracefully handle this case
+    // Create a map of all timestamps, always including Feb 22 and today
+    const allTimestamps = new Set<string>();
+    const today = new Date();
+    const now = today.toISOString();
+    
+    // Always add Feb 22 as the baseline date
+    allTimestamps.add(startDateStr);
+    
+    // Also add today's date
+    allTimestamps.add(now);
+    
+    // Return early with minimal data if no histories
     if (!agentHistories || Object.keys(agentHistories).length === 0) {
-      // If we have at least one selected agent but no history, create a fallback point
+      // If we have at least one selected agent but no history, create minimal points (Feb 22 + today)
       if (selectedAgents.length > 0 && topAgents?.length) {
-        const now = new Date().toISOString();
-        // Initialize the result with proper typing to avoid TS errors
-        const result = [{
-          timestamp: 'Today (Live)', 
-          originalTimestamp: now,
-          // Add an index signature to allow dynamic property assignment
-          [selectedAgents[0]]: 0, // Will be overwritten in the loop
-        }];
+        // Create a result array with Feb 22 (0 values) and today's values
+        const result = [
+          {
+            timestamp: '2/22', 
+            dateString: '2/22',
+            originalTimestamp: startDateStr,
+            sortValue: startDate.getTime()
+          },
+          {
+            timestamp: 'Today (Live)', 
+            dateString: `${today.getMonth() + 1}/${today.getDate()}`,
+            originalTimestamp: now,
+            sortValue: today.getTime()
+          }
+        ];
         
-        // Add a data point for each selected agent using live data
+        // Initialize all agent values to zero for Feb 22
+        selectedAgents.forEach(username => {
+          result[0][username] = 0; // All agents start at 0 on Feb 22
+        });
+        
+        // Add today's data point for each selected agent using live data
         selectedAgents.forEach(username => {
           const agent = topAgents.find((a: Agent) => a.mastodonUsername === username);
           if (agent) {
             switch (metric) {
               case 'score':
-                result[0][username] = agent.score;
+                result[1][username] = agent.score;
                 break;
               case 'followers':
-                result[0][username] = agent.followersCount || 0;
+                result[1][username] = agent.followersCount || 0;
                 break;
               case 'likes':
-                result[0][username] = agent.likesCount || 0;
+                result[1][username] = agent.likesCount || 0;
                 break;
               case 'retweets':
-                result[0][username] = agent.retweetsCount || 0;
+                result[1][username] = agent.retweetsCount || 0;
                 break;
             }
+          } else {
+            result[1][username] = 0; // Default to 0 if agent not found
           }
         });
         
@@ -306,12 +332,6 @@ export default function Analytics({}: AnalyticsProps) {
       
       return [];
     }
-    
-    // Create a map of all timestamps, ensuring we include today's live data
-    const allTimestamps = new Set<string>();
-    const today = new Date();
-    const now = today.toISOString();
-    allTimestamps.add(now); // Add today's date
     
     // Keep track of agents with sparse data
     const agentDataPoints = new Map<string, Map<string, number>>();
@@ -326,6 +346,9 @@ export default function Analytics({}: AnalyticsProps) {
       if (selectedAgents.includes(agent.mastodonUsername)) {
         const dataMap = agentDataPoints.get(agent.mastodonUsername);
         if (dataMap) {
+          // Always set Feb 22 to zero as the baseline
+          dataMap.set(startDateStr, 0);
+          
           // Set today's live data value
           switch (metric) {
             case 'score':
