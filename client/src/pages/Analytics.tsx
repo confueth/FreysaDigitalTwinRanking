@@ -260,9 +260,12 @@ export default function Analytics({}: AnalyticsProps) {
   ) || [];
   
   // Prepare chart data with optimized performance and improved interpolation
-  const prepareChartData = () => {
+  const prepareChartData = (): ChartDataPoint[] => {
     // Immediately return an empty array if no agents are selected
     if (selectedAgents.length === 0) return [];
+    
+    // Define Feb 22 as the start date for all charts
+    const startDate = new Date('2025-02-22T00:00:00Z');
     
     // Also return early if there are no histories but gracefully handle this case
     if (!agentHistories || Object.keys(agentHistories).length === 0) {
