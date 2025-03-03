@@ -171,7 +171,19 @@ export default function Home() {
   
   // Handle toggling between My Agents and All Agents view
   const handleToggleMyAgents = () => {
-    setShowMyAgentsOnly(!showMyAgentsOnly);
+    const newState = !showMyAgentsOnly;
+    console.log(`Toggling My Agents view: ${showMyAgentsOnly} -> ${newState}`);
+    
+    // Update the state
+    setShowMyAgentsOnly(newState);
+    
+    // If turning on my agents view, make sure we have saved data
+    if (newState && myAgents.length > 0) {
+      console.log(`Will show only ${myAgents.length} saved agents`);
+    } else {
+      console.log('Showing all agents');
+    }
+    
     // Reset to page 1 when switching views
     setFilters(prev => ({ ...prev, page: 1 }));
   };
