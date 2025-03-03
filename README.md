@@ -53,7 +53,18 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - **Leaderboard Data**: `https://digital-clone-production.onrender.com/digital-clones/leaderboards?full=true`
 - **Player Details**: `https://digital-clone-production.onrender.com/digital-clones/clones/{mastadonUsername}`
 
-## Implemented Features & Fixes
+## Latest Updates (March 3, 2025)
+
+- ✅ **Chart Rendering Optimization**: Fixed chart size issues in the Analytics dashboard
+- ✅ **Performance Metrics Improvement**: Enhanced percentage change calculations for more accurate metrics
+- ✅ **Analytics UI Enhancements**: Improved layout and visualization of historical data
+- ✅ **Data Fallback Mechanism**: Added more robust fallback to snapshot data when live API returns 404
+- ✅ **Snapshot Selection UI**: Added clearer indicators for snapshot selection in the Analytics view
+- ✅ **Error Handling Improvements**: Better error handling for API responses with detailed logging
+- ✅ **Mobile Responsiveness**: Enhanced responsive design for Analytics page on smaller devices
+- ✅ **Visual Feedback**: Improved visual feedback for data loading and change indicators
+
+## Previously Implemented Features & Fixes
 
 - ✅ **Avatar Display**: Fixed avatar rendering by supporting both field naming conventions (`avatarURL`/`avatarUrl`)
 - ✅ **Validation**: Improved error handling with safeParse() for graceful schema validation
@@ -96,6 +107,7 @@ The application follows a modern web application pattern with these key componen
 
 ## Project Timeline
 
+- **Latest Update (Mar 2025)**: Analytics dashboard improvements and chart rendering fixes
 - **Initial Implementation**: Base application with real-time leaderboard
 - **Schema Improvements**: Enhanced type safety and validation
 - **View Options**: Added multiple visualization modes (Table, Card, Timeline)
