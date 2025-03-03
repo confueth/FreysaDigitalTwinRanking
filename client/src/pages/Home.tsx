@@ -177,6 +177,13 @@ export default function Home() {
   const handleFilterChange = (newFilters: Partial<AgentFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 })); // Reset to page 1 when filters change
   };
+  
+  // Handle toggling between My Agents and All Agents view
+  const handleToggleMyAgents = () => {
+    setShowMyAgentsOnly(!showMyAgentsOnly);
+    // Reset to page 1 when switching views
+    setFilters(prev => ({ ...prev, page: 1 }));
+  };
 
   // Handle agent selection
   const handleAgentSelect = (username: string) => {
@@ -272,8 +279,23 @@ export default function Home() {
   // Apply client-side filtering to reduce server load
   const filteredResults = useMemo(() => {
     if (!displayDataSource.length) return { filteredAgents: [], totalCount: 0 };
-    return applyAllFilters(displayDataSource, filters);
-  }, [displayDataSource, filters]);
+    
+    // First apply the regular filters
+    const filtered = applyAllFilters(displayDataSource, filters);
+    
+    // If showing only My Agents, further filter by myAgents list
+    if (showMyAgentsOnly && myAgents.length > 0) {
+      const myAgentsFiltered = filtered.filteredAgents.filter(agent => 
+        myAgents.includes(agent.mastodonUsername)
+      );
+      return {
+        filteredAgents: myAgentsFiltered,
+        totalCount: myAgentsFiltered.length
+      };
+    }
+    
+    return filtered;
+  }, [displayDataSource, filters, showMyAgentsOnly, myAgents]);
   
   // Display data - this is now client-side filtered
   const displayAgents = filteredResults.filteredAgents || [];
@@ -353,6 +375,9 @@ export default function Home() {
             onFilterChange={handleFilterChange}
             cities={cities || []}
             isLoading={snapshotsLoading}
+            showMyAgents={showMyAgentsOnly}
+            onToggleMyAgents={handleToggleMyAgents}
+            myAgents={myAgents}
           />
           
           <div className="flex-grow p-4 overflow-auto">
@@ -424,6 +449,9 @@ export default function Home() {
             onFilterChange={handleFilterChange}
             cities={cities || []}
             isLoading={snapshotsLoading}
+            showMyAgents={showMyAgentsOnly}
+            onToggleMyAgents={handleToggleMyAgents}
+            myAgents={myAgents}
           />
           
           <div className="p-3">
