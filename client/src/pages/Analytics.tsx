@@ -937,13 +937,13 @@ export default function Analytics({}: AnalyticsProps) {
                     <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
                       <LineChart
                         data={snapshots.map((snapshot: Snapshot) => ({
-                          timestamp: formatDate(snapshot.timestamp, 'full', true),
+                          timestamp: formatDate(snapshot.timestamp, 'short', true),
                           date: new Date(snapshot.timestamp),
                           globalValue: Math.floor(Math.random() * 5000) + 1000
                         }))}
                         width={500}
                         height={300}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 40 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                         <XAxis 
@@ -964,7 +964,20 @@ export default function Analytics({}: AnalyticsProps) {
                         />
                         <Tooltip 
                           formatter={(value: any) => [formatNumber(value), ""]}
-                          labelFormatter={(label) => `Date: ${label}`}
+                          labelFormatter={(label) => {
+                            // Try to parse the date from the label
+                            try {
+                              // Handle full dates from formatDate function
+                              if (label.includes(",")) {
+                                return `Date: ${label}`;
+                              }
+                              // For short date strings like "3/1", try to construct a full date
+                              const [month, day] = label.split("/");
+                              return `Date: ${new Date(2025, parseInt(month)-1, parseInt(day)).toLocaleDateString()}`;
+                            } catch (e) {
+                              return `Date: ${label}`;
+                            }
+                          }}
                           contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151' }}
                         />
                         <Line 
