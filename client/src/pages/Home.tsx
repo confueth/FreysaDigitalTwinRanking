@@ -277,27 +277,34 @@ export default function Home() {
   
   // Apply client-side filtering to reduce server load
   const filteredResults = useMemo(() => {
+    // Handle empty data case
     if (!displayDataSource.length) return { filteredAgents: [], totalCount: 0 };
     
-    // First apply the regular filters
-    const filtered = applyAllFilters(displayDataSource, filters);
+    // Debugging to check our data source and my agents list
+    console.log(`Starting filtering with ${displayDataSource.length} agents`);
+    console.log(`My saved agents: ${myAgents.length > 0 ? myAgents.join(', ') : 'none'}`);
     
-    // If showing only My Agents, further filter by myAgents list
+    // First check if we should filter to only show my agents
+    let dataToFilter = [...displayDataSource];
+    
     if (showMyAgentsOnly && myAgents.length > 0) {
-      // Debug log to check the filter is being applied
       console.log(`Filtering to show only ${myAgents.length} saved agents`);
       
-      const myAgentsFiltered = filtered.filteredAgents.filter(agent => 
+      // Pre-filter to only include my agents
+      dataToFilter = displayDataSource.filter(agent => 
         myAgents.includes(agent.mastodonUsername)
       );
       
-      console.log(`Found ${myAgentsFiltered.length} matching agents from my list`);
+      console.log(`Found ${dataToFilter.length} matching agents from my list`);
       
-      return {
-        filteredAgents: myAgentsFiltered,
-        totalCount: myAgentsFiltered.length
-      };
+      // If no matches found, return empty result
+      if (dataToFilter.length === 0) {
+        return { filteredAgents: [], totalCount: 0 };
+      }
     }
+    
+    // Then apply the regular filters to the pre-filtered data
+    const filtered = applyAllFilters(dataToFilter, filters);
     
     return filtered;
   }, [displayDataSource, filters, showMyAgentsOnly, myAgents]);
