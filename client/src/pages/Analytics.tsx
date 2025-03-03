@@ -939,14 +939,14 @@ export default function Analytics({}: AnalyticsProps) {
                         data={[
                           // Add baseline data point for February 22
                           {
-                            timestamp: "2/22/2025",
+                            timestamp: "2/22 (Start)",
                             date: new Date(2025, 1, 22), // Feb 22, 2025
                             globalValue: 0 // Starting value
                           },
                           // Add existing snapshots, sorted by date
                           ...snapshots
                             .map((snapshot: Snapshot) => ({
-                              timestamp: formatDate(snapshot.timestamp, 'short', true),
+                              timestamp: formatDate(snapshot.timestamp, 'short', true).replace(/\d{4}$/, ''), // Remove year
                               date: new Date(snapshot.timestamp),
                               globalValue: Math.floor(Math.random() * 5000) + 1000
                             }))
