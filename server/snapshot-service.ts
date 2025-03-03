@@ -12,8 +12,13 @@ let isSnapshotInProgress = false;
  */
 export async function createSnapshot(
   storage: IStorage, 
-  description: string = `Daily snapshot - ${new Date().toLocaleDateString()}`
+  description?: string
 ): Promise<number | null> {
+  // If no description is provided, generate one with the current date
+  if (!description) {
+    const date = new Date();
+    description = `Daily snapshot - ${date.toLocaleDateString()}`;
+  }
   if (isSnapshotInProgress) {
     console.log('A snapshot is already in progress. Skipping...');
     return null;
