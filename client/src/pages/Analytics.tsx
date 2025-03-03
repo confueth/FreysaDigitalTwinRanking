@@ -183,26 +183,54 @@ export default function Analytics({}: AnalyticsProps) {
     }
   });
   
-  // Fetch history data for selected agents
+  // Fetch history data for selected agents with optimized performance
   const { data: agentHistories, isLoading: isLoadingHistories } = useQuery({
     queryKey: ['/api/agents/history', selectedAgents],
     queryFn: async () => {
       if (selectedAgents.length === 0) return {};
       
       const results: Record<string, Agent[]> = {};
+      const controller = new AbortController();
+      const signal = controller.signal;
       
-      await Promise.all(
-        selectedAgents.map(async (username) => {
-          const response = await fetch(`/api/agents/${username}/history`);
-          if (!response.ok) throw new Error(`Failed to fetch history for ${username}`);
-          const data = await response.json();
-          results[username] = data;
-        })
-      );
+      try {
+        // Use Promise.all for parallel requests but with a timeout
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+        
+        await Promise.all(
+          selectedAgents.map(async (username) => {
+            try {
+              const response = await fetch(`/api/agents/${username}/history`, { signal });
+              if (!response.ok) {
+                console.warn(`Warning: Failed to fetch history for ${username}, status: ${response.status}`);
+                results[username] = []; // Set empty array to avoid undefined errors
+                return;
+              }
+              const data = await response.json();
+              results[username] = data;
+            } catch (error) {
+              console.error(`Error fetching history for ${username}:`, error);
+              results[username] = []; // Set empty array to avoid undefined errors
+            }
+          })
+        );
+        
+        clearTimeout(timeoutId);
+      } catch (error) {
+        console.error('Error fetching agent histories:', error);
+        // Ensure we return at least empty arrays for all selected agents
+        selectedAgents.forEach(username => {
+          if (!results[username]) {
+            results[username] = [];
+          }
+        });
+      }
       
       return results;
     },
-    enabled: selectedAgents.length > 0
+    enabled: selectedAgents.length > 0,
+    staleTime: 60000, // Cache for 1 minute to improve performance
+    refetchOnWindowFocus: false, // Don't refetch on window focus to reduce unnecessary API calls
   });
   
   const handleAgentSelect = (username: string) => {
@@ -473,16 +501,26 @@ export default function Analytics({}: AnalyticsProps) {
               </CardHeader>
               <CardContent>
                 {selectedAgents.length === 0 ? (
-                  <div className="h-[400px] flex items-center justify-center">
+                  <div className="h-[400px] flex items-center justify-center flex-col gap-4">
                     <p className="text-gray-400">Select agents to view comparison</p>
+                    <p className="text-sm text-gray-500">Choose from the list on the left</p>
                   </div>
                 ) : isLoadingHistories ? (
-                  <div className="h-[400px]">
-                    <Skeleton className="h-full w-full" />
+                  <div className="h-[400px] flex flex-col items-center justify-center">
+                    <div className="w-full max-w-md">
+                      <div className="mb-4 flex items-center justify-center">
+                        <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+                      </div>
+                      <Skeleton className="h-8 w-full mb-2" />
+                      <Skeleton className="h-8 w-5/6 mb-2" />
+                      <Skeleton className="h-8 w-4/6 mb-2" />
+                      <p className="text-center text-sm text-gray-400 mt-4">Loading historical data...</p>
+                    </div>
                   </div>
                 ) : chartData.length === 0 ? (
-                  <div className="h-[400px] flex items-center justify-center">
+                  <div className="h-[400px] flex items-center justify-center flex-col gap-4">
                     <p className="text-gray-400">No historical data available</p>
+                    <p className="text-sm text-gray-500">Try selecting different agents</p>
                   </div>
                 ) : (
                   <div className="h-[400px]">

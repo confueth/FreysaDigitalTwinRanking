@@ -33,6 +33,8 @@ interface MinimalAgent {
   prevScore?: number | null;
   rank?: number;
   prevRank?: number | null;
+  // Support timestamp for history data
+  timestamp?: string | Date;
 }
 
 // Cache control with improved API usage protection and memory optimization
