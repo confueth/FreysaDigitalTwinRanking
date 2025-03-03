@@ -139,8 +139,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // We'll still return the agent data without the comparison
       }
       
-      // Apply filters
-      const { agents, totalCount } = filterAgents(liveData, filters);
+      // Apply filters - ensure all agents have string IDs
+      const normalizedLiveData = liveData.map(agent => ({
+        ...agent,
+        id: typeof agent.id === 'number' ? agent.id.toString() : agent.id
+      }));
+      const { agents, totalCount } = filterAgents(normalizedLiveData, filters);
       
       // Set pagination metadata in headers
       res.setHeader('X-Total-Count', totalCount.toString());
@@ -244,8 +248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create snapshot timestamp from creation time if available, or use current time
           const timestamp = agent.bioUpdatedAt 
             ? agent.bioUpdatedAt.toISOString()
-            : agent.timestamp 
-              ? new Date(agent.timestamp).toISOString()
+            : agent.timestamp instanceof Date 
+              ? agent.timestamp.toISOString()
               : new Date().toISOString();
               
           // Use the timestamp as the key to avoid duplicates
@@ -644,7 +648,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If snapshot doesn't exist, default to live data
         console.log(`Snapshot ${snapshotId} not found, using live data instead`);
         const liveData = await getLiveLeaderboardData();
-        const { agents, totalCount } = filterAgents(liveData, filters);
+        
+        // Need to cast to string IDs to match MinimalAgent interface
+        const normalizedLiveData = liveData.map(agent => ({
+          ...agent,
+          id: agent.id.toString() // Ensure id is always a string
+        }));
+        
+        const { agents, totalCount } = filterAgents(normalizedLiveData, filters);
         
         // Set pagination metadata in headers
         res.setHeader('X-Total-Count', totalCount.toString());
