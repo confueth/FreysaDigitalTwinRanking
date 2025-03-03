@@ -221,16 +221,51 @@ export default function Analytics({}: AnalyticsProps) {
     agent.mastodonUsername.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
   
-  // Prepare chart data
+  // Prepare chart data with optimized performance and improved interpolation
   const prepareChartData = () => {
     if (!agentHistories || Object.keys(agentHistories).length === 0) return [];
     
     // Create a map of all timestamps
     const allTimestamps = new Set<string>();
-    Object.values(agentHistories).forEach((history: Agent[]) => {
-      history.forEach(snapshot => {
+    
+    // Keep track of agents with sparse data
+    const agentDataPoints = new Map<string, Map<string, number>>();
+    
+    // Initialize the agent data maps
+    selectedAgents.forEach(username => {
+      agentDataPoints.set(username, new Map<string, number>());
+    });
+    
+    // Collect all timestamps and map data points
+    Object.entries(agentHistories).forEach(([username, history]) => {
+      // Sort history by timestamp to ensure chronological order
+      const sortedHistory = [...history].sort((a, b) => 
+        new Date(a.timestamp || '').getTime() - new Date(b.timestamp || '').getTime()
+      );
+      
+      // Add all timestamps to the set
+      sortedHistory.forEach(snapshot => {
         if (snapshot.timestamp) {
           allTimestamps.add(snapshot.timestamp);
+          
+          // Store the metric value for this timestamp
+          const dataMap = agentDataPoints.get(username);
+          if (dataMap) {
+            switch (metric) {
+              case 'score':
+                dataMap.set(snapshot.timestamp, snapshot.score);
+                break;
+              case 'followers':
+                dataMap.set(snapshot.timestamp, snapshot.followersCount || 0);
+                break;
+              case 'likes':
+                dataMap.set(snapshot.timestamp, snapshot.likesCount || 0);
+                break;
+              case 'retweets':
+                dataMap.set(snapshot.timestamp, snapshot.retweetsCount || 0);
+                break;
+            }
+          }
         }
       });
     });
@@ -240,6 +275,50 @@ export default function Analytics({}: AnalyticsProps) {
       new Date(a).getTime() - new Date(b).getTime()
     );
     
+    // Perform data interpolation for sparse datasets
+    selectedAgents.forEach(username => {
+      const dataMap = agentDataPoints.get(username);
+      if (dataMap && dataMap.size > 0) {
+        // Find missing timestamps and interpolate values
+        let lastKnownValue: number | null = null;
+        let lastTimestamp: string | null = null;
+        
+        sortedTimestamps.forEach(timestamp => {
+          if (!dataMap.has(timestamp)) {
+            // If we have a previous value, use linear interpolation
+            if (lastKnownValue !== null && lastTimestamp !== null) {
+              // Try to find the next available data point for interpolation
+              const nextTimestampIndex = sortedTimestamps.findIndex(t => 
+                t > timestamp && dataMap.has(t)
+              );
+              
+              if (nextTimestampIndex !== -1) {
+                const nextTimestamp = sortedTimestamps[nextTimestampIndex];
+                const nextValue = dataMap.get(nextTimestamp) || 0;
+                
+                // Perform linear interpolation
+                const lastTime = new Date(lastTimestamp).getTime();
+                const currentTime = new Date(timestamp).getTime();
+                const nextTime = new Date(nextTimestamp).getTime();
+                
+                const ratio = (currentTime - lastTime) / (nextTime - lastTime);
+                const interpolatedValue = lastKnownValue + (ratio * (nextValue - lastKnownValue));
+                
+                dataMap.set(timestamp, Math.round(interpolatedValue));
+              } else {
+                // If no future data point, use the last known value
+                dataMap.set(timestamp, lastKnownValue);
+              }
+            }
+          } else {
+            // Update last known value for future interpolation
+            lastKnownValue = dataMap.get(timestamp) || 0;
+            lastTimestamp = timestamp;
+          }
+        });
+      }
+    });
+    
     // Create data points for each timestamp
     return sortedTimestamps.map(timestamp => {
       const dataPoint: any = {
@@ -248,23 +327,10 @@ export default function Analytics({}: AnalyticsProps) {
       };
       
       // Add data for each agent at this timestamp
-      Object.entries(agentHistories).forEach(([username, history]) => {
-        const snapshot = history.find(s => s.timestamp ? s.timestamp === timestamp : false);
-        if (snapshot) {
-          switch (metric) {
-            case 'score':
-              dataPoint[username] = snapshot.score;
-              break;
-            case 'followers':
-              dataPoint[username] = snapshot.followersCount || 0;
-              break;
-            case 'likes':
-              dataPoint[username] = snapshot.likesCount || 0;
-              break;
-            case 'retweets':
-              dataPoint[username] = snapshot.retweetsCount || 0;
-              break;
-          }
+      selectedAgents.forEach(username => {
+        const dataMap = agentDataPoints.get(username);
+        if (dataMap && dataMap.has(timestamp)) {
+          dataPoint[username] = dataMap.get(timestamp);
         }
       });
       
