@@ -42,6 +42,7 @@ interface ChartDataPoint {
   dateString: string;
   sortValue: number;
   index: number;
+  xAxisLabel?: string; // Label to display on x-axis
   [key: string]: any; // Allow dynamic agent usernames as keys
 }
 
@@ -655,16 +656,20 @@ export default function Analytics({}: AnalyticsProps) {
                         data={chartData}
                         width={500}
                         height={300}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 30 }}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 40 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <CustomXAxisNoFormatter 
+                        <XAxis 
                           dataKey="dateString"
                           height={50}
-                          dy={10}
-                          tickSize={8}
-                          padding={{ left: 20, right: 20 }}
-                          tick={{ fill: '#ffffff', fontSize: 12 }}
+                          tick={{ 
+                            fill: '#ffffff', 
+                            fontSize: 13,
+                            fontWeight: 'bold'
+                          }}
+                          tickLine={true}
+                          axisLine={true}
+                          interval={0}
                         />
                         <YAxis 
                           tick={{ fill: '#9ca3af' }} 
@@ -934,13 +939,17 @@ export default function Analytics({}: AnalyticsProps) {
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <CustomXAxisNoFormatter 
+                        <XAxis 
                           dataKey="timestamp"
                           height={50}
-                          dy={10}
-                          tickSize={8}
-                          padding={{ left: 20, right: 20 }}
-                          tick={{ fill: "#ffffff", fontSize: 12 }}
+                          tick={{ 
+                            fill: '#ffffff', 
+                            fontSize: 13,
+                            fontWeight: 'bold'
+                          }}
+                          tickLine={true}
+                          axisLine={true}
+                          interval={0}
                         />
                         <YAxis 
                           tick={{ fill: '#9ca3af' }} 
