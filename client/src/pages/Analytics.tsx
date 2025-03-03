@@ -575,33 +575,55 @@ export default function Analytics({}: AnalyticsProps) {
                     {selectedAgents.map((username, index) => {
                       // Calculate the growth
                       const agentData = agentHistories?.[username] || [];
-                      if (agentData.length < 2) return null;
                       
-                      const oldestEntry = agentData[agentData.length - 1];
+                      // For agents with only one data point, we'll show current value without comparison
                       const newestEntry = agentData[0];
+                      if (!newestEntry) return null;
                       
-                      let oldValue, newValue;
+                      // Get the current value based on the selected metric
+                      let newValue, oldValue, showChange = false;
                       switch (metric) {
                         case 'score':
-                          oldValue = oldestEntry.score;
                           newValue = newestEntry.score;
                           break;
                         case 'followers':
-                          oldValue = oldestEntry.followersCount || 0;
                           newValue = newestEntry.followersCount || 0;
                           break;
                         case 'likes':
-                          oldValue = oldestEntry.likesCount || 0;
                           newValue = newestEntry.likesCount || 0;
                           break;
                         case 'retweets':
-                          oldValue = oldestEntry.retweetsCount || 0;
                           newValue = newestEntry.retweetsCount || 0;
                           break;
                       }
                       
-                      const change = newValue - oldValue;
-                      const percentChange = oldValue !== 0 ? (change / oldValue) * 100 : 0;
+                      // Only calculate change if we have more than one data point
+                      let change = 0, percentChange = 0;
+                      if (agentData.length > 1) {
+                        const oldestEntry = agentData[agentData.length - 1];
+                        
+                        // Get the old value for the selected metric
+                        switch (metric) {
+                          case 'score':
+                            oldValue = oldestEntry.score;
+                            break;
+                          case 'followers':
+                            oldValue = oldestEntry.followersCount || 0;
+                            break;
+                          case 'likes':
+                            oldValue = oldestEntry.likesCount || 0;
+                            break;
+                          case 'retweets':
+                            oldValue = oldestEntry.retweetsCount || 0;
+                            break;
+                        }
+                        
+                        if (oldValue !== undefined) {
+                          change = newValue - oldValue;
+                          percentChange = oldValue !== 0 ? (change / oldValue) * 100 : 0;
+                          showChange = true;
+                        }
+                      }
                       
                       return (
                         <div 
@@ -617,9 +639,15 @@ export default function Analytics({}: AnalyticsProps) {
                           </div>
                           <div className="flex flex-col">
                             <span className="text-sm text-gray-400">Current: {formatNumber(newValue)}</span>
-                            <span className={`text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                              {change >= 0 ? '+' : ''}{formatNumber(change)} ({percentChange.toFixed(2)}%)
-                            </span>
+                            {showChange ? (
+                              <span className={`text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {change >= 0 ? '+' : ''}{formatNumber(change)} ({percentChange.toFixed(2)}%)
+                              </span>
+                            ) : (
+                              <span className="text-sm text-gray-500">
+                                No historical data for comparison
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
