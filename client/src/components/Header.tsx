@@ -174,6 +174,14 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   className="hover:bg-gray-700"
                   asChild
                 >
+                  <Link to="/my-agents" className="w-full">
+                    My Agents
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  asChild
+                >
                   <Link to="/analytics" className="w-full">
                     Analytics
                   </Link>
@@ -245,6 +253,18 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               >
                 Timeline View
               </Button>
+              
+              <Link to="/my-agents" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Users className="h-4 w-4" />
+                  <span>My Agents</span>
+                </Button>
+              </Link>
               
               <Link to="/analytics" className="w-full">
                 <Button 
