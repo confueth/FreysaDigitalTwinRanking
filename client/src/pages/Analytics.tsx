@@ -288,15 +288,17 @@ export default function Analytics({}: AnalyticsProps) {
         const result = [
           {
             timestamp: '2/22', 
-            dateString: '2/22',
+            dateString: '2/22 (Start)',
             originalTimestamp: startDateStr,
-            sortValue: startDate.getTime()
+            sortValue: startDate.getTime(),
+            index: 0
           },
           {
             timestamp: 'Today (Live)', 
-            dateString: `${today.getMonth() + 1}/${today.getDate()}`,
+            dateString: 'Today',
             originalTimestamp: now,
-            sortValue: today.getTime()
+            sortValue: today.getTime(),
+            index: 1
           }
         ];
         
@@ -653,11 +655,16 @@ export default function Analytics({}: AnalyticsProps) {
                         data={chartData}
                         width={500}
                         height={300}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 30 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                         <CustomXAxisNoFormatter 
-                          dataKey="dateString" 
+                          dataKey="dateString"
+                          height={50}
+                          dy={10}
+                          tickSize={8}
+                          padding={{ left: 20, right: 20 }}
+                          tick={{ fill: '#ffffff', fontSize: 12 }}
                         />
                         <YAxis 
                           tick={{ fill: '#9ca3af' }} 
@@ -926,10 +933,13 @@ export default function Analytics({}: AnalyticsProps) {
                         height={300}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                         <CustomXAxisNoFormatter 
-                          dataKey="dateString" 
-                          tick={{ fill: '#9ca3af' }}
+                          dataKey="timestamp"
+                          height={50}
+                          dy={10}
+                          tickSize={8}
+                          padding={{ left: 20, right: 20 }}
+                          tick={{ fill: "#ffffff", fontSize: 12 }}
                         />
                         <YAxis 
                           tick={{ fill: '#9ca3af' }} 
