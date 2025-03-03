@@ -39,8 +39,9 @@ const CHART_COLORS = [
 interface ChartDataPoint {
   timestamp: string;
   originalTimestamp: string;
-  dateString?: string;
-  sortValue?: number;
+  dateString: string;
+  sortValue: number;
+  index: number;
   [key: string]: any; // Allow dynamic agent usernames as keys
 }
 
@@ -452,21 +453,29 @@ export default function Analytics({}: AnalyticsProps) {
     });
     
     // Create data points for each timestamp
-    return sortedTimestamps.map(timestamp => {
+    return sortedTimestamps.map((timestamp, index) => {
       // Format the timestamp for display
       const date = new Date(timestamp);
       const month = date.getMonth() + 1; // 1-12
       const day = date.getDate(); // 1-31
       const isToday = new Date().toDateString() === date.toDateString();
       
-      // Create a more descriptive display format for dates (Month/Day)
-      const formattedDate = `${month}/${day}`;
+      // Format for display, ensuring each date is properly visible
+      let formattedDate = `${month}/${day}`;
+      
+      // For Feb 22, make it explicitly clear
+      if (date.getMonth() === 1 && date.getDate() === 22) {
+        formattedDate = "2/22 (Start)";
+      } else if (isToday) {
+        formattedDate = "Today";
+      }
       
       const dataPoint: any = {
         timestamp: timestamp, // Keep the original ISO timestamp
         originalTimestamp: timestamp, // For reference
-        dateString: isToday ? 'Today' : formattedDate, // Human-readable format for the x-axis
+        dateString: formattedDate, // Human-readable format for the x-axis
         sortValue: date.getTime(), // For sorting
+        index: index, // Preserve the order for display
       };
       
       // Add data for each agent at this timestamp
@@ -656,8 +665,17 @@ export default function Analytics({}: AnalyticsProps) {
                         />
                         <Tooltip 
                           formatter={(value: any) => [formatNumber(value), ""]}
-                          labelFormatter={(label) => `Date: ${label}`}
-                          contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151' }}
+                          labelFormatter={(label) => {
+                            // Find the data point with this label
+                            const point = chartData.find(p => p.dateString === label);
+                            if (point && point.originalTimestamp) {
+                              const date = new Date(point.originalTimestamp);
+                              // Format a full date for the tooltip
+                              return `Date: ${date.toLocaleDateString()}`;
+                            }
+                            return `Date: ${label}`;
+                          }}
+                          contentStyle={{ backgroundColor: "#1f2937", borderColor: "#374151" }}
                         />
                         <Legend />
                         {selectedAgents.map((username, index) => (
