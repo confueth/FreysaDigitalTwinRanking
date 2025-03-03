@@ -379,7 +379,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                       <div key={tweet.id} className="bg-gray-900 rounded-lg p-3 sm:p-4">
                         <p className="mb-2 text-sm sm:text-base">{formatTweetContent(tweet.content)}</p>
                         <div className="flex flex-col sm:flex-row sm:justify-between text-xs sm:text-sm text-gray-400">
-                          <span className="mb-2 sm:mb-0">{formatDate(tweet.timestamp)}</span>
+                          <span className="mb-2 sm:mb-0">{formatDate(tweet.timestamp, 'full', true)}</span>
                           <div className="flex space-x-3 sm:space-x-4">
                             <div className="flex items-center">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -411,10 +411,10 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
               <div className="mt-6 sm:mt-8 pt-3 sm:pt-4 border-t border-gray-700">
                 <div className="flex flex-col sm:flex-row justify-between text-xs sm:text-sm text-gray-400">
                   <div className="mb-2 sm:mb-0">
-                    <span>Bio Updated:</span> <span>{agent.bioUpdatedAt ? formatDate(agent.bioUpdatedAt) : 'Unknown'}</span>
+                    <span>Bio Updated:</span> <span>{agent.bioUpdatedAt ? formatDate(agent.bioUpdatedAt, 'full', true) : 'Unknown'}</span>
                   </div>
                   <div>
-                    <span>UBI Claimed:</span> <span>{agent.ubiClaimedAt ? formatDate(agent.ubiClaimedAt) : 'Unknown'}</span>
+                    <span>UBI Claimed:</span> <span>{agent.ubiClaimedAt ? formatDate(agent.ubiClaimedAt, 'full', true) : 'Unknown'}</span>
                   </div>
                 </div>
               </div>
