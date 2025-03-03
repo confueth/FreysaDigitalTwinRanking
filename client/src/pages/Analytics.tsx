@@ -522,9 +522,8 @@ export default function Analytics({}: AnalyticsProps) {
       </h1>
 
       <Tabs defaultValue="comparison" className="mb-8">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="comparison">Agent Comparison</TabsTrigger>
-          <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
           <TabsTrigger value="snapshots">Snapshot Management</TabsTrigger>
         </TabsList>
 
