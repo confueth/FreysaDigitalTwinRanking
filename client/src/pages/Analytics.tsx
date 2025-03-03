@@ -339,32 +339,56 @@ export default function Analytics({}: AnalyticsProps) {
     setSearchQuery(e.target.value);
   };
 
-  // Enhanced agent filtering for maximum discoverability using all agent sources
+  // Enhanced agent filtering with fuzzy search capabilities
   const filteredAgents = React.useMemo(() => {
     if (!searchQuery.trim()) return allAvailableAgents?.slice(0, 100) || []; // Show top 100 by default
     
     const searchTermLower = searchQuery.toLowerCase().trim();
     
-    // First look for exact matches to prioritize them
-    const exactMatches = allAvailableAgents?.filter((agent: Agent) => {
-      const username = agent.mastodonUsername?.toLowerCase() || '';
-      return username === searchTermLower;
+    // Function to calculate similarity score for fuzzy matching
+    const calculateSimilarity = (agentName: string, searchTerm: string): number => {
+      const name = agentName.toLowerCase();
+      
+      // Exact match gets highest score
+      if (name === searchTerm) return 1.0;
+      
+      // Direct inclusion scores high
+      if (name.includes(searchTerm)) return 0.8;
+      
+      // Check for fuzzy match - calculate how many characters match in sequence
+      let matchCount = 0;
+      let searchIndex = 0;
+      
+      for (let i = 0; i < name.length && searchIndex < searchTerm.length; i++) {
+        if (name[i] === searchTerm[searchIndex]) {
+          matchCount++;
+          searchIndex++;
+        }
+      }
+      
+      // Calculate similarity as percentage of characters matched
+      return searchTerm.length > 0 ? matchCount / searchTerm.length : 0;
+    };
+    
+    // Calculate scores for each agent
+    const scoredAgents = allAvailableAgents?.map((agent: Agent) => {
+      const username = agent.mastodonUsername || '';
+      const similarityScore = calculateSimilarity(username, searchTermLower);
+      return { agent, score: similarityScore };
     }) || [];
     
-    // Then look for partial matches
-    const partialMatches = allAvailableAgents?.filter((agent: Agent) => {
-      const username = agent.mastodonUsername?.toLowerCase() || '';
-      return username.includes(searchTermLower) && username !== searchTermLower;
-    }) || [];
+    // Filter agents with some similarity and sort by similarity score
+    const matchingAgents = scoredAgents
+      .filter(item => item.score > 0.3) // Keep only reasonably similar matches
+      .sort((a, b) => b.score - a.score) // Sort by score descending
+      .map(item => item.agent);
     
     // If we found the searched agent directly but it wasn't in the results, prioritize it
-    if (searchedAgent && !exactMatches.some(a => a.mastodonUsername === searchedAgent.mastodonUsername)) {
-      return [searchedAgent, ...exactMatches, ...partialMatches];
+    if (searchedAgent && !matchingAgents.some(a => a.mastodonUsername === searchedAgent.mastodonUsername)) {
+      return [searchedAgent, ...matchingAgents];
     }
     
-    // If we have exact matches, return them first followed by partial matches
-    // Otherwise, return all partial matches
-    return [...exactMatches, ...partialMatches];
+    return matchingAgents;
   }, [allAvailableAgents, searchQuery, searchedAgent]);
   
   // Handle special case when an agent isn't found but user wants to add them
@@ -546,6 +570,15 @@ export default function Analytics({}: AnalyticsProps) {
       }
     });
 
+    // Initialize Feb 22 baseline values for all agents
+    selectedAgents.forEach(username => {
+      const dataMap = agentDataPoints.get(username);
+      if (dataMap) {
+        // All agents start at 0 on Feb 22 for consistency
+        dataMap.set(startDateStr, 0);
+      }
+    });
+    
     // Collect all timestamps and map data points from historical data
     Object.entries(agentHistories).forEach(([username, history]) => {
       // Sort history by timestamp to ensure chronological order
@@ -830,7 +863,7 @@ export default function Analytics({}: AnalyticsProps) {
                         </Button>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">Type any agent name to search and compare - not limited to top agents</p>
+
                   </div>
 
                   <div className="h-[400px] overflow-y-auto border rounded-md p-2">
