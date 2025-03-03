@@ -16,12 +16,16 @@ export function CustomXAxisNoFormatter({ dataKey = "dateString", ...props }: Cus
     <XAxis 
       dataKey={dataKey}
       interval={0}
-      tick={{ fill: '#9ca3af' }}
+      tick={{ fill: '#9ca3af', fontSize: 12 }}
       allowDataOverflow={false}
       angle={0}
       textAnchor="middle"
       height={60}
-      minTickGap={0}
+      minTickGap={-10}
+      padding={{ left: 10, right: 10 }}
+      tickMargin={10}
+      tickSize={8}
+      hide={false}
       {...props}
     />
   );
