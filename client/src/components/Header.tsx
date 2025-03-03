@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, BarChart2, Menu, X } from 'lucide-react';
+import { ChevronDown, BarChart2, Menu, X, Users } from 'lucide-react';
 import { Link } from 'wouter';
 import { 
   DropdownMenu,
@@ -66,6 +66,17 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
             >
               Create your Digital Twin
             </a>
+            
+            <Link to="/my-agents">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
+              >
+                <Users className="h-4 w-4" />
+                <span>My Agents</span>
+              </Button>
+            </Link>
             
             <Link to="/analytics">
               <Button 
