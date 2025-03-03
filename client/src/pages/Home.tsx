@@ -222,21 +222,29 @@ export default function Home() {
   
   // Show a toast notification when falling back to snapshot data
   useEffect(() => {
-    if (liveDataError && snapshotAgents && snapshotAgents.length > 0) {
+    // Show notification when we're using snapshot data as fallback, either due to explicit error
+    // or because the API returned empty data
+    if (((liveDataError || (agents && agents.length === 0)) && snapshotAgents && snapshotAgents.length > 0) &&
+        // Only show the toast if we have agents but they're empty
+        (!agents || agents.length === 0)) {
       toast({
         title: "Using snapshot data",
         description: "Live data is currently unavailable. Showing latest snapshot data instead.",
         variant: "default"
       });
     }
-  }, [liveDataError, snapshotAgents, toast]);
+  }, [liveDataError, agents, snapshotAgents, toast]);
   
   // Determine which data source to use - live data or snapshot fallback
   const displayDataSource = useMemo(() => {
-    // Use live data if available, otherwise use snapshot data as fallback
+    // Use live data if available and not empty
     if (agents && agents.length > 0) {
       return agents;
-    } else if (liveDataError && snapshotAgents && snapshotAgents.length > 0) {
+    } 
+    // Use snapshot data as fallback if:
+    // 1. There was an explicit API error, OR
+    // 2. The live data returned empty but we have snapshot data available
+    else if ((liveDataError || (agents && agents.length === 0)) && snapshotAgents && snapshotAgents.length > 0) {
       return snapshotAgents;
     }
     return [];
@@ -253,7 +261,14 @@ export default function Home() {
   const totalAgentsCount = filteredResults.totalCount || 0;
   
   // Determine if we're in loading state - ensure boolean type
-  const isLoading: boolean = agentsLoading || (liveDataError && snapshotAgentsLoading) ? true : false;
+  const isLoading: boolean = 
+    // Regular loading from live API
+    agentsLoading || 
+    // Loading from fallback when live API explicitly failed
+    (liveDataError && snapshotAgentsLoading) ||
+    // Loading from fallback when live API returned empty
+    (agents && agents.length === 0 && snapshotAgentsLoading)
+    ? true : false;
   
   // Poll for new data infrequently to avoid excessive API calls
   useEffect(() => {
