@@ -937,15 +937,21 @@ export default function Analytics({}: AnalyticsProps) {
                             globalValue: 0 // All metrics start at 0 for Feb 22
                           },
                           // Add existing snapshots, sorted by date
+                          // Process historical snapshots (skip today's snapshot if we have live data)
                           ...snapshots
+                            .filter(snapshot => {
+                              // Skip today's snapshot since we'll add live data separately
+                              const snapshotDate = new Date(snapshot.timestamp);
+                              const today = new Date();
+                              return !(snapshotDate.toDateString() === today.toDateString() && topAgents && topAgents.length > 0);
+                            })
                             // First deduplicate by date
                             .reduce((unique: {timestamp: string; date: Date; globalValue: number}[], snapshot: Snapshot) => {
                               // Format date
                               const date = new Date(snapshot.timestamp);
                               const month = date.getMonth() + 1; // 1-12
                               const day = date.getDate(); // 1-31
-                              const isToday = new Date().toDateString() === date.toDateString();
-                              const dateStr = isToday ? "Today" : `${month}/${day}`;
+                              const dateStr = `${month}/${day}`;
                               
                               // Check if we already have this date in our list
                               const dateExists = unique.some(item => item.timestamp === dateStr);
@@ -988,7 +994,28 @@ export default function Analytics({}: AnalyticsProps) {
                               }
                               return unique;
                             }, [])
-                            .sort((a: {date: Date}, b: {date: Date}) => a.date.getTime() - b.date.getTime()) // Sort chronologically
+                            .sort((a: {date: Date}, b: {date: Date}) => a.date.getTime() - b.date.getTime()),
+                            
+                          // Add today's live data if available
+                          ...(topAgents && topAgents.length > 0 ? [{
+                            timestamp: "Today",
+                            date: new Date(),
+                            globalValue: (() => {
+                              // Calculate metric from live data
+                              switch (metric) {
+                                case 'score':
+                                  return topAgents.reduce((sum: number, agent: Agent) => sum + agent.score, 0) / topAgents.length;
+                                case 'followers':
+                                  return topAgents.reduce((sum: number, agent: Agent) => sum + (agent.followersCount || 0), 0);
+                                case 'likes':
+                                  return topAgents.reduce((sum: number, agent: Agent) => sum + (agent.likesCount || 0), 0);
+                                case 'retweets':
+                                  return topAgents.reduce((sum: number, agent: Agent) => sum + (agent.retweetsCount || 0), 0);
+                                default:
+                                  return 0;
+                              }
+                            })()
+                          }] : []) // Sort chronologically
                         ]}
                         width={500}
                         height={300}
