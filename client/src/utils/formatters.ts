@@ -37,7 +37,7 @@ export function formatCompactNumber(value: number | undefined | null): string {
  */
 export function formatDate(
   dateString: string | undefined, 
-  formatType: 'full' | 'short' | 'game-ends' = 'full',
+  formatType: 'full' | 'short' | 'game-ends' | 'time' = 'full',
   useUtc: boolean = false
 ): string {
   if (!dateString) return '';
@@ -45,7 +45,12 @@ export function formatDate(
   const date = new Date(dateString);
   const options: Intl.DateTimeFormatOptions = {};
 
-  if (formatType === 'game-ends') {
+  if (formatType === 'time') {
+    // Just show the time portion
+    options.hour = 'numeric';
+    options.minute = '2-digit';
+    options.hour12 = true;
+  } else if (formatType === 'game-ends') {
     options.month = 'short';
     options.day = 'numeric';
     options.year = 'numeric';

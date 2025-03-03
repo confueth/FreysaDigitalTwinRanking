@@ -4,8 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, MapPin, ExternalLink } from 'lucide-react';
-import { formatNumber, formatCompactNumber, formatDate, formatWalletAddress } from '@/utils/formatters';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, MapPin, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { formatNumber, formatCompactNumber, formatDate, formatWalletAddress, getRankChangeClass, getScoreChangeClass, getChangeValue } from '@/utils/formatters';
+import { Agent, Tweet } from '@/types/agent';
 
 export default function AgentDetail() {
   const [match, params] = useRoute('/agent/:username');
@@ -20,13 +22,13 @@ export default function AgentDetail() {
   }, [username, setLocation]);
 
   // Query agent details
-  const { data: agent, isLoading } = useQuery({
+  const { data: agent, isLoading } = useQuery<Agent>({
     queryKey: [`/api/agents/${username}`],
     enabled: !!username,
   });
 
   // Query agent history
-  const { data: history } = useQuery({
+  const { data: history } = useQuery<Agent[]>({
     queryKey: [`/api/agents/${username}/history`],
     enabled: !!username,
   });
@@ -95,27 +97,57 @@ export default function AgentDetail() {
                 <p className="mt-4 text-gray-300">{agent.mastodonBio}</p>
               )}
             </div>
-            <div className="mt-4 md:mt-0">
+            <div className="mt-4 md:mt-0 flex flex-col md:flex-row gap-4">
+              {/* Score Card */}
               <div className="flex flex-col items-center p-4 rounded-lg bg-gray-900">
                 <div className="text-2xl font-bold">{formatNumber(agent.score)}</div>
                 <div className="text-sm text-gray-400">Current Score</div>
-                {agent.prevScore && (
-                  <div className={`flex items-center mt-1 ${agent.score > agent.prevScore ? 'text-green-500' : 'text-red-500'}`}>
+                {agent.prevScore !== undefined && (
+                  <div className={`flex items-center mt-2 ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
                     {agent.score > agent.prevScore ? (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                        </svg>
-                        <span>+{formatNumber(agent.score - agent.prevScore)} since last snapshot</span>
-                      </>
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                    ) : agent.score < agent.prevScore ? (
+                      <TrendingDown className="h-4 w-4 mr-1" />
                     ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clipRule="evenodd" />
-                        </svg>
-                        <span>{formatNumber(agent.score - agent.prevScore)} since last snapshot</span>
-                      </>
+                      <Minus className="h-4 w-4 mr-1" />
                     )}
+                    <span>
+                      {getChangeValue(agent.score, agent.prevScore)} in 24h
+                    </span>
+                  </div>
+                )}
+                {agent.prevTimestamp && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Compared to {formatDate(agent.prevTimestamp, 'time')}
+                  </div>
+                )}
+              </div>
+              
+              {/* Rank Card */}
+              <div className="flex flex-col items-center p-4 rounded-lg bg-gray-900">
+                <div className="text-2xl font-bold">#{agent.rank || 'N/A'}</div>
+                <div className="text-sm text-gray-400">Current Rank</div>
+                {agent.prevRank !== undefined && (
+                  <div className={`flex items-center mt-2 ${getRankChangeClass(agent.rank, agent.prevRank)}`}>
+                    {agent.prevRank > agent.rank ? (
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                    ) : agent.prevRank < agent.rank ? (
+                      <TrendingDown className="h-4 w-4 mr-1" />
+                    ) : (
+                      <Minus className="h-4 w-4 mr-1" />
+                    )}
+                    <span>
+                      {agent.prevRank > agent.rank ? 
+                        `↑${agent.prevRank - agent.rank}` : 
+                        agent.prevRank < agent.rank ? 
+                        `↓${agent.rank - agent.prevRank}` : 
+                        `No change`} in 24h
+                    </span>
+                  </div>
+                )}
+                {agent.prevTimestamp && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Compared to {formatDate(agent.prevTimestamp, 'time')}
                   </div>
                 )}
               </div>
