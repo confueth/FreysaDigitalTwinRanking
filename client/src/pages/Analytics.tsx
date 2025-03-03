@@ -790,7 +790,7 @@ export default function Analytics({}: AnalyticsProps) {
                         {snapshots.map((snapshot: Snapshot) => (
                           <tr key={snapshot.id} className="border-b border-gray-800 hover:bg-gray-800">
                             <td className="p-2">{snapshot.id}</td>
-                            <td className="p-2">{new Date(snapshot.timestamp).toLocaleDateString()}</td>
+                            <td className="p-2">{snapshot.timestamp ? new Date(snapshot.timestamp).toLocaleDateString() : 'N/A'}</td>
                             <td className="p-2">{snapshot.description}</td>
                             <td className="p-2 text-right">
                               <Button 
