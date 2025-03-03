@@ -93,6 +93,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Agent not found" });
       }
       
+      // Now let's add 24-hour comparison data - find an older snapshot from ~24 hours ago
+      try {
+        // Get all snapshots sorted by timestamp
+        const snapshots = await storage.getSnapshots();
+        
+        // Sort snapshots by time (latest first)
+        snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        
+        // Try to find a snapshot from approximately 24 hours ago
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        
+        let closestSnapshot = null;
+        let minTimeDiff = Infinity;
+        
+        // Find the snapshot closest to 24 hours ago
+        for (const snapshot of snapshots) {
+          const timeDiff = Math.abs(snapshot.timestamp.getTime() - oneDayAgo.getTime());
+          if (timeDiff < minTimeDiff) {
+            minTimeDiff = timeDiff;
+            closestSnapshot = snapshot;
+          }
+        }
+        
+        // If we found a usable snapshot and it's not the same as the current one
+        if (closestSnapshot && agent.snapshotId !== closestSnapshot.id) {
+          console.log(`Using snapshot #${closestSnapshot.id} for previous day comparison`);
+          
+          // Get the agent data from that snapshot
+          const previousDayAgent = await storage.getAgent(closestSnapshot.id, username);
+          
+          if (previousDayAgent) {
+            // Add previous day data for comparison
+            agent.prevScore = previousDayAgent.score;
+            agent.prevRank = previousDayAgent.rank;
+            // Record when the previous data was collected
+            agent.prevTimestamp = closestSnapshot.timestamp.toISOString();
+          }
+        }
+      } catch (historyError) {
+        // If there's an error getting historical data, log it but continue
+        console.error(`Error fetching historical comparison data for ${username}:`, historyError);
+        // We'll still return the agent data without the comparison
+      }
+      
       res.json(agent);
     } catch (error) {
       console.error(`Error fetching agent ${req.params.username}:`, error);
@@ -290,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get cities for filtering
   app.get("/api/cities", async (req: Request, res: Response) => {
     try {
-      let cities = [];
+      let cities: string[] = [];
       
       try {
         // First try to get live cities data
