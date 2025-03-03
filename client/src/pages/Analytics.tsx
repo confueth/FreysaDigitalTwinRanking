@@ -52,6 +52,9 @@ export default function Analytics({}: AnalyticsProps) {
   const [metric, setMetric] = useState<'score' | 'followers' | 'likes' | 'retweets'>('score');
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  
+  // Storage key for the user's saved agents - keep in sync with MyAgents page
+  const MY_AGENTS_KEY = 'freysa-my-agents';
 
   // CSV Generation function
   const generateCsvForSnapshot = (snapshotId: number) => {
@@ -154,6 +157,29 @@ export default function Analytics({}: AnalyticsProps) {
   // Cache snapshot agent data by snapshotId
   const [snapshotAgentsCache, setSnapshotAgentsCache] = useState<Record<number, Agent[]>>({});
   
+  // Load saved agents from localStorage on component mount
+  useEffect(() => {
+    const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
+    if (savedAgents) {
+      try {
+        const parsed = JSON.parse(savedAgents);
+        if (Array.isArray(parsed)) {
+          // Limit to maximum 5 agents for performance
+          setSelectedAgents(parsed.slice(0, 5));
+          
+          if (parsed.length > 5) {
+            toast({
+              title: "Note",
+              description: "Only the first 5 saved agents are loaded for comparison.",
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing saved agents:', e);
+      }
+    }
+  }, []);
+
   // Fetch agents for each snapshot when snapshots are loaded
   useEffect(() => {
     const fetchSnapshotAgents = async () => {
@@ -327,12 +353,43 @@ export default function Analytics({}: AnalyticsProps) {
     refetchOnWindowFocus: false, // Don't refetch on window focus to reduce unnecessary API calls
   });
 
+  // Handle agent selection/deselection with localStorage updates
   const handleAgentSelect = (username: string) => {
+    let newSelectedAgents: string[];
+    
     if (selectedAgents.includes(username)) {
-      setSelectedAgents(selectedAgents.filter(agent => agent !== username));
+      // Deselect agent
+      newSelectedAgents = selectedAgents.filter(agent => agent !== username);
     } else if (selectedAgents.length < 5) {
-      setSelectedAgents([...selectedAgents, username]);
+      // Select new agent
+      newSelectedAgents = [...selectedAgents, username];
+    } else {
+      // Maximum agents reached
+      toast({
+        title: "Maximum Reached",
+        description: "You can only compare up to 5 agents at once.",
+        variant: "destructive"
+      });
+      return;
     }
+    
+    // Update state
+    setSelectedAgents(newSelectedAgents);
+    
+    // Save selection to localStorage - but only if it's different from the saved list
+    const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
+    let savedList: string[] = [];
+    
+    try {
+      if (savedAgents) {
+        savedList = JSON.parse(savedAgents);
+      }
+    } catch (e) {
+      console.error('Error parsing saved agents:', e);
+    }
+    
+    // Update localStorage if needed
+    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -416,6 +473,9 @@ export default function Analytics({}: AnalyticsProps) {
       return;
     }
     
+    // Create new selected agents list
+    const newSelectedAgents = [...selectedAgents, username];
+    
     // Try to fetch the agent directly first
     try {
       const response = await fetch(`/api/agents/${username}`);
@@ -423,7 +483,10 @@ export default function Analytics({}: AnalyticsProps) {
         const agentData = await response.json();
         
         // If agent is found, add to selection
-        setSelectedAgents([...selectedAgents, username]);
+        setSelectedAgents(newSelectedAgents);
+        
+        // Update localStorage with new selection
+        localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
         
         // Clear the search query
         setSearchQuery('');
@@ -440,7 +503,10 @@ export default function Analytics({}: AnalyticsProps) {
     }
     
     // If we get here, the agent couldn't be found but we'll add it anyway
-    setSelectedAgents([...selectedAgents, username]);
+    setSelectedAgents(newSelectedAgents);
+    
+    // Update localStorage with new selection
+    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
     
     // Clear the search query
     setSearchQuery('');
