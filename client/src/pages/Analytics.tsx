@@ -934,10 +934,7 @@ export default function Analytics({}: AnalyticsProps) {
                             date: new Date(2025, 1, 22), // Feb 22, 2025
                             // Starting value should be significantly lower than current values
                             // to show growth over time, relative to selected metric
-                            globalValue: metric === 'score' ? 500 : 
-                                       metric === 'followers' ? 15000 : 
-                                       metric === 'likes' ? 25000 : 
-                                       metric === 'retweets' ? 5000 : 0
+                            globalValue: 0 // All metrics start at 0 for Feb 22
                           },
                           // Add existing snapshots, sorted by date
                           ...snapshots
