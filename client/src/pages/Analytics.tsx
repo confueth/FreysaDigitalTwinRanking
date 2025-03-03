@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { Home, RefreshCw, Loader2, Download } from 'lucide-react';
@@ -230,12 +230,13 @@ export default function Analytics({}: AnalyticsProps) {
     }
   });
 
-  // Fetch top agents for selection
+  // Fetch agents for selection - get all agents, not just top 100
   const { data: topAgents, isLoading: isLoadingTopAgents } = useQuery({
     queryKey: ['/api/agents'],
     queryFn: async () => {
-      const response = await fetch('/api/agents?sortBy=score&limit=100');
-      if (!response.ok) throw new Error('Failed to fetch top agents');
+      // Request all agents by setting limit=0
+      const response = await fetch('/api/agents?sortBy=score&limit=0');
+      if (!response.ok) throw new Error('Failed to fetch agents');
       return response.json();
     }
   });
@@ -302,9 +303,19 @@ export default function Analytics({}: AnalyticsProps) {
     setSearchQuery(e.target.value);
   };
 
-  const filteredAgents = topAgents?.filter((agent: Agent) => 
-    agent.mastodonUsername.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  // Improved agent filtering with more accurate search
+  const filteredAgents = React.useMemo(() => {
+    if (!topAgents || topAgents.length === 0) return [];
+    if (!searchQuery.trim()) return topAgents;
+    
+    const searchTermLower = searchQuery.toLowerCase().trim();
+    
+    return topAgents.filter((agent: Agent) => {
+      // Case-insensitive username search
+      const username = agent.mastodonUsername?.toLowerCase() || '';
+      return username.includes(searchTermLower);
+    });
+  }, [topAgents, searchQuery]);
 
   // Prepare chart data with optimized performance and improved interpolation
   const prepareChartData = (): ChartDataPoint[] => {
