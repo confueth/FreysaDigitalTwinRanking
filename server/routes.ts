@@ -259,22 +259,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get stats
   app.get("/api/stats", async (req: Request, res: Response) => {
     try {
-      const stats = await getLiveStats();
+      let stats;
+      
+      try {
+        // First try to get live stats
+        stats = await getLiveStats();
+      } catch (apiError) {
+        console.error("Error fetching live stats, will attempt to use snapshot data", apiError);
+        
+        // Fallback to latest snapshot stats
+        const latestSnapshot = await storage.getLatestSnapshot();
+        if (latestSnapshot) {
+          console.log(`Falling back to snapshot #${latestSnapshot.id} stats data`);
+          stats = await storage.getSnapshotStats(latestSnapshot.id);
+        } else {
+          throw new Error("No fallback stats data available");
+        }
+      }
+      
       res.json(stats);
     } catch (error) {
       console.error("Error fetching stats:", error);
-      res.status(500).json({ error: "Failed to fetch stats" });
+      res.status(500).json({ 
+        error: "Failed to fetch stats",
+        message: "Please try again later. Using fallback snapshot data when available."
+      });
     }
   });
 
   // Get cities for filtering
   app.get("/api/cities", async (req: Request, res: Response) => {
     try {
-      const cities = getAvailableCities();
+      let cities = [];
+      
+      try {
+        // First try to get live cities data
+        cities = getAvailableCities();
+      } catch (apiError) {
+        console.error("Error getting available cities, will try fallback", apiError);
+        
+        // If the cache fails, try to extract cities from the latest snapshot
+        const latestSnapshot = await storage.getLatestSnapshot();
+        if (latestSnapshot) {
+          console.log(`Using cities from snapshot #${latestSnapshot.id}`);
+          const agents = await storage.getAgents(latestSnapshot.id);
+          
+          // Extract unique cities
+          const citySet = new Set<string>();
+          agents.forEach(agent => {
+            if (agent.city) {
+              citySet.add(agent.city);
+            }
+          });
+          
+          cities = Array.from(citySet);
+        }
+      }
+      
+      // Sort alphabetically
+      cities.sort();
+      
       res.json(cities);
     } catch (error) {
       console.error("Error fetching cities:", error);
-      res.status(500).json({ error: "Failed to fetch cities" });
+      res.status(500).json({ 
+        error: "Failed to fetch cities",
+        message: "Please try again later. Using fallback data when available."
+      });
     }
   });
   
