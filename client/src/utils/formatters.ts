@@ -30,47 +30,49 @@ export function formatCompactNumber(value: number | undefined | null): string {
 }
 
 /**
- * Format a date from string to a readable format in the user's local timezone
+ * Format a date from string to a readable format with timezone handling
+ * @param dateString The date string to format
+ * @param formatType The type of formatting to apply
+ * @param useUtc If true, treats the date as UTC rather than local time
  */
-export function formatDate(dateString: string | undefined, formatType: 'full' | 'short' | 'game-ends' = 'full'): string {
+export function formatDate(
+  dateString: string | undefined, 
+  formatType: 'full' | 'short' | 'game-ends' = 'full',
+  useUtc: boolean = false
+): string {
   if (!dateString) return '';
 
   const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = {};
 
   if (formatType === 'game-ends') {
-    return date.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric', 
-      year: 'numeric'
-    });
+    options.month = 'short';
+    options.day = 'numeric';
+    options.year = 'numeric';
+  } else if (formatType === 'short') {
+    options.month = 'short';
+    options.day = 'numeric';
+  } else {
+    // full format
+    options.month = 'short';
+    options.day = 'numeric';
+    options.year = 'numeric';
+    
+    // Only add time if it's not midnight
+    if (date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0) {
+      options.hour = 'numeric';
+      options.minute = '2-digit';
+      options.hour12 = true;
+      options.timeZoneName = 'short';
+    }
   }
 
-  if (formatType === 'short') {
-    return date.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric'
-    });
+  // Use UTC timezone if specified (for server timestamps)
+  if (useUtc) {
+    options.timeZone = 'UTC';
   }
 
-  // Format with time if available (full format)
-  if (date.getHours() !== 0 || date.getMinutes() !== 0) {
-    return date.toLocaleString(undefined, { // undefined uses the user's browser locale
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZoneName: 'short' // Display timezone abbreviation
-    });
-  }
-
-  // Otherwise just return the date
-  return date.toLocaleString(undefined, { // undefined uses the user's browser locale
-    month: 'short',
-    day: 'numeric', 
-    year: 'numeric'
-  });
+  return date.toLocaleString(undefined, options);
 }
 
 /**
