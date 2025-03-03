@@ -33,9 +33,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get live data from API with fallback to snapshot data
       let liveData;
+      let currentSnapshotId: number | null = null;
+      
       try {
         console.log("Fetching fresh leaderboard data");
         liveData = await getLiveLeaderboardData();
+        // For live data, we'll compare with latest snapshot
+        const latestSnapshot = await storage.getLatestSnapshot();
+        if (latestSnapshot) {
+          currentSnapshotId = latestSnapshot.id;
+        }
       } catch (apiError) {
         console.error("Error fetching live data, will attempt to use snapshot data", apiError);
         
@@ -44,9 +51,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (latestSnapshot) {
           console.log(`Falling back to snapshot #${latestSnapshot.id} data`);
           liveData = await storage.getAgents(latestSnapshot.id);
+          currentSnapshotId = latestSnapshot.id;
         } else {
           throw new Error("No fallback data available");
         }
+      }
+      
+      // Now let's add 24-hour comparison data
+      try {
+        // If we're using a snapshot as current data, find previous day snapshot for comparison
+        if (currentSnapshotId !== null) {
+          // Get all snapshots sorted by timestamp
+          const snapshots = await storage.getSnapshots();
+          
+          // Sort snapshots by time (latest first)
+          snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+          
+          // Find the current snapshot
+          const currentSnapshot = snapshots.find(s => s.id === currentSnapshotId);
+          
+          if (currentSnapshot) {
+            // Find a snapshot ~24 hours before the current one
+            const currentTime = currentSnapshot.timestamp.getTime();
+            const oneDayAgo = new Date(currentTime - 24 * 60 * 60 * 1000);
+            
+            let previousSnapshot = null;
+            let minTimeDiff = Infinity;
+            
+            // Find the snapshot closest to 24 hours ago
+            for (const snapshot of snapshots) {
+              // Skip if it's the current snapshot
+              if (snapshot.id === currentSnapshotId) continue;
+              
+              const timeDiff = Math.abs(snapshot.timestamp.getTime() - oneDayAgo.getTime());
+              if (timeDiff < minTimeDiff) {
+                minTimeDiff = timeDiff;
+                previousSnapshot = snapshot;
+              }
+            }
+            
+            // If we found a previous snapshot
+            if (previousSnapshot && previousSnapshot.id !== currentSnapshotId) {
+              console.log(`Using snapshot #${previousSnapshot.id} for previous day comparison for all agents`);
+              
+              // Get all agents from the previous snapshot
+              const previousAgents = await storage.getAgents(previousSnapshot.id);
+              
+              // Create a lookup map for faster access
+              const prevAgentMap = new Map();
+              previousAgents.forEach(agent => {
+                prevAgentMap.set(agent.mastodonUsername.toLowerCase(), agent);
+              });
+              
+              // Update each agent with previous data
+              liveData = liveData.map(agent => {
+                const prevAgent = prevAgentMap.get(agent.mastodonUsername.toLowerCase());
+                if (prevAgent) {
+                  return {
+                    ...agent,
+                    prevScore: prevAgent.score,
+                    prevRank: prevAgent.rank,
+                    prevTimestamp: previousSnapshot.timestamp.toISOString()
+                  };
+                }
+                return agent;
+              });
+            }
+          }
+        }
+      } catch (historyError) {
+        // If there's an error getting historical data, log it but continue
+        console.error("Error adding previous day comparison data to agents:", historyError);
+        // We'll still return the agent data without the comparison
       }
       
       // Apply filters
