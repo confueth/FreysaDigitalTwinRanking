@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { formatNumber, formatCompactNumber, formatDate, formatWalletAddress, getRankChangeClass, getScoreChangeClass, getChangeValue } from '@/utils/formatters';
-import { Agent, Tweet } from '@/types/agent';
+import { Agent, Tweet, AgentWithTweets } from '@/types/agent';
 
 export default function AgentDetail() {
   const [match, params] = useRoute('/agent/:username');
@@ -118,7 +118,7 @@ export default function AgentDetail() {
                 )}
                 {agent.prevTimestamp && (
                   <div className="text-xs text-gray-500 mt-1">
-                    Compared to {formatDate(agent.prevTimestamp, 'time')}
+                    Compared to {formatDate(agent.prevTimestamp, 'short')}
                   </div>
                 )}
               </div>
@@ -147,7 +147,7 @@ export default function AgentDetail() {
                 )}
                 {agent.prevTimestamp && (
                   <div className="text-xs text-gray-500 mt-1">
-                    Compared to {formatDate(agent.prevTimestamp, 'time')}
+                    Compared to {formatDate(agent.prevTimestamp, 'short')}
                   </div>
                 )}
               </div>
