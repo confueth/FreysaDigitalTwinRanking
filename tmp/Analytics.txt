@@ -6,7 +6,6 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
-import { CustomXAxisNoFormatter } from '@/components/CustomXAxisNoFormatter';
 import { Agent, Snapshot } from '@/types/agent';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
