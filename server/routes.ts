@@ -38,10 +38,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log("Fetching fresh leaderboard data");
         liveData = await getLiveLeaderboardData();
-        // For live data, we'll compare with latest snapshot
-        const latestSnapshot = await storage.getLatestSnapshot();
-        if (latestSnapshot) {
-          currentSnapshotId = latestSnapshot.id;
+        
+        // If the live API returned an empty array, fall back to snapshot data
+        if (!liveData || liveData.length === 0) {
+          console.log("Live API returned empty data, falling back to snapshot");
+          const latestSnapshot = await storage.getLatestSnapshot();
+          if (latestSnapshot) {
+            console.log(`Using snapshot #${latestSnapshot.id} data as fallback for empty live data`);
+            liveData = await storage.getAgents(latestSnapshot.id);
+            currentSnapshotId = latestSnapshot.id;
+          } else {
+            console.error("No snapshot data available for fallback");
+          }
+        } else {
+          // For live data, we'll compare with latest snapshot
+          const latestSnapshot = await storage.getLatestSnapshot();
+          if (latestSnapshot) {
+            currentSnapshotId = latestSnapshot.id;
+          }
         }
       } catch (apiError) {
         console.error("Error fetching live data, will attempt to use snapshot data", apiError);
