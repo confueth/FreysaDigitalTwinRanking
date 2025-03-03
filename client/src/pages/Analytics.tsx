@@ -455,16 +455,18 @@ export default function Analytics({}: AnalyticsProps) {
     return sortedTimestamps.map(timestamp => {
       // Format the timestamp for display
       const date = new Date(timestamp);
+      const month = date.getMonth() + 1; // 1-12
+      const day = date.getDate(); // 1-31
       const isToday = new Date().toDateString() === date.toDateString();
       
-      // Use a simple string format instead of date objects to avoid NaN/NaN errors
-      const formattedDate = `${date.getMonth() + 1}/${date.getDate()}`;
+      // Create a more descriptive display format for dates (Month/Day)
+      const formattedDate = `${month}/${day}`;
       
       const dataPoint: any = {
-        timestamp: isToday ? 'Today (Live)' : formattedDate,
-        originalTimestamp: timestamp, // Keep the original timestamp for reference
-        dateString: formattedDate, // Use a simple string format for display
-        sortValue: date.getTime() // For sorting
+        timestamp: timestamp, // Keep the original ISO timestamp
+        originalTimestamp: timestamp, // For reference
+        dateString: isToday ? 'Today' : formattedDate, // Human-readable format for the x-axis
+        sortValue: date.getTime(), // For sorting
       };
       
       // Add data for each agent at this timestamp
