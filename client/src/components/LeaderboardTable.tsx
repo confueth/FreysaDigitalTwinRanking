@@ -27,6 +27,7 @@ interface LeaderboardTableProps {
   totalAgents: number;
   pageSize: number;
   isLoading: boolean;
+  savedAgents?: string[]; // Optional array of saved agent usernames to highlight
 }
 
 export default function LeaderboardTable({
@@ -36,7 +37,8 @@ export default function LeaderboardTable({
   onPageChange,
   totalAgents,
   pageSize,
-  isLoading
+  isLoading,
+  savedAgents = []
 }: LeaderboardTableProps) {
   // Calculate total pages
   const totalPages = Math.ceil(totalAgents / pageSize);
@@ -87,57 +89,64 @@ export default function LeaderboardTable({
   }
 
   // Responsive column rendering
-  const renderMobileTableRow = (agent: Agent) => (
-    <TableRow 
-      key={agent.id} 
-      className="hover:bg-gray-700 cursor-pointer"
-      onClick={() => onAgentSelect(agent.mastodonUsername)}
-    >
-      <TableCell className="px-2 py-3 whitespace-nowrap">
-        <div className="flex items-center">
-          <span className="text-base font-semibold">{agent.rank}</span>
-          {agent.prevRank && agent.rank !== agent.prevRank && (
-            <span className={`ml-1 text-xs ${getRankChangeClass(agent.rank, agent.prevRank)}`}>
-              {agent.prevRank > agent.rank ? `+${agent.prevRank - agent.rank}` : `${agent.prevRank - agent.rank}`}
-            </span>
-          )}
-        </div>
-      </TableCell>
-      <TableCell className="px-2 py-3 whitespace-nowrap">
-        <div className="flex items-center">
-          <img 
-            className="h-7 w-7 rounded-full"
-            src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
-            alt={`${agent.mastodonUsername} avatar`}
-          />
-          <div className="ml-2">
-            <div className="text-xs font-medium">@{agent.mastodonUsername.length > 12 ? 
-              `${agent.mastodonUsername.substring(0, 10)}...` : agent.mastodonUsername}</div>
+  const renderMobileTableRow = (agent: Agent) => {
+    const isSaved = savedAgents.includes(agent.mastodonUsername);
+    
+    return (
+      <TableRow 
+        key={agent.id} 
+        className={`hover:bg-gray-700 cursor-pointer ${isSaved ? 'bg-emerald-900/20' : ''}`}
+        onClick={() => onAgentSelect(agent.mastodonUsername)}
+      >
+        <TableCell className="px-2 py-3 whitespace-nowrap">
+          <div className="flex items-center">
+            <span className="text-base font-semibold">{agent.rank}</span>
+            {agent.prevRank && agent.rank !== agent.prevRank && (
+              <span className={`ml-1 text-xs ${getRankChangeClass(agent.rank, agent.prevRank)}`}>
+                {agent.prevRank > agent.rank ? `+${agent.prevRank - agent.rank}` : `${agent.prevRank - agent.rank}`}
+              </span>
+            )}
           </div>
-        </div>
-      </TableCell>
-      <TableCell className="px-2 py-3 whitespace-nowrap">
-        <div className="text-xs font-semibold">{formatCompactNumber(agent.score)}</div>
-        <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-          {agent.prevScore ? (agent.score > agent.prevScore ? '↑' : '↓') : ''}
-        </div>
-      </TableCell>
-      <TableCell className="px-2 py-3 whitespace-nowrap text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-primary hover:text-primary-dark p-1 h-7 w-7"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAgentSelect(agent.mastodonUsername);
-          }}
-        >
-          <Eye className="h-4 w-4" />
-          <span className="sr-only">View</span>
-        </Button>
-      </TableCell>
-    </TableRow>
-  );
+        </TableCell>
+        <TableCell className="px-2 py-3 whitespace-nowrap">
+          <div className="flex items-center">
+            <img 
+              className="h-7 w-7 rounded-full"
+              src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
+              alt={`${agent.mastodonUsername} avatar`}
+            />
+            <div className="ml-2">
+              <div className="flex items-center">
+                <span className="text-xs font-medium">@{agent.mastodonUsername.length > 12 ? 
+                  `${agent.mastodonUsername.substring(0, 10)}...` : agent.mastodonUsername}</span>
+                {isSaved && <span className="ml-1 text-xs text-emerald-400">★</span>}
+              </div>
+            </div>
+          </div>
+        </TableCell>
+        <TableCell className="px-2 py-3 whitespace-nowrap">
+          <div className="text-xs font-semibold">{formatCompactNumber(agent.score)}</div>
+          <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
+            {agent.prevScore ? (agent.score > agent.prevScore ? '↑' : '↓') : ''}
+          </div>
+        </TableCell>
+        <TableCell className="px-2 py-3 whitespace-nowrap text-right">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-primary hover:text-primary-dark p-1 h-7 w-7"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAgentSelect(agent.mastodonUsername);
+            }}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="sr-only">View</span>
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   const renderDesktopTableRow = (agent: Agent) => (
     <TableRow 
