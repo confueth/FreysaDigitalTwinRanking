@@ -787,18 +787,13 @@ export default function Analytics({}: AnalyticsProps) {
                         </tr>
                       </thead>
                       <tbody>
-                        {snapshots.map((snapshot: Snapshot) => {
-                          // Ensure consistent date format by explicitly converting to Date object
-                          const date = snapshot.timestamp ? new Date(snapshot.timestamp) : null;
-                          return (
-                            <tr key={snapshot.id} className="border-b border-gray-800 hover:bg-gray-800">
-                              <td className="p-2">{snapshot.id}</td>
-                              <td className="p-2">{date ? `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}` : 'N/A'}</td>
-                              <td className="p-2">{snapshot.description}</td>
-                              <td className="p-2 text-right">
-                                <Button 
-                          );
-                        })} 
+                        {snapshots.map((snapshot: Snapshot) => (
+                          <tr key={snapshot.id} className="border-b border-gray-800 hover:bg-gray-800">
+                            <td className="p-2">{snapshot.id}</td>
+                            <td className="p-2">{snapshot.timestamp ? new Date(snapshot.timestamp).toLocaleDateString() : 'N/A'}</td>
+                            <td className="p-2">{snapshot.description}</td>
+                            <td className="p-2 text-right">
+                              <Button 
                                 variant="ghost" 
                                 size="sm"
                                 onClick={() => generateCsvForSnapshot(snapshot.id)}
