@@ -7,30 +7,38 @@ import { XAxis } from 'recharts';
  * while still showing formatted dates
  */
 export function CustomXAxisNoFormatter(props: any) {
+  // Helper function to safely format a date value
+  const safeFormatDate = (value: any): string => {
+    // If value is already a formatted string, return it
+    if (typeof value === 'string') {
+      // If it contains a slash or is "Today", it's already formatted
+      if (value.includes('/') || value.includes('Today')) {
+        return value;
+      }
+      
+      // Otherwise try to parse it as a date
+      try {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+          return `${date.getMonth() + 1}/${date.getDate()}`;
+        }
+      } catch (e) {
+        // If parsing fails, just return the original
+        console.warn('Date parsing failed', e);
+      }
+    }
+    
+    // For all other cases including non-date strings, return as is
+    return String(value);
+  };
+  
   return (
     <XAxis 
-      dataKey="timestamp" 
+      dataKey="timestamp"
       tick={{ fill: '#9ca3af' }}
-      tickFormatter={(value) => {
-        // Safely display the value - if it's already formatted, return as is
-        if (typeof value === 'string' && (value.includes('/') || value.includes('Today'))) {
-          return value;
-        }
-        
-        try {
-          // Otherwise try to parse and format the date
-          const date = new Date(value);
-          // Check if date is valid before formatting
-          if (!isNaN(date.getTime())) {
-            return `${date.getMonth() + 1}/${date.getDate()}`;
-          }
-        } catch (e) {
-          // If parsing fails, return the original value
-          console.warn('Date parsing error', e);
-        }
-        
-        return value;
-      }}
+      // Override any tickFormatter in props with our safe version
+      tickFormatter={safeFormatDate}
+      allowDataOverflow={false}
       {...props}
     />
   );
