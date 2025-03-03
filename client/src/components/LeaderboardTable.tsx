@@ -148,68 +148,75 @@ export default function LeaderboardTable({
     );
   };
 
-  const renderDesktopTableRow = (agent: Agent) => (
-    <TableRow 
-      key={agent.id} 
-      className="hover:bg-gray-700 cursor-pointer"
-      onClick={() => onAgentSelect(agent.mastodonUsername)}
-    >
-      <TableCell className="px-4 py-3 whitespace-nowrap">
-        <div className="flex items-center">
-          <span className="text-lg font-semibold">{agent.rank}</span>
-          {agent.prevRank && agent.rank !== agent.prevRank && (
-            <span className={`ml-1 text-xs ${getRankChangeClass(agent.rank, agent.prevRank)}`}>
-              {agent.prevRank > agent.rank ? `+${agent.prevRank - agent.rank}` : `${agent.prevRank - agent.rank}`}
-            </span>
-          )}
-        </div>
-      </TableCell>
-      <TableCell className="px-4 py-3 whitespace-nowrap">
-        <div className="flex items-center">
-          <img 
-            className="h-8 w-8 rounded-full"
-            src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
-            alt={`${agent.mastodonUsername} avatar`}
-          />
-          <div className="ml-3">
-            <div className="text-sm font-medium">@{agent.mastodonUsername}</div>
+  const renderDesktopTableRow = (agent: Agent) => {
+    const isSaved = savedAgents.includes(agent.mastodonUsername);
+    
+    return (
+      <TableRow 
+        key={agent.id} 
+        className={`hover:bg-gray-700 cursor-pointer ${isSaved ? 'bg-emerald-900/20' : ''}`}
+        onClick={() => onAgentSelect(agent.mastodonUsername)}
+      >
+        <TableCell className="px-4 py-3 whitespace-nowrap">
+          <div className="flex items-center">
+            <span className="text-lg font-semibold">{agent.rank}</span>
+            {agent.prevRank && agent.rank !== agent.prevRank && (
+              <span className={`ml-1 text-xs ${getRankChangeClass(agent.rank, agent.prevRank)}`}>
+                {agent.prevRank > agent.rank ? `+${agent.prevRank - agent.rank}` : `${agent.prevRank - agent.rank}`}
+              </span>
+            )}
           </div>
-        </div>
-      </TableCell>
-      <TableCell className="px-4 py-3 whitespace-nowrap">
-        <div className="text-sm font-semibold">{formatNumber(agent.score)}</div>
-        <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-          {getChangeValue(agent.score, agent.prevScore)}
-        </div>
-      </TableCell>
-      <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
-        <div className="text-sm">{agent.city || '-'}</div>
-      </TableCell>
-      <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
-        <div className="text-sm">{formatCompactNumber(agent.followersCount)}</div>
-      </TableCell>
-      <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
-        <div className="text-sm">{formatCompactNumber(agent.likesCount)}</div>
-      </TableCell>
-      <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
-        <div className="text-sm">{formatCompactNumber(agent.retweetsCount)}</div>
-      </TableCell>
-      <TableCell className="px-4 py-3 whitespace-nowrap text-right">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-primary hover:text-primary-dark"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAgentSelect(agent.mastodonUsername);
-          }}
-        >
-          <Eye className="h-5 w-5" />
-          <span className="sr-only">View</span>
-        </Button>
-      </TableCell>
-    </TableRow>
-  );
+        </TableCell>
+        <TableCell className="px-4 py-3 whitespace-nowrap">
+          <div className="flex items-center">
+            <img 
+              className="h-8 w-8 rounded-full"
+              src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
+              alt={`${agent.mastodonUsername} avatar`}
+            />
+            <div className="ml-3">
+              <div className="flex items-center">
+                <div className="text-sm font-medium">@{agent.mastodonUsername}</div>
+                {isSaved && <span className="ml-2 text-xs text-emerald-400">★</span>}
+              </div>
+            </div>
+          </div>
+        </TableCell>
+        <TableCell className="px-4 py-3 whitespace-nowrap">
+          <div className="text-sm font-semibold">{formatNumber(agent.score)}</div>
+          <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
+            {getChangeValue(agent.score, agent.prevScore)}
+          </div>
+        </TableCell>
+        <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+          <div className="text-sm">{agent.city || '-'}</div>
+        </TableCell>
+        <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+          <div className="text-sm">{formatCompactNumber(agent.followersCount)}</div>
+        </TableCell>
+        <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+          <div className="text-sm">{formatCompactNumber(agent.likesCount)}</div>
+        </TableCell>
+        <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+          <div className="text-sm">{formatCompactNumber(agent.retweetsCount)}</div>
+        </TableCell>
+        <TableCell className="px-4 py-3 whitespace-nowrap text-right">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-primary hover:text-primary-dark"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAgentSelect(agent.mastodonUsername);
+            }}
+          >
+            <Eye className="h-5 w-5" />
+            <span className="sr-only">View</span>
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 mb-6">
