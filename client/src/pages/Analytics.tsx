@@ -230,7 +230,7 @@ export default function Analytics({}: AnalyticsProps) {
     }
   });
 
-  // Fetch agents for selection - get all agents, not just top 100
+  // Fetch all agents for selection with comprehensive search capability
   const { data: topAgents, isLoading: isLoadingTopAgents } = useQuery({
     queryKey: ['/api/agents'],
     queryFn: async () => {
@@ -240,6 +240,42 @@ export default function Analytics({}: AnalyticsProps) {
       return response.json();
     }
   });
+  
+  // Separate query for searching agents by exact username
+  const { data: searchedAgent, isLoading: isSearchingAgent } = useQuery({
+    queryKey: ['/api/agent-search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim()) return null;
+      
+      // Try to get the exact agent by username
+      try {
+        const response = await fetch(`/api/agents/${searchQuery}`);
+        if (response.ok) {
+          const agent = await response.json();
+          return agent;
+        }
+        return null;
+      } catch (error) {
+        console.error("Error searching for agent:", error);
+        return null;
+      }
+    },
+    enabled: !!searchQuery.trim() && searchQuery.length > 2,
+    retry: false,
+    refetchOnWindowFocus: false
+  });
+  
+  // Combine all available agents from different sources
+  const allAvailableAgents = React.useMemo(() => {
+    const agents = [...(topAgents || [])];
+    
+    // Add the searched agent if found and not already in the list
+    if (searchedAgent && !agents.some(a => a.mastodonUsername === searchedAgent.mastodonUsername)) {
+      agents.push(searchedAgent);
+    }
+    
+    return agents;
+  }, [topAgents, searchedAgent]);
 
   // Fetch history data for selected agents with optimized performance
   const { data: agentHistories, isLoading: isLoadingHistories } = useQuery({
@@ -303,39 +339,45 @@ export default function Analytics({}: AnalyticsProps) {
     setSearchQuery(e.target.value);
   };
 
-  // Enhanced agent filtering for maximum discoverability
+  // Enhanced agent filtering for maximum discoverability using all agent sources
   const filteredAgents = React.useMemo(() => {
-    if (!topAgents || topAgents.length === 0) return [];
-    if (!searchQuery.trim()) return topAgents;
+    if (!searchQuery.trim()) return allAvailableAgents?.slice(0, 100) || []; // Show top 100 by default
     
     const searchTermLower = searchQuery.toLowerCase().trim();
     
     // First look for exact matches to prioritize them
-    const exactMatches = topAgents.filter((agent: Agent) => {
+    const exactMatches = allAvailableAgents?.filter((agent: Agent) => {
       const username = agent.mastodonUsername?.toLowerCase() || '';
       return username === searchTermLower;
-    });
+    }) || [];
     
     // Then look for partial matches
-    const partialMatches = topAgents.filter((agent: Agent) => {
+    const partialMatches = allAvailableAgents?.filter((agent: Agent) => {
       const username = agent.mastodonUsername?.toLowerCase() || '';
       return username.includes(searchTermLower) && username !== searchTermLower;
-    });
+    }) || [];
+    
+    // If we found the searched agent directly but it wasn't in the results, prioritize it
+    if (searchedAgent && !exactMatches.some(a => a.mastodonUsername === searchedAgent.mastodonUsername)) {
+      return [searchedAgent, ...exactMatches, ...partialMatches];
+    }
     
     // If we have exact matches, return them first followed by partial matches
     // Otherwise, return all partial matches
     return [...exactMatches, ...partialMatches];
-  }, [topAgents, searchQuery]);
+  }, [allAvailableAgents, searchQuery, searchedAgent]);
   
   // Handle special case when an agent isn't found but user wants to add them
   const handleCustomAgentSelect = async () => {
     if (!searchQuery.trim()) return;
     
+    const username = searchQuery.trim();
+    
     // Check if the agent already exists in the selection
-    if (selectedAgents.includes(searchQuery)) {
+    if (selectedAgents.includes(username)) {
       toast({
         title: "Already Selected",
-        description: `${searchQuery} is already in your comparison.`,
+        description: `${username} is already in your comparison.`,
       });
       return;
     }
@@ -350,15 +392,38 @@ export default function Analytics({}: AnalyticsProps) {
       return;
     }
     
-    // Add the custom agent to the selection
-    setSelectedAgents([...selectedAgents, searchQuery]);
+    // Try to fetch the agent directly first
+    try {
+      const response = await fetch(`/api/agents/${username}`);
+      if (response.ok) {
+        const agentData = await response.json();
+        
+        // If agent is found, add to selection
+        setSelectedAgents([...selectedAgents, username]);
+        
+        // Clear the search query
+        setSearchQuery('');
+        
+        toast({
+          title: "Agent Added",
+          description: `${username} has been added to your comparison.`,
+        });
+        
+        return;
+      }
+    } catch (error) {
+      console.error("Error fetching agent:", error);
+    }
+    
+    // If we get here, the agent couldn't be found but we'll add it anyway
+    setSelectedAgents([...selectedAgents, username]);
     
     // Clear the search query
     setSearchQuery('');
     
     toast({
-      title: "Agent Added",
-      description: `${searchQuery} has been added to your comparison.`,
+      title: "Custom Agent Added",
+      description: `${username} has been added to your comparison. Historical data may be limited.`,
     });
   };
 
@@ -742,22 +807,30 @@ export default function Analytics({}: AnalyticsProps) {
                   <div className="space-y-2">
                     <Label htmlFor="search">Search Agents</Label>
                     <div className="flex gap-2">
-                      <Input
-                        id="search"
-                        placeholder="Search by username"
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                      />
+                      <div className="relative flex-1">
+                        <Input
+                          id="search"
+                          placeholder="Enter any agent username"
+                          value={searchQuery}
+                          onChange={handleSearchChange}
+                        />
+                        {isSearchingAgent && (
+                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                            <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                          </div>
+                        )}
+                      </div>
                       {searchQuery.trim() && filteredAgents.length === 0 && (
                         <Button
                           className="whitespace-nowrap"
                           onClick={handleCustomAgentSelect}
-                          disabled={selectedAgents.length >= 5}
+                          disabled={selectedAgents.length >= 5 || isSearchingAgent}
                         >
                           Add
                         </Button>
                       )}
                     </div>
+                    <p className="text-xs text-gray-400 mt-1">Type any agent name to search and compare - not limited to top agents</p>
                   </div>
 
                   <div className="h-[400px] overflow-y-auto border rounded-md p-2">
@@ -794,18 +867,26 @@ export default function Analytics({}: AnalyticsProps) {
                       ))
                     ) : searchQuery.trim() ? (
                       <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                        <p className="text-gray-400 mb-4">No agents found with the name "{searchQuery}"</p>
-                        <Button
-                          onClick={handleCustomAgentSelect}
-                          disabled={selectedAgents.length >= 5}
-                          className="bg-emerald-600 hover:bg-emerald-700"
-                        >
-                          Add "{searchQuery}" to Compare
-                        </Button>
+                        <p className="text-gray-400 mb-4">No agents found with the username "{searchQuery}"</p>
+                        
+                        {isSearchingAgent ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm">Searching...</span>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={handleCustomAgentSelect}
+                            disabled={selectedAgents.length >= 5}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            Add "{searchQuery}" to Compare Anyway
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <div className="text-gray-400 text-center p-4">
-                        {topAgents?.length > 0 ? `${topAgents.length} agents available. Start typing to filter.` : "No agents available."}
+                        {allAvailableAgents?.length > 0 ? `${allAvailableAgents.length} agents available. Type any agent name to search.` : "No agents available."}
                       </div>
                     )}
                   
