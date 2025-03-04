@@ -128,9 +128,15 @@ export default function LeaderboardTable({
         </TableCell>
         <TableCell className="px-2 py-3 whitespace-nowrap">
           <div className="text-xs font-semibold">{formatCompactNumber(agent.score)}</div>
-          <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-            {agent.prevScore ? (agent.score > agent.prevScore ? '↑' : '↓') : ''}
-          </div>
+          {agent.prevScore !== undefined && agent.score !== agent.prevScore && (
+            <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
+              {agent.score > agent.prevScore ? (
+                <span>+{formatNumber(agent.score - agent.prevScore)}</span>
+              ) : (
+                <span>-{formatNumber(Math.abs(agent.score - agent.prevScore))}</span>
+              )}
+            </div>
+          )}
         </TableCell>
         <TableCell className="px-2 py-3 whitespace-nowrap text-right">
           <div className="flex justify-end space-x-1">
@@ -204,9 +210,15 @@ export default function LeaderboardTable({
         </TableCell>
         <TableCell className="px-4 py-3 whitespace-nowrap">
           <div className="text-sm font-semibold">{formatNumber(agent.score)}</div>
-          <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-            {getChangeValue(agent.score, agent.prevScore)}
-          </div>
+          {agent.prevScore !== undefined && agent.score !== agent.prevScore && (
+            <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
+              {agent.score > agent.prevScore ? (
+                <span>+{formatNumber(agent.score - agent.prevScore)}</span>
+              ) : (
+                <span>-{formatNumber(Math.abs(agent.score - agent.prevScore))}</span>
+              )}
+            </div>
+          )}
         </TableCell>
         <TableCell className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
           <div className="text-sm">{agent.city || '-'}</div>
