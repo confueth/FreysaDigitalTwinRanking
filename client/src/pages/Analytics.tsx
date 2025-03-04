@@ -140,6 +140,82 @@ export default function Analytics({}: AnalyticsProps) {
       });
   };
 
+  // Function to download live leaderboard data
+  const generateLiveDataCsv = () => {
+    // Fetch all live agents
+    fetch(`/api/agents?limit=0`)
+      .then(response => response.json())
+      .then(agents => {
+        if (!agents || agents.length === 0) {
+          toast({
+            title: "Error",
+            description: "No live agents found",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Create CSV headers
+        const headers = [
+          "Username", 
+          "Score", 
+          "Rank", 
+          "City", 
+          "Likes", 
+          "Followers", 
+          "Retweets",
+          "Previous Score",
+          "Previous Rank"
+        ].join(",");
+
+        // Convert agent data to CSV rows
+        const rows = agents.map((agent: Agent) => [
+          agent.mastodonUsername,
+          agent.score,
+          agent.rank,
+          agent.city || "N/A",
+          agent.likesCount || 0,
+          agent.followersCount || 0,
+          agent.retweetsCount || 0,
+          agent.prevScore || "N/A",
+          agent.prevRank || "N/A"
+        ].join(","));
+
+        // Combine headers and rows
+        const csvContent = [headers, ...rows].join("\n");
+
+        // Create a blob with the CSV content
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        // Create a link to download the CSV
+        const link = document.createElement("a");
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const time = new Date().toISOString().slice(11, 19).replace(/:/g, '-');
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `live-leaderboard-data-${timestamp}-${time}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast({
+          title: "Success",
+          description: "Live leaderboard data downloaded successfully",
+          variant: "default"
+        });
+      })
+      .catch(error => {
+        console.error("Error generating live data CSV:", error);
+        toast({
+          title: "Error",
+          description: "Failed to download live leaderboard data",
+          variant: "destructive"
+        });
+      });
+  };
+
   // Fetch snapshots for historical trends
   const { 
     data: snapshots, 
@@ -1228,6 +1304,62 @@ export default function Analytics({}: AnalyticsProps) {
         <TabsContent value="snapshots" className="mt-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-medium">Snapshot Management</h3>
+            
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generateLiveDataCsv}
+                title="Download current leaderboard data as CSV"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  className="h-4 w-4 mr-1"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span className="hidden sm:inline">Download Live Data</span>
+              </Button>
+              
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => createSnapshotMutation.mutate()}
+                disabled={createSnapshotMutation.isPending}
+              >
+                {createSnapshotMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                ) : (
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className="h-4 w-4 mr-1"
+                  >
+                    <path d="M15 2.5H9a7 7 0 0 0 0 14h6a7 7 0 1 0 0-14z"/>
+                    <circle cx="9" cy="9.5" r="1.5"/>
+                    <path d="M21 2.5H9a7 7 0 0 0 0 14h12v-14z"/>
+                  </svg>
+                )}
+                <span className="hidden sm:inline">Create Snapshot</span>
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
