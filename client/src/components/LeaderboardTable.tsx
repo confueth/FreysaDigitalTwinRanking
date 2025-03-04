@@ -130,7 +130,11 @@ export default function LeaderboardTable({
           <div className="text-xs font-semibold">{formatCompactNumber(agent.score)}</div>
           {agent.prevScore !== undefined && agent.score !== agent.prevScore && (
             <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-              {getChangeValue(agent.score, agent.prevScore)}
+              {agent.score > agent.prevScore ? (
+                <span>+{formatNumber(agent.score - agent.prevScore)}</span>
+              ) : (
+                <span>-{formatNumber(Math.abs(agent.score - agent.prevScore))}</span>
+              )}
             </div>
           )}
         </TableCell>
@@ -208,7 +212,11 @@ export default function LeaderboardTable({
           <div className="text-sm font-semibold">{formatNumber(agent.score)}</div>
           {agent.prevScore !== undefined && agent.score !== agent.prevScore && (
             <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-              {getChangeValue(agent.score, agent.prevScore)}
+              {agent.score > agent.prevScore ? (
+                <span>+{formatNumber(agent.score - agent.prevScore)}</span>
+              ) : (
+                <span>-{formatNumber(Math.abs(agent.score - agent.prevScore))}</span>
+              )}
             </div>
           )}
         </TableCell>
