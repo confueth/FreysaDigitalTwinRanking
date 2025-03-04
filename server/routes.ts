@@ -105,67 +105,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Now let's add 24-hour comparison data
+      // Now let's add previous day comparison data
       try {
-        // If we're using a snapshot as current data, find previous day snapshot for comparison
-        if (currentSnapshotId !== null) {
-          // Get all snapshots sorted by timestamp
-          const snapshots = await storage.getSnapshots();
+        // For both live and snapshot data, we want to find a previous day snapshot for comparison
+        // Get all snapshots sorted by timestamp
+        const snapshots = await storage.getSnapshots();
 
-          // Sort snapshots by time (latest first)
-          snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        // Sort snapshots by time (latest first)
+        snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-          // Find the current snapshot
-          const currentSnapshot = snapshots.find(s => s.id === currentSnapshotId);
+        // Find a snapshot from the previous day for comparison
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0); // Set to beginning of today
 
-          if (currentSnapshot) {
-            // Find a snapshot ~24 hours before the current one
-            const currentTime = currentSnapshot.timestamp.getTime();
-            const oneDayAgo = new Date(currentTime - 24 * 60 * 60 * 1000);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1); // Set to previous day
 
-            let previousSnapshot = null;
-            let minTimeDiff = Infinity;
+        // Find the snapshot closest to yesterday
+        let previousSnapshot = null;
+        let minTimeDiff = Infinity;
 
-            // Find the snapshot closest to 24 hours ago
-            for (const snapshot of snapshots) {
-              // Skip if it's the current snapshot
-              if (snapshot.id === currentSnapshotId) continue;
+        for (const snapshot of snapshots) {
+          const snapshotDate = new Date(snapshot.timestamp);
+          snapshotDate.setUTCHours(0, 0, 0, 0); // Compare just the date part
 
-              const timeDiff = Math.abs(snapshot.timestamp.getTime() - oneDayAgo.getTime());
-              if (timeDiff < minTimeDiff) {
-                minTimeDiff = timeDiff;
-                previousSnapshot = snapshot;
-              }
-            }
-
-            // If we found a previous snapshot
-            if (previousSnapshot && previousSnapshot.id !== currentSnapshotId) {
-              console.log(`Using snapshot #${previousSnapshot.id} for previous day comparison for all agents`);
-
-              // Get all agents from the previous snapshot
-              const previousAgents = await storage.getAgents(previousSnapshot.id);
-
-              // Create a lookup map for faster access
-              const prevAgentMap = new Map();
-              previousAgents.forEach(agent => {
-                prevAgentMap.set(agent.mastodonUsername.toLowerCase(), agent);
-              });
-
-              // Update each agent with previous data
-              liveData = liveData.map(agent => {
-                const prevAgent = prevAgentMap.get(agent.mastodonUsername.toLowerCase());
-                if (prevAgent) {
-                  return {
-                    ...agent,
-                    prevScore: prevAgent.score,
-                    prevRank: prevAgent.rank,
-                    prevTimestamp: previousSnapshot.timestamp.toISOString()
-                  };
-                }
-                return agent;
-              });
-            }
+          // Check if this snapshot is from yesterday
+          if (snapshotDate.getTime() === yesterday.getTime()) {
+            previousSnapshot = snapshot;
+            break; // Perfect match found
           }
+
+          // If no exact match, find the closest one before today
+          const timeDiff = today.getTime() - snapshotDate.getTime();
+          if (timeDiff > 0 && timeDiff < minTimeDiff) {
+            minTimeDiff = timeDiff;
+            previousSnapshot = snapshot;
+          }
+        }
+
+        // If we found a previous snapshot
+        if (previousSnapshot && previousSnapshot.id !== currentSnapshotId) {
+          console.log(`Using snapshot #${previousSnapshot.id} for previous day comparison for all agents`);
+
+          // Get all agents from the previous snapshot
+          const previousAgents = await storage.getAgents(previousSnapshot.id);
+
+          // Create a lookup map for faster access
+          const prevAgentMap = new Map();
+          previousAgents.forEach(agent => {
+            prevAgentMap.set(agent.mastodonUsername.toLowerCase(), agent);
+          });
+
+          // Update each agent with previous data
+          liveData = liveData.map(agent => {
+            const prevAgent = prevAgentMap.get(agent.mastodonUsername.toLowerCase());
+            if (prevAgent) {
+              return {
+                ...agent,
+                prevScore: prevAgent.score,
+                prevRank: prevAgent.rank,
+                prevTimestamp: previousSnapshot.timestamp.toISOString()
+              };
+            }
+            return agent;
+          });
         }
       } catch (historyError) {
         // If there's an error getting historical data, log it but continue
