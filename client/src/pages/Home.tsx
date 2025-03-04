@@ -376,6 +376,13 @@ export default function Home() {
     // Initial activity timestamp
     updateLastActivity();
     
+    // Initialize firstLoadTime on component mount if it's not set
+    if (!firstLoadTime) {
+      setFirstLoadTime(new Date().toISOString());
+      console.log("First load - forcing data refresh");
+      refreshData();
+    }
+    
     // Set up infrequent polling (once every 30 minutes)
     // This respects our API usage and ensures data is eventually refreshed
     const interval = setInterval(refreshData, 30 * 60 * 1000); // 30 minutes
@@ -459,6 +466,7 @@ export default function Home() {
             <StatCards 
               stats={stats} 
               snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
+              firstLoadTime={firstLoadTime}
               isLoading={!stats}
             />
             
@@ -513,6 +521,7 @@ export default function Home() {
             <StatCards 
               stats={stats} 
               snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
+              firstLoadTime={firstLoadTime}
               isLoading={!stats}
             />
             
