@@ -7,6 +7,8 @@ import { scheduleSnapshots } from "./snapshot-service";
 import rateLimit from 'express-rate-limit';
 
 const app = express();
+// Enable trust proxy to properly handle X-Forwarded-For headers in Replit environment
+app.set('trust proxy', true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
