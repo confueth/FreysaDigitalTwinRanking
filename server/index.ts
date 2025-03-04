@@ -4,10 +4,22 @@ import { setupVite, serveStatic, log } from "./vite";
 // CSV import removed as it's no longer needed
 import { storage } from "./storage";
 import { scheduleSnapshots } from "./snapshot-service";
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add rate limiting to prevent abuse
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Apply rate limiting to API routes
+app.use('/api/', apiLimiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -49,10 +61,15 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    // Only show detailed error messages in development
+    const message = app.get("env") === "development" 
+      ? (err.message || "Internal Server Error")
+      : "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
+    
+    // Log the error instead of throwing it
+    console.error(err);
   });
 
   // importantly only setup vite in development and after
