@@ -29,6 +29,7 @@ export default function Home() {
   const [showAgentModal, setShowAgentModal] = useState(false);
   const [showMyAgentsOnly, setShowMyAgentsOnly] = useState(false);
   const [myAgents, setMyAgents] = useState<string[]>([]);
+  const [firstLoadTime, setFirstLoadTime] = useState<string | null>(null);
   
   // Query available snapshots 
   const { data: snapshots, isLoading: snapshotsLoading } = useQuery<Snapshot[]>({
@@ -112,7 +113,11 @@ export default function Home() {
         // Cache the results
         try {
           sessionStorage.setItem(cacheKey, JSON.stringify(data));
-          sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+          const currentTime = Date.now().toString();
+          sessionStorage.setItem(`${cacheKey}_time`, currentTime);
+          
+          // Update firstLoadTime state with the current time
+          setFirstLoadTime(new Date().toISOString());
         } catch (e) {
           console.warn('Failed to cache leaderboard data', e);
         }
