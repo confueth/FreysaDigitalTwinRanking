@@ -202,3 +202,52 @@ async function initializeSnapshot(storage: IStorage): Promise<void> {
     console.error('Error initializing snapshot:', error);
   }
 }
+
+/**
+ * Find a snapshot from the previous day compared to the current date
+ * @param storage Storage implementation
+ * @returns The snapshot from the previous day or the closest one before today
+ */
+export async function findPreviousDaySnapshot(storage: IStorage): Promise<{ id: number, timestamp: Date } | null> {
+  try {
+    // Get all snapshots
+    const snapshots = await storage.getSnapshots();
+    
+    // If no snapshots, return null
+    if (!snapshots || snapshots.length === 0) {
+      return null;
+    }
+    
+    // Define today
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0); // Set to beginning of today
+    
+    // Sort snapshots by timestamp (newest first)
+    snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    
+    // Find the most recent snapshot before today
+    let previousDaySnapshot = null;
+    
+    for (const snapshot of snapshots) {
+      const snapshotDate = new Date(snapshot.timestamp);
+      snapshotDate.setUTCHours(0, 0, 0, 0); // Compare just the date part
+      
+      // If this snapshot is from before today, it's our candidate
+      if (snapshotDate.getTime() < today.getTime()) {
+        previousDaySnapshot = snapshot;
+        break; // Take the first one (most recent) before today
+      }
+    }
+    
+    if (previousDaySnapshot) {
+      console.log(`Found previous day snapshot #${previousDaySnapshot.id} from ${previousDaySnapshot.timestamp}`);
+    } else {
+      console.log('No previous day snapshot found');
+    }
+    
+    return previousDaySnapshot;
+  } catch (error) {
+    console.error('Error finding previous day snapshot:', error);
+    return null;
+  }
+}
