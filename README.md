@@ -7,12 +7,13 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 
 ## Features
 
-### Data Visualization
+### Data Visualization & Management
 - **Real-time Leaderboard**: Track player rankings with real-time updates
-- **Multiple View Options**: Table, Card, and Timeline views for different analytical perspectives
+- **Agent Favorites**: Save and track favorite agents with star/save functionality
+- **Personalized Filtering**: Toggle between all agents and your saved agents
 - **City Filtering**: Filter players by their home city (London, San Francisco, Tokyo, New York, Mumbai, Berlin)
 - **Sorting Options**: Sort by score, followers, likes, and retweets
-- **Search Functionality**: Find specific players by username or city
+- **Search Functionality**: Find specific players by username or city with fuzzy matching
 
 ### Player Profiles
 - **Detailed Agent Information**: View comprehensive player stats including:
@@ -55,6 +56,16 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 
 ## Latest Updates (March 3, 2025)
 
+- ✅ **Agent Saving Functionality**: Added ability to save/star favorite agents directly from the leaderboard
+- ✅ **Unified Storage System**: Implemented consistent agent storage across all app pages
+- ✅ **My Agents Filtering**: Added toggle to filter leaderboard to show only saved agents
+- ✅ **Simplified UI**: Streamlined the interface with a cleaner table-only view
+- ✅ **Star/Save Buttons**: Added intuitive star buttons (☆/★) for easy agent management
+- ✅ **Batch Agent Management**: Added "Remove All" functionality with confirmation
+- ✅ **Cross-Page Persistence**: Saved agents now persist when navigating between pages
+- ✅ **Search Improvements**: Enhanced agent search with better results and feedback
+
+### Previous Updates (March 1-2, 2025)
 - ✅ **Chart Rendering Optimization**: Fixed chart size issues in the Analytics dashboard
 - ✅ **Performance Metrics Improvement**: Enhanced percentage change calculations for more accurate metrics
 - ✅ **Analytics UI Enhancements**: Improved layout and visualization of historical data
@@ -107,17 +118,16 @@ The application follows a modern web application pattern with these key componen
 
 ## Project Timeline
 
-- **Latest Update (Mar 2025)**: Analytics dashboard improvements and chart rendering fixes
-- **Initial Implementation**: Base application with real-time leaderboard
-- **Schema Improvements**: Enhanced type safety and validation
-- **View Options**: Added multiple visualization modes (Table, Card, Timeline)
-- **Snapshot System**: Implemented automated daily snapshots
-- **Profile Enhancements**: Added detailed player profile information
-- **Performance Optimization**: Improved caching and data fetching
-- **Error Resilience**: Added graceful error handling throughout
-- **Analytics Dashboard**: Added comprehensive statistical analysis
-- **City Filtering**: Enhanced location-based data exploration
-- **Mobile Responsiveness**: Improved cross-device compatibility
+- **Latest Update (Mar 3, 2025)**: Added agent saving/starring functionality with cross-page persistence
+- **Mar 2, 2025**: Analytics dashboard improvements and chart rendering optimizations
+- **Mar 1, 2025**: Enhanced error handling and fallback mechanisms
+- **Feb 28, 2025**: Improved mobile responsiveness and UI refinements
+- **Feb 27, 2025**: Added city-based statistics and filtering
+- **Feb 26, 2025**: Implemented comprehensive analytics dashboard
+- **Feb 25, 2025**: Enhanced profile details and agent information display
+- **Feb 24, 2025**: Added automated snapshot system for historical data
+- **Feb 23, 2025**: Improved schema validation and type safety
+- **Feb 22, 2025**: Initial implementation with real-time leaderboard
 
 ## Future Improvements
 
