@@ -7,10 +7,11 @@ import { useGameStatus } from '@/hooks/use-game-status';
 interface StatCardsProps {
   stats?: SnapshotStats;
   snapshotTime: string;
+  firstLoadTime?: string | null;
   isLoading: boolean;
 }
 
-export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsProps) {
+export default function StatCards({ stats, snapshotTime, firstLoadTime, isLoading }: StatCardsProps) {
   const { data: gameStatus, isLoading: isGameStatusLoading } = useGameStatus();
 
   if (isLoading || isGameStatusLoading) {
@@ -137,14 +138,14 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">First Load Refresh Time</p>
-                <h3 className="text-base font-bold" id="firstLoadTime">{formatDate(snapshotTime, 'short', true)}</h3>
+                <h3 className="text-base font-bold" id="firstLoadTime">{formatDate(firstLoadTime || snapshotTime, 'short', true)}</h3>
               </div>
               <div className="rounded-full bg-green-500 bg-opacity-20 p-1.5">
                 <Clock className="h-4 w-4 text-green-500" />
               </div>
             </div>
             <div className="mt-1 flex items-center text-xs text-gray-400">
-              <span>{formatRelativeTime(snapshotTime)}</span>
+              <span>{formatRelativeTime(firstLoadTime || snapshotTime)}</span>
             </div>
           </div>
         </div>
