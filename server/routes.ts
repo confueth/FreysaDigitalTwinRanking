@@ -10,37 +10,33 @@ async function findPreviousDaySnapshot(storage) {
     const snapshots = await storage.getSnapshots();
     if (!snapshots || snapshots.length === 0) return null;
 
+    // Define today
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0); // Set to beginning of today
-
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1); // Set to previous day
-
-    // Sort snapshots by time (latest first)
+    
+    // Sort snapshots by timestamp (newest first)
     snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-    // Find the snapshot closest to yesterday
+    
+    // Find the most recent snapshot before today
     let previousSnapshot = null;
-    let minTimeDiff = Infinity;
-
+    
     for (const snapshot of snapshots) {
         const snapshotDate = new Date(snapshot.timestamp);
         snapshotDate.setUTCHours(0, 0, 0, 0); // Compare just the date part
-
-        // Check if this snapshot is from yesterday
-        if (snapshotDate.getTime() === yesterday.getTime()) {
+        
+        // If this snapshot is from before today, it's our candidate
+        if (snapshotDate.getTime() < today.getTime()) {
             previousSnapshot = snapshot;
-            break; // Perfect match found
-        }
-
-        // If no exact match, find the closest one before today
-        const timeDiff = today.getTime() - snapshotDate.getTime();
-        if (timeDiff > 0 && timeDiff < minTimeDiff) {
-            minTimeDiff = timeDiff;
-            previousSnapshot = snapshot;
+            break; // Take the first one (most recent) before today
         }
     }
-
+    
+    if (previousSnapshot) {
+        console.log(`Found previous day snapshot #${previousSnapshot.id} from ${previousSnapshot.timestamp}`);
+    } else {
+        console.log('No previous day snapshot found');
+    }
+    
     return previousSnapshot;
 }
 
