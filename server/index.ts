@@ -7,8 +7,9 @@ import { scheduleSnapshots } from "./snapshot-service";
 import rateLimit from 'express-rate-limit';
 
 const app = express();
-// Enable trust proxy to properly handle X-Forwarded-For headers in Replit environment
-app.set('trust proxy', true);
+// Configure trust proxy to handle X-Forwarded-For headers safely in Replit environment
+// Only trust the first proxy (Replit's infrastructure)
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -18,6 +19,7 @@ const apiLimiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  trustProxy: true // Explicitly trust the proxy configuration from Express
 });
 
 // Apply rate limiting to API routes
