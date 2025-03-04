@@ -136,8 +136,8 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
           <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-gray-400 text-xs">Snapshot Time</p>
-                <h3 className="text-base font-bold" id="snapshotTime">{formatDate(snapshotTime, 'short', true)}</h3>
+                <p className="text-gray-400 text-xs">First Load Refresh Time</p>
+                <h3 className="text-base font-bold" id="firstLoadTime">{formatDate(snapshotTime, 'short', true)}</h3>
               </div>
               <div className="rounded-full bg-green-500 bg-opacity-20 p-1.5">
                 <Clock className="h-4 w-4 text-green-500" />
