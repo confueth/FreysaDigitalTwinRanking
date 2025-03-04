@@ -93,7 +93,7 @@ export default function LeaderboardTable({
   // Responsive column rendering
   const renderMobileTableRow = (agent: Agent) => {
     const isSaved = savedAgents.includes(agent.mastodonUsername);
-    
+
     return (
       <TableRow 
         key={agent.id} 
@@ -130,7 +130,9 @@ export default function LeaderboardTable({
           <div className="text-xs font-semibold">{formatCompactNumber(agent.score)}</div>
           {agent.prevScore !== undefined && agent.score !== agent.prevScore && (
             <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-              {agent.score > agent.prevScore ? (
+              {agent.score === agent.prevScore ? (
+                <span>0</span>
+              ) : agent.score > agent.prevScore ? (
                 <span>+{formatNumber(agent.score - agent.prevScore)}</span>
               ) : (
                 <span>-{formatNumber(Math.abs(agent.score - agent.prevScore))}</span>
@@ -155,7 +157,7 @@ export default function LeaderboardTable({
                 <span className="sr-only">{isSaved ? 'Remove from saved' : 'Save agent'}</span>
               </Button>
             )}
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -176,7 +178,7 @@ export default function LeaderboardTable({
 
   const renderDesktopTableRow = (agent: Agent) => {
     const isSaved = savedAgents.includes(agent.mastodonUsername);
-    
+
     return (
       <TableRow 
         key={agent.id} 
@@ -212,7 +214,9 @@ export default function LeaderboardTable({
           <div className="text-sm font-semibold">{formatNumber(agent.score)}</div>
           {agent.prevScore !== undefined && agent.score !== agent.prevScore && (
             <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
-              {agent.score > agent.prevScore ? (
+              {agent.score === agent.prevScore ? (
+                <span>0</span>
+              ) : agent.score > agent.prevScore ? (
                 <span>+{formatNumber(agent.score - agent.prevScore)}</span>
               ) : (
                 <span>-{formatNumber(Math.abs(agent.score - agent.prevScore))}</span>
@@ -249,7 +253,7 @@ export default function LeaderboardTable({
                 <span className="sr-only">{isSaved ? 'Remove from saved' : 'Save agent'}</span>
               </Button>
             )}
-            
+
             <Button
               variant="ghost"
               size="icon"
@@ -318,7 +322,7 @@ export default function LeaderboardTable({
             </Button>
           </div>
         </div>
-        
+
         {/* Desktop pagination */}
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
@@ -340,11 +344,11 @@ export default function LeaderboardTable({
                 <span className="sr-only">Previous</span>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              
+
               {Array.from({ length: Math.min(5, totalPages) }).map((_, index) => {
                 const pageNumber = index + 1;
                 const isCurrentPage = pageNumber === currentPage;
-                
+
                 return (
                   <Button
                     key={pageNumber}
@@ -361,7 +365,7 @@ export default function LeaderboardTable({
                   </Button>
                 );
               })}
-              
+
               {totalPages > 5 && (
                 <>
                   <span className="relative inline-flex items-center px-4 py-2 border border-gray-700 bg-gray-800 text-sm font-medium text-gray-400">
@@ -377,7 +381,7 @@ export default function LeaderboardTable({
                   </Button>
                 </>
               )}
-              
+
               <Button
                 variant="outline"
                 size="icon"
