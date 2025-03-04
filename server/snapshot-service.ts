@@ -58,10 +58,8 @@ export async function createSnapshot(
     // Import the data
     await storage.importLeaderboardData(entries, snapshot.id);
     
-    // Get detailed data for top agents (limit to avoid hitting API rate limits)
-    const topAgents = agents.slice(0, 50);
-    
-    for (const agent of topAgents) {
+    // Get detailed data for all agents (no limit)
+    for (const agent of agents) {
       try {
         const details = await getLiveAgentDetail(agent.mastodonUsername);
         if (details) {
