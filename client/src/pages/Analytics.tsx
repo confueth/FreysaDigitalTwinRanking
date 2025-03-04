@@ -52,7 +52,7 @@ export default function Analytics({}: AnalyticsProps) {
   const [metric, setMetric] = useState<'score' | 'followers' | 'likes' | 'retweets'>('score');
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   // Storage key for the user's saved agents - keep in sync with MyAgents page
   const MY_AGENTS_KEY = 'freysa-my-agents';
 
@@ -192,7 +192,7 @@ export default function Analytics({}: AnalyticsProps) {
         const link = document.createElement("a");
         const timestamp = new Date().toISOString().slice(0, 10);
         const time = new Date().toISOString().slice(11, 19).replace(/:/g, '-');
-        
+
         link.setAttribute("href", url);
         link.setAttribute("download", `live-leaderboard-data-${timestamp}-${time}.csv`);
         link.style.visibility = 'hidden';
@@ -229,10 +229,10 @@ export default function Analytics({}: AnalyticsProps) {
       return response.json();
     }
   });
-  
+
   // Cache snapshot agent data by snapshotId
   const [snapshotAgentsCache, setSnapshotAgentsCache] = useState<Record<number, Agent[]>>({});
-  
+
   // Load saved agents from localStorage on component mount
   useEffect(() => {
     const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
@@ -242,7 +242,7 @@ export default function Analytics({}: AnalyticsProps) {
         if (Array.isArray(parsed)) {
           // Limit to maximum 5 agents for performance
           setSelectedAgents(parsed.slice(0, 5));
-          
+
           if (parsed.length > 5) {
             toast({
               title: "Note",
@@ -260,9 +260,9 @@ export default function Analytics({}: AnalyticsProps) {
   useEffect(() => {
     const fetchSnapshotAgents = async () => {
       if (!snapshots || snapshots.length === 0) return;
-      
+
       const newCache: Record<number, Agent[]> = {};
-      
+
       // Fetch agent data for each snapshot concurrently
       await Promise.all(snapshots.map(async (snapshot: Snapshot) => {
         if (snapshotAgentsCache[snapshot.id]) {
@@ -270,31 +270,31 @@ export default function Analytics({}: AnalyticsProps) {
           newCache[snapshot.id] = snapshotAgentsCache[snapshot.id];
           return;
         }
-        
+
         try {
           const response = await fetch(`/api/snapshots/${snapshot.id}/agents?limit=0`);
           if (!response.ok) {
             console.warn(`Failed to fetch agents for snapshot ${snapshot.id}`);
             return;
           }
-          
+
           const agents = await response.json();
-          
+
           // Add timestamp to agents for consistency with history data
           const agentsWithTimestamp = agents.map((agent: Agent) => ({
             ...agent,
             timestamp: snapshot.timestamp
           }));
-          
+
           newCache[snapshot.id] = agentsWithTimestamp;
         } catch (error) {
           console.error(`Error fetching agents for snapshot ${snapshot.id}:`, error);
         }
       }));
-      
+
       setSnapshotAgentsCache(prev => ({...prev, ...newCache}));
     };
-    
+
     fetchSnapshotAgents();
   }, [snapshots]);
 
@@ -342,13 +342,13 @@ export default function Analytics({}: AnalyticsProps) {
       return response.json();
     }
   });
-  
+
   // Separate query for searching agents by exact username
   const { data: searchedAgent, isLoading: isSearchingAgent } = useQuery({
     queryKey: ['/api/agent-search', searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim()) return null;
-      
+
       // Try to get the exact agent by username
       try {
         const response = await fetch(`/api/agents/${searchQuery}`);
@@ -366,16 +366,16 @@ export default function Analytics({}: AnalyticsProps) {
     retry: false,
     refetchOnWindowFocus: false
   });
-  
+
   // Combine all available agents from different sources
   const allAvailableAgents = React.useMemo(() => {
     const agents = [...(topAgents || [])];
-    
+
     // Add the searched agent if found and not already in the list
     if (searchedAgent && !agents.some(a => a.mastodonUsername === searchedAgent.mastodonUsername)) {
       agents.push(searchedAgent);
     }
-    
+
     return agents;
   }, [topAgents, searchedAgent]);
 
@@ -432,7 +432,7 @@ export default function Analytics({}: AnalyticsProps) {
   // Handle agent selection/deselection with localStorage updates
   const handleAgentSelect = (username: string) => {
     let newSelectedAgents: string[];
-    
+
     if (selectedAgents.includes(username)) {
       // Deselect agent
       newSelectedAgents = selectedAgents.filter(agent => agent !== username);
@@ -448,14 +448,14 @@ export default function Analytics({}: AnalyticsProps) {
       });
       return;
     }
-    
+
     // Update state
     setSelectedAgents(newSelectedAgents);
-    
+
     // Save selection to localStorage - but only if it's different from the saved list
     const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
     let savedList: string[] = [];
-    
+
     try {
       if (savedAgents) {
         savedList = JSON.parse(savedAgents);
@@ -463,7 +463,7 @@ export default function Analytics({}: AnalyticsProps) {
     } catch (e) {
       console.error('Error parsing saved agents:', e);
     }
-    
+
     // Update localStorage if needed
     localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
   };
@@ -475,61 +475,61 @@ export default function Analytics({}: AnalyticsProps) {
   // Enhanced agent filtering with fuzzy search capabilities
   const filteredAgents = React.useMemo(() => {
     if (!searchQuery.trim()) return allAvailableAgents?.slice(0, 100) || []; // Show top 100 by default
-    
+
     const searchTermLower = searchQuery.toLowerCase().trim();
-    
+
     // Function to calculate similarity score for fuzzy matching
     const calculateSimilarity = (agentName: string, searchTerm: string): number => {
       const name = agentName.toLowerCase();
-      
+
       // Exact match gets highest score
       if (name === searchTerm) return 1.0;
-      
+
       // Direct inclusion scores high
       if (name.includes(searchTerm)) return 0.8;
-      
+
       // Check for fuzzy match - calculate how many characters match in sequence
       let matchCount = 0;
       let searchIndex = 0;
-      
+
       for (let i = 0; i < name.length && searchIndex < searchTerm.length; i++) {
         if (name[i] === searchTerm[searchIndex]) {
           matchCount++;
           searchIndex++;
         }
       }
-      
+
       // Calculate similarity as percentage of characters matched
       return searchTerm.length > 0 ? matchCount / searchTerm.length : 0;
     };
-    
+
     // Calculate scores for each agent
     const scoredAgents = allAvailableAgents?.map((agent: Agent) => {
       const username = agent.mastodonUsername || '';
       const similarityScore = calculateSimilarity(username, searchTermLower);
       return { agent, score: similarityScore };
     }) || [];
-    
+
     // Filter agents with some similarity and sort by similarity score
     const matchingAgents = scoredAgents
       .filter(item => item.score > 0.3) // Keep only reasonably similar matches
       .sort((a, b) => b.score - a.score) // Sort by score descending
       .map(item => item.agent);
-    
+
     // If we found the searched agent directly but it wasn't in the results, prioritize it
     if (searchedAgent && !matchingAgents.some(a => a.mastodonUsername === searchedAgent.mastodonUsername)) {
       return [searchedAgent, ...matchingAgents];
     }
-    
+
     return matchingAgents;
   }, [allAvailableAgents, searchQuery, searchedAgent]);
-  
+
   // Handle special case when an agent isn't found but user wants to add them
   const handleCustomAgentSelect = async () => {
     if (!searchQuery.trim()) return;
-    
+
     const username = searchQuery.trim();
-    
+
     // Check if the agent already exists in the selection
     if (selectedAgents.includes(username)) {
       toast({
@@ -538,7 +538,7 @@ export default function Analytics({}: AnalyticsProps) {
       });
       return;
     }
-    
+
     // Check if we've reached the maximum number of agents
     if (selectedAgents.length >= 5) {
       toast({
@@ -548,45 +548,45 @@ export default function Analytics({}: AnalyticsProps) {
       });
       return;
     }
-    
+
     // Create new selected agents list
     const newSelectedAgents = [...selectedAgents, username];
-    
+
     // Try to fetch the agent directly first
     try {
       const response = await fetch(`/api/agents/${username}`);
       if (response.ok) {
         const agentData = await response.json();
-        
+
         // If agent is found, add to selection
         setSelectedAgents(newSelectedAgents);
-        
+
         // Update localStorage with new selection
         localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
-        
+
         // Clear the search query
         setSearchQuery('');
-        
+
         toast({
           title: "Agent Added",
           description: `${username} has been added to your comparison.`,
         });
-        
+
         return;
       }
     } catch (error) {
       console.error("Error fetching agent:", error);
     }
-    
+
     // If we get here, the agent couldn't be found but we'll add it anyway
     setSelectedAgents(newSelectedAgents);
-    
+
     // Update localStorage with new selection
     localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
-    
+
     // Clear the search query
     setSearchQuery('');
-    
+
     toast({
       title: "Custom Agent Added",
       description: `${username} has been added to your comparison. Historical data may be limited.`,
@@ -720,7 +720,7 @@ export default function Analytics({}: AnalyticsProps) {
         dataMap.set(startDateStr, 0);
       }
     });
-    
+
     // Collect all timestamps and map data points from historical data
     Object.entries(agentHistories).forEach(([username, history]) => {
       // Sort history by timestamp to ensure chronological order
@@ -754,7 +754,7 @@ export default function Analytics({}: AnalyticsProps) {
         }
       });
     });
-    
+
     // Add data from snapshots to fill any gaps
     // This is crucial for ensuring March 2nd and other snapshots are properly represented
     if (snapshots && snapshots.length > 0) {
@@ -762,19 +762,19 @@ export default function Analytics({}: AnalyticsProps) {
       snapshots.forEach((snapshot: Snapshot) => {
         const snapshotId = snapshot.id;
         const timestamp = snapshot.timestamp;
-        
+
         // Skip if we don't have agents for this snapshot
         if (!snapshotAgentsCache[snapshotId]) return;
-        
+
         // Add this timestamp to the set of all timestamps
         allTimestamps.add(timestamp);
-        
+
         // Look for selected agents in this snapshot
         selectedAgents.forEach(username => {
           const agent = snapshotAgentsCache[snapshotId]?.find(
             (a: Agent) => a.mastodonUsername === username
           );
-          
+
           if (agent) {
             // Found this agent in the snapshot, add data point
             const dataMap = agentDataPoints.get(username);
@@ -803,29 +803,29 @@ export default function Analytics({}: AnalyticsProps) {
     // Filter out today's snapshot if it exists - we'll only use live data for today
     // Create a map to track date strings to ensure unique dates (prevent duplicate dates)
     const dateMap = new Map<string, string>();
-    
+
     // Always keep Feb 22 and today
     dateMap.set('2025-02-22', startDateStr);
     dateMap.set(todayDateString, now);
-    
+
     // Process all other timestamps - keeping only the latest timestamp for each date
     Array.from(allTimestamps).forEach(timestamp => {
       const date = new Date(timestamp);
       const dateString = date.toDateString();
-      
+
       // Skip dates we already processed (Feb 22 and today)
       if (dateString === new Date(startDateStr).toDateString() || 
           dateString === todayDateString) {
         return;
       }
-      
+
       // For all other dates, keep track of the latest timestamp for each date
       if (!dateMap.has(dateString) || 
           new Date(dateMap.get(dateString) || '').getTime() < date.getTime()) {
         dateMap.set(dateString, timestamp);
       }
     });
-    
+
     // Get the unique timestamps (one per day)
     const filteredTimestamps = Array.from(dateMap.values());
     const sortedTimestamps = filteredTimestamps.sort((a, b) => 
@@ -1043,7 +1043,7 @@ export default function Analytics({}: AnalyticsProps) {
                     ) : searchQuery.trim() ? (
                       <div className="flex flex-col items-center justify-center h-full p-4 text-center">
                         <p className="text-gray-400 mb-4">No agents found with the username "{searchQuery}"</p>
-                        
+
                         {isSearchingAgent ? (
                           <div className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1064,7 +1064,7 @@ export default function Analytics({}: AnalyticsProps) {
                         {allAvailableAgents?.length > 0 ? `${allAvailableAgents.length} agents available. Type any agent name to search.` : "No agents available."}
                       </div>
                     )}
-                  
+
                   </div>
 
                   {selectedAgents.length > 0 && (
@@ -1304,7 +1304,7 @@ export default function Analytics({}: AnalyticsProps) {
         <TabsContent value="snapshots" className="mt-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-medium">Snapshot Management</h3>
-            
+
             <div className="flex space-x-2">
               <Button
                 variant="outline"
@@ -1330,8 +1330,8 @@ export default function Analytics({}: AnalyticsProps) {
                 </svg>
                 <span className="hidden sm:inline">Download Live Data</span>
               </Button>
-              
-              <Button
+
+              {/* <Button
                 variant="default"
                 size="sm"
                 onClick={() => createSnapshotMutation.mutate()}
@@ -1358,7 +1358,7 @@ export default function Analytics({}: AnalyticsProps) {
                   </svg>
                 )}
                 <span className="hidden sm:inline">Create Snapshot</span>
-              </Button>
+              </Button> */}
             </div>
           </div>
 
