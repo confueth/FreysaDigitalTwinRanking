@@ -136,7 +136,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
           <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-gray-400 text-xs">Snapshot Time</p>
+                <p className="text-gray-400 text-xs">Last Data Refresh Time</p>
                 <h3 className="text-base font-bold" id="snapshotTime">{formatDate(snapshotTime, 'short', true)}</h3>
               </div>
               <div className="rounded-full bg-green-500 bg-opacity-20 p-1.5">
@@ -144,7 +144,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
               </div>
             </div>
             <div className="mt-1 flex items-center text-xs text-gray-400">
-              <span>First load refresh {formatRelativeTime(snapshotTime)}</span>
+              <span>{formatRelativeTime(snapshotTime)}</span>
             </div>
           </div>
         </div>
