@@ -62,7 +62,7 @@ export function formatDate(
     options.month = 'short';
     options.day = 'numeric';
     options.year = 'numeric';
-    
+
     // Only add time if it's not midnight
     if (date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0) {
       options.hour = 'numeric';
@@ -134,6 +134,9 @@ export function getRankChangeClass(current?: number | null, previous?: number | 
 export function getScoreChangeClass(current?: number | null, previous?: number | null): string {
   if (current === undefined || previous === undefined || current === null || previous === null) return 'text-gray-400';
 
+  if (current === previous) {
+    return 'text-gray-400'; // Neutral color for no change
+  }
   if (current > previous) {
     return 'text-green-500';
   }
