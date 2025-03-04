@@ -161,7 +161,7 @@ export function scheduleSnapshots(storage: IStorage): void {
         const month = date.getUTCMonth() + 1;
         const day = date.getUTCDate();
         const year = date.getUTCFullYear();
-        await createSnapshot(storage, `End of day snapshot (updated) - ${month}/${day}/${year}`);
+        await createSnapshot(storage, `End of day snapshot - ${month}/${day}/${year}`);
       }
     }
   });
@@ -194,7 +194,7 @@ async function initializeSnapshot(storage: IStorage): Promise<void> {
       const month = date.getUTCMonth() + 1;
       const day = date.getUTCDate();
       const year = date.getUTCFullYear();
-      await createSnapshot(storage, `Initial snapshot - ${month}/${day}/${year}`);
+      await createSnapshot(storage, `Snapshot - ${month}/${day}/${year}`);
     } else {
       console.log('Snapshot for today already exists. No initialization needed.');
     }
