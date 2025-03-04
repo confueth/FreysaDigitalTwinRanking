@@ -144,7 +144,7 @@ export default function StatCards({ stats, snapshotTime, isLoading }: StatCardsP
               </div>
             </div>
             <div className="mt-1 flex items-center text-xs text-gray-400">
-              <span>{formatRelativeTime(snapshotTime)}</span>
+              <span>First load refresh {formatRelativeTime(snapshotTime)}</span>
             </div>
           </div>
         </div>
