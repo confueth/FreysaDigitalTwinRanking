@@ -54,7 +54,16 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - **Leaderboard Data**: `https://digital-clone-production.onrender.com/digital-clones/leaderboards?full=true`
 - **Player Details**: `https://digital-clone-production.onrender.com/digital-clones/clones/{mastadonUsername}`
 
-## Latest Updates (March 4, 2025)
+## Latest Updates (March 5, 2025)
+
+- ✅ **Enhanced Branding**: Added clickable Freysa profile image to the main leaderboard
+- ✅ **Twin Creation Button**: Added "Create your Twin" button with referral link
+- ✅ **Improved UX**: Made Freysa Digital Twin Leaderboard title clickable to website
+- ✅ **Consistent Styling**: Unified glowing effect on profile image across all screens
+- ✅ **Mobile Optimization**: Ensured responsive design for all new UI elements
+- ✅ **Brand Recognition**: Updated title to "Freysa Digital Twin Leaderboard" for clarity
+
+## Previous Updates (March 4, 2025)
 
 - ✅ **Smart Data Refresh**: Implemented intelligent timestamp tracking for data refresh operations
 - ✅ **Enhanced Timestamp Display**: Added separate tracking for snapshot vs fresh data load times
@@ -129,8 +138,8 @@ The application follows a modern web application pattern with these key componen
 
 ## Project Timeline
 
-- **Latest Update (Mar 4, 2025)**: Implemented smart data refresh with timestamp tracking and user activity monitoring
-- **Mar 4, 2025 (Earlier)**: Enhanced security with rate limiting and improved error handling
+- **Latest Update (Mar 5, 2025)**: Enhanced branding with clickable logo, title, and added Twin creation button
+- **Mar 4, 2025**: Implemented smart data refresh with timestamp tracking and user activity monitoring
 - **Mar 3, 2025**: Added agent saving/starring functionality with cross-page persistence
 - **Mar 2, 2025**: Analytics dashboard improvements and chart rendering optimizations
 - **Mar 1, 2025**: Enhanced error handling and fallback mechanisms
