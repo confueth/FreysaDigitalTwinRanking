@@ -107,7 +107,7 @@ const AgentPerformanceChart: React.FC<AgentPerformanceChartProps> = ({
   return (
     <div className="bg-gray-800 rounded-lg p-4 sm:p-6">
       <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-200">Performance History</h3>
-      <div className="h-72">
+      <div className="h-72 w-full" style={{ minHeight: '250px', minWidth: '300px' }}>
         <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
           <LineChart
             data={chartData}
@@ -183,7 +183,7 @@ const ChartSkeleton: React.FC = () => {
   return (
     <div className="bg-gray-800 rounded-lg p-4 sm:p-6">
       <Skeleton className="h-6 w-36 mb-4 bg-gray-700" />
-      <div className="h-72 flex flex-col justify-between">
+      <div className="h-72 w-full flex flex-col justify-between" style={{ minHeight: '250px', minWidth: '300px' }}>
         <div className="flex-1 flex items-center justify-center">
           <Skeleton className="h-[80%] w-[95%] bg-gray-700" />
         </div>

@@ -1250,7 +1250,7 @@ export default function Analytics({}: AnalyticsProps) {
                     <p className="text-sm text-gray-500">Try selecting different agents</p>
                   </div>
                 ) : (
-                  <div className="h-[600px]">
+                  <div className="h-[600px] w-full" style={{ minHeight: '550px', minWidth: '300px' }}>
                     <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={550}>
                       <LineChart
                         data={chartData}
