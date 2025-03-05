@@ -48,17 +48,7 @@ export default function Home() {
     }
   }, [latestSnapshot]);
   
-  // Load saved agents from localStorage
-  useEffect(() => {
-    try {
-      const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
-      if (savedAgents) {
-        setMyAgents(JSON.parse(savedAgents));
-      }
-    } catch (error) {
-      console.error('Error loading saved agents:', error);
-    }
-  }, []);
+  // The useMyAgents hook handles loading saved agents now
   
   // Current snapshot object for display
   const currentSnapshot = latestSnapshot || {
@@ -194,34 +184,13 @@ export default function Home() {
   
   // Handle toggling save/unsave agent
   const handleToggleSaveAgent = (username: string) => {
-    if (myAgents.includes(username)) {
-      // Remove from saved agents
-      setMyAgents(prev => prev.filter(agent => agent !== username));
-      
-      toast({
-        title: 'Agent Removed',
-        description: `${username} has been removed from your saved agents.`
-      });
-    } else {
-      // Add to saved agents
-      setMyAgents(prev => [...prev, username]);
-      
-      toast({
-        title: 'Agent Saved',
-        description: `${username} has been added to your saved agents.`
-      });
-    }
+    // Use the toggleAgent function from our hook
+    const wasRemoved = toggleAgent(username);
     
-    // Calculate the new list of saved agents
-    const updatedAgents = myAgents.includes(username)
-      ? myAgents.filter(agent => agent !== username)
-      : [...myAgents, username];
-      
-    // Update state with new list
-    setMyAgents(updatedAgents);
-      
-    // Update localStorage with new list
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
+    toast({
+      title: wasRemoved ? 'Agent Removed' : 'Agent Saved',
+      description: `${username} has been ${wasRemoved ? 'removed from' : 'added to'} your saved agents.`
+    });
   };
 
   // Handle agent selection
@@ -341,6 +310,40 @@ export default function Home() {
     
     // Then apply the regular filters to the pre-filtered data
     const filtered = applyAllFilters(dataToFilter, filters);
+    
+    // Prioritize saved agents by moving them to the top of the results
+    if (myAgents.length > 0 && filtered.filteredAgents.length > 0 && !showMyAgentsOnly) {
+      const savedAgentsMap = new Map();
+      const nonSavedAgents = [];
+      
+      // Separate saved and non-saved agents, keeping saved agents in a map for quick access
+      for (const agent of filtered.filteredAgents) {
+        if (myAgents.includes(agent.mastodonUsername)) {
+          savedAgentsMap.set(agent.mastodonUsername, agent);
+        } else {
+          nonSavedAgents.push(agent);
+        }
+      }
+      
+      // If we have saved agents, reorder the results to show them first
+      if (savedAgentsMap.size > 0) {
+        // Reconstruct the array with saved agents first, maintaining their order in myAgents list
+        const reorderedAgents = [
+          // First add saved agents in the same order as myAgents
+          ...myAgents
+            .filter(username => savedAgentsMap.has(username))
+            .map(username => savedAgentsMap.get(username)),
+          // Then add all other agents
+          ...nonSavedAgents
+        ];
+        
+        // Return the reordered list but keep the original total count
+        return {
+          filteredAgents: reorderedAgents,
+          totalCount: filtered.totalCount
+        };
+      }
+    }
     
     return filtered;
   }, [displayDataSource, filters, showMyAgentsOnly, myAgents]);

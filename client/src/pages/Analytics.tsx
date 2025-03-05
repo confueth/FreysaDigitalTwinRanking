@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useMyAgents } from '@/hooks/use-my-agents';
 import { 
   Select,
   SelectContent,
@@ -52,9 +53,7 @@ export default function Analytics({}: AnalyticsProps) {
   const [metric, setMetric] = useState<'score' | 'followers' | 'likes' | 'retweets'>('score');
   const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  // Storage key for the user's saved agents - keep in sync with MyAgents page
-  const MY_AGENTS_KEY = 'freysa-my-agents';
+  const { myAgents } = useMyAgents();
 
   // CSV Generation function
   const generateCsvForSnapshot = (snapshotId: number) => {

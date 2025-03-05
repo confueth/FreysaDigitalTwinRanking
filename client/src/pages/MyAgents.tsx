@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { useMyAgents } from '@/hooks/use-my-agents';
 import { Agent } from '@/types/agent';
 import { 
   Card, 
@@ -19,41 +20,20 @@ import { Switch } from '@/components/ui/switch';
 import { Home, Trash2, Search, Plus, ChevronUp, ChevronDown, Save, LineChart } from 'lucide-react';
 import { formatNumber } from '@/utils/formatters';
 
-// Storage key for the user's saved agents
-const MY_AGENTS_KEY = 'freysa-my-agents';
-
 export default function MyAgents() {
   const { toast } = useToast();
+  const { myAgents, setMyAgents, addAgent, removeAgent, clearAgents } = useMyAgents();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isSearching, setIsSearching] = React.useState(false);
   const [allAgents, setAllAgents] = React.useState<Agent[]>([]);
   const [filteredAgents, setFilteredAgents] = React.useState<Agent[]>([]);
-  const [myAgents, setMyAgents] = React.useState<string[]>([]);
   const [showMyAgentsOnly, setShowMyAgentsOnly] = React.useState(false);
   const [isLoadingAgents, setIsLoadingAgents] = React.useState(true);
 
-  // Load my agents from localStorage on component mount
+  // Fetch all available agents on component mount
   React.useEffect(() => {
-    const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
-    if (savedAgents) {
-      try {
-        const parsed = JSON.parse(savedAgents);
-        if (Array.isArray(parsed)) {
-          setMyAgents(parsed);
-        }
-      } catch (e) {
-        console.error('Error parsing saved agents:', e);
-      }
-    }
-    
-    // Fetch all available agents
     fetchAllAgents();
   }, []);
-
-  // Save my agents to localStorage whenever they change
-  React.useEffect(() => {
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(myAgents));
-  }, [myAgents]);
 
   // Fetch all agents from the API
   const fetchAllAgents = async () => {
@@ -266,16 +246,9 @@ export default function MyAgents() {
       a => a.mastodonUsername.toLowerCase() === cleanUsername.toLowerCase()
     );
     
-    // Update state and localStorage based on whether agent exists
-    let updatedAgents: string[];
-    
     if (existingAgent) {
       // If agent exists in our data, use their full profile
-      updatedAgents = [...myAgents, existingAgent.mastodonUsername];
-      setMyAgents(updatedAgents);
-      
-      // Update localStorage directly
-      localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
+      addAgent(existingAgent.mastodonUsername);
       
       toast({
         title: 'Agent Added',
@@ -283,11 +256,7 @@ export default function MyAgents() {
       });
     } else {
       // If agent doesn't exist, add the custom username
-      updatedAgents = [...myAgents, cleanUsername];
-      setMyAgents(updatedAgents);
-      
-      // Update localStorage directly
-      localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
+      addAgent(cleanUsername);
       
       toast({
         variant: 'default',
@@ -299,12 +268,8 @@ export default function MyAgents() {
 
   // Remove an agent from my agents list
   const removeFromMyAgents = (username: string) => {
-    // Update state with filtered list
-    const updatedAgents = myAgents.filter(name => name !== username);
-    setMyAgents(updatedAgents);
-    
-    // Directly update localStorage to ensure consistency across pages
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
+    // Remove agent using the hook function
+    removeAgent(username);
     
     toast({
       title: 'Agent Removed',
@@ -325,11 +290,8 @@ export default function MyAgents() {
     // Count before clearing for toast message
     const count = myAgents.length;
     
-    // Update state
-    setMyAgents([]);
-    
-    // Update localStorage directly to ensure consistency across pages
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify([]));
+    // Clear all agents using the hook function
+    clearAgents();
     
     toast({
       title: 'All Agents Removed',
