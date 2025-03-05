@@ -769,12 +769,28 @@ export default function Analytics({}: AnalyticsProps) {
 
     // Add data from snapshots to fill any gaps
     // This is crucial for ensuring March 2nd and other snapshots are properly represented
+    // IMPORTANT: March 1st data needs special handling (snapshot id 4)
     if (snapshots && snapshots.length > 0) {
-      // Process each snapshot
+      // Map to track which snapshots correspond to which dates
+      // This is crucial for handling cases like March 1st correctly
+      const snapshotDateMap = new Map<string, {id: number, timestamp: string}>();
+      
+      // First pass: map snapshots to their dates to identify the correct snapshot for each date
       snapshots.forEach((snapshot: Snapshot) => {
-        const snapshotId = snapshot.id;
-        const timestamp = snapshot.timestamp;
-
+        const date = new Date(snapshot.timestamp);
+        const dateString = date.toLocaleDateString('en-US', options);
+        
+        // Only keep the earliest snapshot for each date
+        // This ensures we get March 1st snapshot (id 4) instead of any newer ones
+        if (!snapshotDateMap.has(dateString) || 
+            snapshot.id < snapshotDateMap.get(dateString)!.id) {
+          snapshotDateMap.set(dateString, {id: snapshot.id, timestamp: snapshot.timestamp});
+        }
+      });
+      
+      // Second pass: process snapshots
+      // We iterate through our date map to ensure we use the correct snapshot for each date
+      snapshotDateMap.forEach(({id: snapshotId, timestamp}) => {
         // Skip if we don't have agents for this snapshot
         if (!snapshotAgentsCache[snapshotId]) return;
 
@@ -791,20 +807,33 @@ export default function Analytics({}: AnalyticsProps) {
             // Found this agent in the snapshot, add data point
             const dataMap = agentDataPoints.get(username);
             if (dataMap) {
+              // Extract the correct metric value based on what we're tracking
+              let metricValue = 0;
               switch (metric) {
                 case 'score':
-                  dataMap.set(timestamp, agent.score);
+                  metricValue = agent.score;
                   break;
                 case 'followers':
-                  dataMap.set(timestamp, agent.followersCount || 0);
+                  metricValue = agent.followersCount || 0;
                   break;
                 case 'likes':
-                  dataMap.set(timestamp, agent.likesCount || 0);
+                  metricValue = agent.likesCount || 0;
                   break;
                 case 'retweets':
-                  dataMap.set(timestamp, agent.retweetsCount || 0);
+                  metricValue = agent.retweetsCount || 0;
                   break;
               }
+              
+              // Special debug logging for March 1st data (snapshot id 4)
+              const date = new Date(timestamp);
+              const dateStr = date.toLocaleDateString('en-US', options);
+              const isMarFirstSnapshot = dateStr.includes('3/1');
+              if (isMarFirstSnapshot && username === 'PopularFollow') {
+                console.log(`March 1st data for PopularFollow: ${metricValue} (snapshot ID: ${snapshotId})`);
+              }
+              
+              // Set the value for this timestamp
+              dataMap.set(timestamp, metricValue);
             }
           }
         });
