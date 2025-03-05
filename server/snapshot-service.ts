@@ -182,11 +182,10 @@ async function initializeSnapshot(storage: IStorage): Promise<void> {
     
     if (!hasSnapshotToday) {
       console.log('No snapshot for today found. Creating initial snapshot for today...');
-      const date = new Date();
-      const month = date.getUTCMonth() + 1;
-      const day = date.getUTCDate();
-      const year = date.getUTCFullYear();
-      await createSnapshot(storage, `Snapshot - ${month}/${day}/${year}`);
+      // Use EST date for the description
+      const estDate = convertToEST(new Date());
+      const [month, day, year] = estDate.split(/[\/,\s]+/);
+      await createSnapshot(storage, `Snapshot - ${month}/${day}/${year} (EST)`);
     } else {
       console.log('Snapshot for today already exists. No initialization needed.');
     }
