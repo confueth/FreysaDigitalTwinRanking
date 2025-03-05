@@ -5,34 +5,35 @@ import fs from 'fs';
 import { getLiveLeaderboardData, getLiveAgentDetail, filterAgents, getLiveStats, getAvailableCities } from './live-api';
 import { storage } from './storage';
 import { createSnapshot } from './snapshot-service';
+import { getStartOfDayEST, formatDateEST, convertToEST } from './date-utils';
 
-async function findPreviousDaySnapshot(storage) {
+async function findPreviousDaySnapshot(storage: any) {
     const snapshots = await storage.getSnapshots();
     if (!snapshots || snapshots.length === 0) return null;
 
-    // Define today
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0); // Set to beginning of today
+    // Define today in EST timezone
+    const today = getStartOfDayEST();
     
     // Sort snapshots by timestamp (newest first)
-    snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    snapshots.sort((a: any, b: any) => b.timestamp.getTime() - a.timestamp.getTime());
     
     // Find the most recent snapshot before today
     let previousSnapshot = null;
     
     for (const snapshot of snapshots) {
+        // Convert snapshot date to EST timezone and get start of day
         const snapshotDate = new Date(snapshot.timestamp);
-        snapshotDate.setUTCHours(0, 0, 0, 0); // Compare just the date part
+        const snapshotDateEST = getStartOfDayEST(snapshotDate);
         
         // If this snapshot is from before today, it's our candidate
-        if (snapshotDate.getTime() < today.getTime()) {
+        if (snapshotDateEST.getTime() < today.getTime()) {
             previousSnapshot = snapshot;
             break; // Take the first one (most recent) before today
         }
     }
     
     if (previousSnapshot) {
-        console.log(`Found previous day snapshot #${previousSnapshot.id} from ${previousSnapshot.timestamp}`);
+        console.log(`Found previous day snapshot #${previousSnapshot.id} from ${formatDateEST(previousSnapshot.timestamp)}`);
     } else {
         console.log('No previous day snapshot found');
     }
