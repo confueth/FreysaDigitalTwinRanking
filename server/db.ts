@@ -1,3 +1,4 @@
+
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
@@ -21,30 +22,42 @@ let timezoneDone = false;
 
 // Set timezone to America/New_York (EST/EDT) for all queries
 pool.on('connect', async (client) => {
-  await client.query('SET timezone = \'America/New_York\'');
-  
-  // Only log this message once
-  if (!timezoneDone) {
-    console.log('Connected to database with timezone set to America/New_York');
+  try {
+    await client.query('SET timezone = \'America/New_York\'');
+    
+    // Only log this message once
+    if (!timezoneDone) {
+      console.log('Connected to database with timezone set to America/New_York');
+      timezoneDone = true;
+    }
+  } catch (err) {
+    console.error('Error setting timezone on connection:', err);
   }
 });
 
-// Execute a query to set timezone immediately and verify
+// Execute a query to verify timezone setting - separate from connection event
+// to avoid race conditions
 (async () => {
-  if (timezoneDone) return; // Skip if already done
-  
   try {
+    // Allow some time for connection pool to initialize
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     const client = await pool.connect();
     try {
       await client.query('SET timezone = \'America/New_York\'');
       const result = await client.query('SHOW timezone;');
-      console.log('Database timezone set to:', result.rows[0].TimeZone || result.rows[0].timezone);
-      timezoneDone = true;
+      const timezone = result.rows[0].TimeZone || result.rows[0].timezone;
+      
+      if (timezone) {
+        console.log('Database timezone set to:', timezone);
+      } else {
+        console.error('Unable to determine timezone. Column present:', Object.keys(result.rows[0]).join(', '));
+      }
     } finally {
       client.release();
     }
   } catch (err) {
-    console.error('Error setting database timezone:', err);
+    console.error('Error verifying database timezone:', err);
   }
 })();
 
