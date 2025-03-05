@@ -64,10 +64,24 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 
 ```
 ├── client               # Frontend React application
+│   ├── public           # Static assets
+│   ├── src              # React source code
+│   │   ├── components   # UI components
+│   │   ├── hooks        # Custom React hooks
+│   │   ├── lib          # Utility libraries
+│   │   ├── pages        # Page components
+│   │   ├── types        # TypeScript type definitions
+│   │   └── utils        # Helper functions
 ├── server               # Backend Express server
+│   ├── db.ts            # Database connection and queries
+│   ├── routes.ts        # API endpoint definitions
+│   ├── snapshot-service.ts # Snapshot management service
+│   └── live-api.ts      # Live data API handlers
 ├── shared               # Shared code between client and server
+│   └── schema.ts        # Data schemas and types
 ├── data                 # Data files for the application
-└── scripts              # Utility scripts
+├── scripts              # Utility scripts
+└── attached_assets      # Project images and resources
 ```
 
 ---
