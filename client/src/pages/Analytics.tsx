@@ -606,7 +606,7 @@ export default function Analytics({}: AnalyticsProps) {
 
     // Create a map of all timestamps, always including Feb 22 and today
     const allTimestamps = new Set<string>();
-    
+
     // Get current date in EST timezone for consistency with server data
     const options = { timeZone: 'America/New_York' };
     const todayDate = new Date();
@@ -816,10 +816,11 @@ export default function Analytics({}: AnalyticsProps) {
     // Process all other timestamps - keeping only the latest timestamp for each date
     Array.from(allTimestamps).forEach(timestamp => {
       const date = new Date(timestamp);
-      const dateString = date.toDateString();
+      const dateString = date.toLocaleDateString('en-US', options);
+
 
       // Skip dates we already processed (Feb 22 and today)
-      if (dateString === new Date(startDateStr).toDateString() || 
+      if (dateString === new Date(startDateStr).toLocaleDateString('en-US', options) || 
           dateString === todayDateString) {
         return;
       }
@@ -887,12 +888,12 @@ export default function Analytics({}: AnalyticsProps) {
       // Using America/New_York timezone to be consistent with backend
       const estOptions = { timeZone: 'America/New_York' };
       const date = new Date(timestamp);
-      
+
       // Format date in EST timezone
       const estDateString = date.toLocaleDateString('en-US', estOptions);
       const month = new Date(estDateString).getMonth() + 1; // 1-12
       const day = new Date(estDateString).getDate(); // 1-31
-      
+
       // Check if this is today in EST timezone
       const todayInEST = new Date().toLocaleDateString('en-US', estOptions);
       const isToday = estDateString === todayInEST;
