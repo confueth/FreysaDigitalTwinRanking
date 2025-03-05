@@ -207,14 +207,23 @@ export class MemStorage implements IStorage {
   }
 
   async getAgentHistory(mastodonUsername: string): Promise<Agent[]> {
-    return Array.from(this.agentsData.values())
-      .filter(agent => agent.mastodonUsername === mastodonUsername)
-      .sort((a, b) => {
-        const snapshotA = this.snapshotsData.get(a.snapshotId);
-        const snapshotB = this.snapshotsData.get(b.snapshotId);
-        if (!snapshotA || !snapshotB) return 0;
-        return snapshotB.timestamp.getTime() - snapshotA.timestamp.getTime();
-      });
+    // Get all agents for this username
+    const agents = Array.from(this.agentsData.values())
+      .filter(agent => agent.mastodonUsername === mastodonUsername);
+
+    // Map to add the snapshot timestamp to each agent
+    return agents.map(agent => {
+      const snapshot = this.snapshotsData.get(agent.snapshotId);
+      return {
+        ...agent,
+        timestamp: snapshot ? snapshot.timestamp.toISOString() : new Date().toISOString()
+      };
+    }).sort((a, b) => {
+      // Sort by timestamp (newest first)
+      const timestampA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const timestampB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return timestampB - timestampA;
+    });
   }
 
   async createTweet(tweet: InsertTweet): Promise<Tweet> {
@@ -531,6 +540,9 @@ export class DatabaseStorage implements IStorage {
     // Get all snapshots ordered by timestamp desc (newest first)
     const snapshotsList = await this.getSnapshots();
     
+    // Sort snapshots chronologically (newest first)
+    snapshotsList.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    
     // Get agent records for each snapshot
     const results: Agent[] = [];
     
@@ -539,7 +551,8 @@ export class DatabaseStorage implements IStorage {
       if (agent) {
         // Add timestamp from snapshot to agent for better display
         results.push({
-          ...agent
+          ...agent,
+          timestamp: snapshot.timestamp.toISOString() // Add ISO string timestamp
         });
       }
     }
