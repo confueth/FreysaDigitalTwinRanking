@@ -420,8 +420,8 @@ export default function Home() {
   return (
     <div>
       <div className="bg-gray-900 border-b border-gray-800 py-4">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
+        <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 flex justify-between items-center">
+          <div className="flex items-center">
             <a 
               href="https://www.freysa.ai/digital-twin" 
               target="_blank" 
@@ -443,7 +443,7 @@ export default function Home() {
             </a>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <a 
               href="https://freysa.ai/digital-twin?ref=Navali" 
               target="_blank" 
