@@ -925,7 +925,7 @@ export default function Analytics({}: AnalyticsProps) {
       // Format date in EST timezone
       const estDateString = date.toLocaleDateString('en-US', estOptions);
       const month = new Date(estDateString).getMonth() + 1; // 1-12
-      const day = new DateestDateString).getDate(); // 1-31
+      const day = new Date(estDateString).getDate(); // 1-31
 
       // Check if this is today in EST timezone
       const todayInEST = new Date().toLocaleDateString('en-US', estOptions);
