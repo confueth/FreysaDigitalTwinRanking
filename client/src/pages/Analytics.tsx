@@ -797,10 +797,11 @@ export default function Analytics({}: AnalyticsProps) {
         // Add this timestamp to the set of all timestamps
         allTimestamps.add(timestamp);
 
-        // Look for selected agents in this snapshot
+        // Look for selected agents in this snapshot - with case-insensitive comparison
         selectedAgents.forEach(username => {
+          // Use case-insensitive comparison to handle agents like "Gandhi" vs "gandhi"
           const agent = snapshotAgentsCache[snapshotId]?.find(
-            (a: Agent) => a.mastodonUsername === username
+            (a: Agent) => a.mastodonUsername.toLowerCase() === username.toLowerCase()
           );
 
           if (agent) {
@@ -969,7 +970,7 @@ export default function Analytics({}: AnalyticsProps) {
           const march1stSnapshot = snapshotAgentsCache[4];
           if (march1stSnapshot) {
             const march1stAgent = march1stSnapshot.find(
-              (a: Agent) => a.mastodonUsername === username
+              (a: Agent) => a.mastodonUsername.toLowerCase() === username.toLowerCase()
             );
             
             if (march1stAgent) {
@@ -1016,7 +1017,7 @@ export default function Analytics({}: AnalyticsProps) {
         if (snapshotId !== null && snapshotAgentsCache[snapshotId]) {
           // We found a snapshot for this date, use its data directly
           const agentInSnapshot = snapshotAgentsCache[snapshotId].find(
-            (a: Agent) => a.mastodonUsername === username
+            (a: Agent) => a.mastodonUsername.toLowerCase() === username.toLowerCase()
           );
           
           if (agentInSnapshot) {
