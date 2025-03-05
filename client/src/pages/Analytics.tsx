@@ -741,19 +741,26 @@ export default function Analytics({}: AnalyticsProps) {
           // Store the metric value for this timestamp
           const dataMap = agentDataPoints.get(username);
           if (dataMap) {
+            // Extract the metric value directly from the snapshot
+            let metricValue = 0;
             switch (metric) {
               case 'score':
-                dataMap.set(snapshot.timestamp, snapshot.score);
+                metricValue = snapshot.score;
                 break;
               case 'followers':
-                dataMap.set(snapshot.timestamp, snapshot.followersCount || 0);
+                metricValue = snapshot.followersCount || 0;
                 break;
               case 'likes':
-                dataMap.set(snapshot.timestamp, snapshot.likesCount || 0);
+                metricValue = snapshot.likesCount || 0;
                 break;
               case 'retweets':
-                dataMap.set(snapshot.timestamp, snapshot.retweetsCount || 0);
+                metricValue = snapshot.retweetsCount || 0;
                 break;
+            }
+            
+            // Only set the value if it doesn't already exist or is more accurate
+            if (!dataMap.has(snapshot.timestamp)) {
+              dataMap.set(snapshot.timestamp, metricValue);
             }
           }
         }
