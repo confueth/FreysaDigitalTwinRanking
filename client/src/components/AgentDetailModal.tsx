@@ -16,10 +16,11 @@ import {
   getScoreChangeClass,
   getChangeValue
 } from '@/utils/formatters';
-import { X, MapPin, ExternalLink } from 'lucide-react';
+import { X, MapPin, ExternalLink, User, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Define types
 interface AgentDetailModalProps {
@@ -50,6 +51,7 @@ interface ExternalAgentData {
   walletAddress?: string;
   walletBalance?: string;
   mastodonBio?: string;
+  humanFeedback?: string;
   bioUpdatedAt?: string;
   ubiClaimedAt?: string;
   tweets?: TweetData[];
@@ -303,8 +305,39 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                       <span className="text-sm sm:text-base text-gray-400">{agent.city}</span>
                     </div>
                   )}
-                  {agent.mastodonBio && (
-                    <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-300 line-clamp-4 sm:line-clamp-none">{agent.mastodonBio}</p>
+                  
+                  {/* Bio/Human Feedback Tabs */}
+                  {(agent.mastodonBio || agent.humanFeedback) && (
+                    <div className="mt-3 sm:mt-4">
+                      <Tabs defaultValue={agent.mastodonBio ? "bio" : "feedback"} className="w-full">
+                        <TabsList className="grid w-full max-w-[300px] grid-cols-2">
+                          <TabsTrigger value="bio" disabled={!agent.mastodonBio} className="flex items-center gap-1">
+                            <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>Bio</span>
+                          </TabsTrigger>
+                          <TabsTrigger value="feedback" disabled={!agent.humanFeedback} className="flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>Feedback</span>
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="bio" className="mt-2">
+                          {agent.mastodonBio ? (
+                            <p className="text-sm sm:text-base text-gray-300">{agent.mastodonBio}</p>
+                          ) : (
+                            <p className="text-sm text-gray-400 italic">No bio available</p>
+                          )}
+                        </TabsContent>
+                        
+                        <TabsContent value="feedback" className="mt-2">
+                          {agent.humanFeedback ? (
+                            <p className="text-sm sm:text-base text-gray-300">{agent.humanFeedback}</p>
+                          ) : (
+                            <p className="text-sm text-gray-400 italic">No human feedback available</p>
+                          )}
+                        </TabsContent>
+                      </Tabs>
+                    </div>
                   )}
                 </div>
                 <div className="mt-3 md:mt-0 md:ml-4 self-start">
@@ -446,8 +479,9 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                 >
                   <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center gap-1 w-full sm:w-auto">
                     <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="text-xs sm:text-sm">View Freysa Profile</span>
+                    <span className="text-xs sm:text-sm">View Mastadon Profile</span>
                   </Button>
+                  
                 </a>
               </div>
             </>
@@ -472,8 +506,13 @@ function AgentDetailSkeleton() {
         <div className="flex-1 min-w-0">
           <Skeleton className="h-6 sm:h-8 w-32 sm:w-40 bg-gray-700 mb-2" />
           <Skeleton className="h-4 sm:h-5 w-24 sm:w-32 bg-gray-700 mb-3 sm:mb-4" />
-          <Skeleton className="h-3 sm:h-4 w-full bg-gray-700 mb-1 sm:mb-2" />
-          <Skeleton className="h-3 sm:h-4 w-3/4 bg-gray-700" />
+          
+          {/* Tab skeleton */}
+          <div className="mb-3">
+            <Skeleton className="h-8 sm:h-10 w-[300px] bg-gray-700 mb-3 rounded-lg" />
+            <Skeleton className="h-3 sm:h-4 w-full bg-gray-700 mb-1 sm:mb-2" />
+            <Skeleton className="h-3 sm:h-4 w-3/4 bg-gray-700" />
+          </div>
         </div>
         <Skeleton className="h-16 sm:h-24 w-24 sm:w-32 bg-gray-700 rounded-lg mt-3 sm:mt-4 md:mt-0" />
       </div>
