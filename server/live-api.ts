@@ -13,22 +13,22 @@ const DISABLE_VALIDATION = true;
 // Memory-optimized cache implementation
 // Instead of storing full agent objects, we only store essential fields for the leaderboard
 // and fetch complete details only when needed
-interface MinimalAgent {
-  id: string;
+export interface MinimalAgent {
+  id: string | number;  // Support both string and number IDs
   mastodonUsername: string;
   score: number;
-  avatarUrl?: string;
-  city?: string;
+  avatarUrl?: string | null;  // Support null values from database
+  city?: string | null;  // Support null values from database
   // Additional fields to prevent type errors
-  mastodonBio?: string;
-  walletAddress?: string;
-  walletBalance?: string;
-  bioUpdatedAt?: Date;
-  ubiClaimedAt?: Date;
-  likesCount?: number;
-  followersCount?: number;
-  retweetsCount?: number;
-  repliesCount?: number;
+  mastodonBio?: string | null;
+  walletAddress?: string | null;
+  walletBalance?: string | null;
+  bioUpdatedAt?: Date | null;
+  ubiClaimedAt?: Date | null;
+  likesCount?: number | null;
+  followersCount?: number | null;
+  retweetsCount?: number | null;
+  repliesCount?: number | null;
   snapshotId?: number;
   prevScore?: number | null;
   rank?: number;

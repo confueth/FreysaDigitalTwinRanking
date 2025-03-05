@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import path from 'path';
 import fs from 'fs';
 import { getLiveLeaderboardData, getLiveAgentDetail, filterAgents, getLiveStats, getAvailableCities } from './live-api';
+import type { MinimalAgent } from './live-api'; // Import the MinimalAgent type
 import { storage } from './storage';
 import { createSnapshot } from './snapshot-service';
 import { getStartOfDayEST, formatDateEST, convertToEST } from './date-utils';
@@ -178,11 +179,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // We'll still return the agent data without the comparison
       }
 
-      // Apply filters - ensure all agents have string IDs
-      const normalizedLiveData = liveData.map(agent => ({
-        ...agent,
-        id: typeof agent.id === 'number' ? agent.id.toString() : agent.id
-      }));
+      // Apply filters - ensure all agents have string IDs and handle DB-sourced data
+      const normalizedLiveData = liveData.map(agent => {
+        // Add timestamp for DB-sourced agents if not present
+        // This handles the case where Agent from database doesn't have timestamp property
+        const normalizedAgent: MinimalAgent = {
+          ...agent,
+          id: typeof agent.id === 'number' ? agent.id.toString() : agent.id,
+          timestamp: agent.hasOwnProperty('timestamp') ? agent.timestamp : new Date()
+        };
+        return normalizedAgent;
+      });
+      
       const { agents, totalCount } = filterAgents(normalizedLiveData, filters);
 
       // Set pagination metadata in headers
@@ -263,7 +271,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        console.log(`Using snapshot #${previousSnapshot?.id} from ${formatDateEST(previousSnapshot?.timestamp)} for previous day comparison`);
+        // Check if we have a valid previous snapshot before formatting its date
+        console.log(`Using snapshot #${previousSnapshot?.id} from ${previousSnapshot?.timestamp ? formatDateEST(previousSnapshot.timestamp) : 'unknown'} for previous day comparison`);
 
         // If we found the specific snapshot and it's not the same as the current one
         if (previousSnapshot && agent.snapshotId !== previousSnapshot.id) {
