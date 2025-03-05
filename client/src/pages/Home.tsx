@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useMyAgents } from '@/hooks/use-my-agents';
 import { Link } from 'wouter';
 import { LineChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,11 +17,9 @@ import { formatDate } from '@/utils/formatters';
 import { applyAllFilters } from '@/utils/FilterUtils';
 import FreysaImage from '../assets/profile-freysa-original.jpg';
 
-// Constants
-const MY_AGENTS_KEY = 'freysa-my-agents';
-
 export default function Home() {
   const { toast } = useToast();
+  const { myAgents, setMyAgents, toggleAgent } = useMyAgents();
   const [filters, setFilters] = useState<AgentFilters>({
     page: 1,
     limit: 25,
@@ -29,7 +28,6 @@ export default function Home() {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [showAgentModal, setShowAgentModal] = useState(false);
   const [showMyAgentsOnly, setShowMyAgentsOnly] = useState(false);
-  const [myAgents, setMyAgents] = useState<string[]>([]);
   const [firstLoadTime, setFirstLoadTime] = useState<string | null>(null);
   
   // Query available snapshots 
