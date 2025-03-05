@@ -594,19 +594,24 @@ export default function Analytics({}: AnalyticsProps) {
   };
 
   // Prepare chart data with optimized performance and improved interpolation
+  // Now with proper EST timezone handling
   const prepareChartData = (): ChartDataPoint[] => {
     // Immediately return an empty array if no agents are selected
     if (selectedAgents.length === 0) return [];
 
-    // Define Feb 22 as the start date for all charts
-    const startDate = new Date('2025-02-22T00:00:00Z');
+    // Define Feb 22 as the start date for all charts (in EST timezone)
+    // Using America/New_York timezone for consistent display with the backend
+    const startDate = new Date('2025-02-22T00:00:00-05:00'); // EST timezone offset
     const startDateStr = startDate.toISOString();
 
     // Create a map of all timestamps, always including Feb 22 and today
     const allTimestamps = new Set<string>();
+    
+    // Get current date in EST timezone for consistency with server data
+    const options = { timeZone: 'America/New_York' };
     const todayDate = new Date();
     const now = todayDate.toISOString();
-    const todayDateString = todayDate.toDateString();
+    const todayDateString = todayDate.toLocaleDateString('en-US', options);
 
     // Always add Feb 22 as the baseline date
     allTimestamps.add(startDateStr);
@@ -878,17 +883,25 @@ export default function Analytics({}: AnalyticsProps) {
 
     // Create data points for each timestamp
     return sortedTimestamps.map((timestamp, index) => {
-      // Format the timestamp for display
+      // Format the timestamp for display in EST timezone
+      // Using America/New_York timezone to be consistent with backend
+      const estOptions = { timeZone: 'America/New_York' };
       const date = new Date(timestamp);
-      const month = date.getMonth() + 1; // 1-12
-      const day = date.getDate(); // 1-31
-      const isToday = todayDateString === date.toDateString();
+      
+      // Format date in EST timezone
+      const estDateString = date.toLocaleDateString('en-US', estOptions);
+      const month = new Date(estDateString).getMonth() + 1; // 1-12
+      const day = new Date(estDateString).getDate(); // 1-31
+      
+      // Check if this is today in EST timezone
+      const todayInEST = new Date().toLocaleDateString('en-US', estOptions);
+      const isToday = estDateString === todayInEST;
 
       // Format for display, ensuring each date is properly visible
       let formattedDate = `${month}/${day}`;
 
       // For Feb 22, make it explicitly clear
-      if (date.getMonth() === 1 && date.getDate() === 22) {
+      if (month === 2 && day === 22) {
         formattedDate = "2/22 (Start)";
       } else if (isToday) {
         formattedDate = "Today";

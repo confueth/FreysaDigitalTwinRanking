@@ -309,11 +309,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Process and format each historical entry
         historyData.forEach(agent => {
           // Create snapshot timestamp from creation time if available, or use current time
-          const timestamp = agent.bioUpdatedAt 
-            ? agent.bioUpdatedAt.toISOString()
-            : agent.timestamp instanceof Date 
-              ? agent.timestamp.toISOString()
+          // First check for bioUpdatedAt, which is a standard field
+          // If that's not available, safely check if timestamp exists on the object
+          // and is a Date instance (using any cast to avoid typescript errors)
+          let timestamp;
+          if (agent.bioUpdatedAt) {
+            timestamp = agent.bioUpdatedAt.toISOString();
+          } else {
+            // Use type assertion to safely access the optional timestamp property
+            const agentAny = agent as any;
+            timestamp = agentAny.timestamp instanceof Date 
+              ? agentAny.timestamp.toISOString()
               : new Date().toISOString();
+          }
 
           // Use the timestamp as the key to avoid duplicates
           historyMap.set(timestamp, {
