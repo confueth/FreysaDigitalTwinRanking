@@ -14,6 +14,7 @@ import AgentDetailModal from '@/components/AgentDetailModal';
 import { Agent, AgentFilters, Snapshot, SnapshotStats } from '@/types/agent';
 import { formatDate } from '@/utils/formatters';
 import { applyAllFilters } from '@/utils/FilterUtils';
+import FreysaImage from '../assets/profile-freysa-original.jpg';
 
 // Constants
 const MY_AGENTS_KEY = 'freysa-my-agents';
@@ -420,9 +421,17 @@ export default function Home() {
     <div>
       <div className="bg-gray-900 border-b border-gray-800 py-4">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
+              <img 
+                src={FreysaImage}
+                alt="Freysa" 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
-              Freysa Leaderboard
+              Freysa Game Leaderboard
             </h1>
           </div>
           
