@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 // CSV import removed as it's no longer needed
 import { storage } from "./storage";
 import { scheduleSnapshots } from "./snapshot-service";
+import { validateEnvironment } from "./env-validator";
 
 const app = express();
 // Configure trust proxy to handle X-Forwarded-For headers safely in Replit environment
@@ -43,6 +44,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Validate environment before starting server
+  validateEnvironment();
+  
   const server = await registerRoutes(app);
   
   // Set up daily snapshots
@@ -72,11 +76,11 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  // Use PORT from environment or fallback to 5000
   // this serves both the API and the client
-  const port = 5000;
+  const port = process.env.PORT || 5000;
   server.listen({
-    port,
+    port: Number(port),
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
