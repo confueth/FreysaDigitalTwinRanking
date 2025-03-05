@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes.fixed"; // Using the updated routes with EST timezone support
+import { registerRoutes } from "./routes"; // Routes with EST timezone support
 import { setupVite, serveStatic, log } from "./vite";
 // CSV import removed as it's no longer needed
 import { storage } from "./storage";
@@ -13,10 +13,10 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Add rate limiting to prevent abuse
+// Add rate limiting to prevent abuse - increased limit for development
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000, // increased limit for development and testing
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   // Note: trustProxy was causing a type error as it's not in the API options
