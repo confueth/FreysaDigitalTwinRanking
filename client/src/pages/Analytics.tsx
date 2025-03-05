@@ -232,28 +232,20 @@ export default function Analytics({}: AnalyticsProps) {
   // Cache snapshot agent data by snapshotId
   const [snapshotAgentsCache, setSnapshotAgentsCache] = useState<Record<number, Agent[]>>({});
 
-  // Load saved agents from localStorage on component mount
+  // Load saved agents using the hook on component mount
   useEffect(() => {
-    const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
-    if (savedAgents) {
-      try {
-        const parsed = JSON.parse(savedAgents);
-        if (Array.isArray(parsed)) {
-          // Limit to maximum 5 agents for performance
-          setSelectedAgents(parsed.slice(0, 5));
-
-          if (parsed.length > 5) {
-            toast({
-              title: "Note",
-              description: "Only the first 5 saved agents are loaded for comparison.",
-            });
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing saved agents:', e);
+    if (myAgents && myAgents.length > 0) {
+      // Limit to maximum 5 agents for performance
+      setSelectedAgents(myAgents.slice(0, 5));
+      
+      if (myAgents.length > 5) {
+        toast({
+          title: "Note",
+          description: "Only the first 5 saved agents are loaded for comparison.",
+        });
       }
     }
-  }, []);
+  }, [myAgents]);
 
   // Fetch agents for each snapshot when snapshots are loaded
   useEffect(() => {
