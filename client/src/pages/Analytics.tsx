@@ -805,32 +805,27 @@ export default function Analytics({}: AnalyticsProps) {
     }
 
     // Sort timestamps chronologically
-    // Filter out today's snapshot if it exists - we'll only use live data for today
     // Create a map to track date strings to ensure unique dates (prevent duplicate dates)
     const dateMap = new Map<string, string>();
 
-    // Always keep Feb 22 and today
-    dateMap.set('2025-02-22', startDateStr);
-    dateMap.set(todayDateString, now);
+    // Always keep Feb 22 as the baseline date
+    dateMap.set(new Date(startDateStr).toDateString(), startDateStr);
 
-    // Process all other timestamps - keeping only the latest timestamp for each date
+    // Process all timestamps - keeping only the latest timestamp for each date
     Array.from(allTimestamps).forEach(timestamp => {
       const date = new Date(timestamp);
-      const dateString = date.toLocaleDateString('en-US', options);
+      const dateString = date.toDateString();
 
-
-      // Skip dates we already processed (Feb 22 and today)
-      if (dateString === new Date(startDateStr).toLocaleDateString('en-US', options) || 
-          dateString === todayDateString) {
-        return;
-      }
-
-      // For all other dates, keep track of the latest timestamp for each date
+      // For each date, keep track of the latest timestamp for that date
       if (!dateMap.has(dateString) || 
           new Date(dateMap.get(dateString) || '').getTime() < date.getTime()) {
         dateMap.set(dateString, timestamp);
       }
     });
+
+    // Make sure today's date uses the most recent timestamp (now)
+    // This ensures we only have one "Today" point with the latest data
+    dateMap.set(todayDateString, now);
 
     // Get the unique timestamps (one per day)
     const filteredTimestamps = Array.from(dateMap.values());
@@ -945,7 +940,7 @@ export default function Analytics({}: AnalyticsProps) {
           <Button 
             variant="outline" 
             size="sm" 
-            className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
+                        className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
           >
             <Home className="h-4 w-4" />
             <span>Back to Leaderboard</span>
