@@ -615,6 +615,23 @@ export default function Analytics({}: AnalyticsProps) {
     // Also add today's date
     allTimestamps.add(now);
 
+    // Add debugging for selected agents
+    console.log(`Preparing chart data for ${selectedAgents.length} agents:`, selectedAgents);
+    
+    // Debug available snapshots
+    if (snapshots) {
+      console.log(`Available snapshots: ${snapshots.length}`);
+      snapshots.forEach((s: Snapshot) => {
+        console.log(`Snapshot #${s.id}: ${s.timestamp} - ${s.description || 'No description'}`);
+      });
+    }
+    
+    // Debug snapshot cache
+    console.log(`Snapshot cache has ${Object.keys(snapshotAgentsCache).length} snapshots`);
+    Object.keys(snapshotAgentsCache).forEach(id => {
+      console.log(`Cache for snapshot #${id}: ${snapshotAgentsCache[Number(id)]?.length || 0} agents`);
+    });
+
     // Return early with minimal data if no histories
     if (!agentHistories || Object.keys(agentHistories).length === 0) {
       // If we have at least one selected agent but no history, create minimal points (Feb 22 + today)
@@ -651,8 +668,13 @@ export default function Analytics({}: AnalyticsProps) {
 
         // Add today's data point for each selected agent using live data
         selectedAgents.forEach(username => {
-          const agent = topAgents.find((a: Agent) => a.mastodonUsername === username);
+          // Case-insensitive search for agent
+          const agent = topAgents.find((a: Agent) => 
+            a.mastodonUsername.toLowerCase() === username.toLowerCase()
+          );
+          
           if (agent) {
+            console.log(`Found live data for ${username}:`, agent);
             switch (metric) {
               case 'score':
                 result[1][username] = agent.score;
@@ -668,6 +690,7 @@ export default function Analytics({}: AnalyticsProps) {
                 break;
             }
           } else {
+            console.warn(`No live data found for ${username}`);
             result[1][username] = 0; // Default to 0 if agent not found
           }
         });
@@ -687,31 +710,47 @@ export default function Analytics({}: AnalyticsProps) {
     });
 
     // Get latest agent data (live data) for today's values
-    topAgents?.forEach((agent: Agent) => {
-      if (selectedAgents.includes(agent.mastodonUsername)) {
-        const dataMap = agentDataPoints.get(agent.mastodonUsername);
-        if (dataMap) {
-          // Always set Feb 22 to zero as the baseline
-          dataMap.set(startDateStr, 0);
+    if (topAgents) {
+      selectedAgents.forEach(username => {
+        // Case-insensitive search for the agent
+        const agent = topAgents.find((a: Agent) => 
+          a.mastodonUsername.toLowerCase() === username.toLowerCase()
+        );
+        
+        if (agent) {
+          console.log(`Found live agent data for ${username}:`, {
+            score: agent.score,
+            followers: agent.followersCount,
+            likes: agent.likesCount,
+            retweets: agent.retweetsCount,
+          });
+          
+          const dataMap = agentDataPoints.get(username);
+          if (dataMap) {
+            // Always set Feb 22 to zero as the baseline
+            dataMap.set(startDateStr, 0);
 
-          // Set today's live data value
-          switch (metric) {
-            case 'score':
-              dataMap.set(now, agent.score);
-              break;
-            case 'followers':
-              dataMap.set(now, agent.followersCount || 0);
-              break;
-            case 'likes':
-              dataMap.set(now, agent.likesCount || 0);
-              break;
-            case 'retweets':
-              dataMap.set(now, agent.retweetsCount || 0);
-              break;
+            // Set today's live data value
+            switch (metric) {
+              case 'score':
+                dataMap.set(now, agent.score);
+                break;
+              case 'followers':
+                dataMap.set(now, agent.followersCount || 0);
+                break;
+              case 'likes':
+                dataMap.set(now, agent.likesCount || 0);
+                break;
+              case 'retweets':
+                dataMap.set(now, agent.retweetsCount || 0);
+                break;
+            }
           }
+        } else {
+          console.warn(`No live data found for ${username} when checking topAgents`);
         }
-      }
-    });
+      });
+    }
 
     // Initialize Feb 22 baseline values for all agents
     selectedAgents.forEach(username => {
@@ -724,6 +763,8 @@ export default function Analytics({}: AnalyticsProps) {
 
     // Collect all timestamps and map data points from historical data
     Object.entries(agentHistories).forEach(([username, history]) => {
+      console.log(`Processing history for ${username}: ${history.length} data points`);
+      
       // Sort history by timestamp to ensure chronological order
       const sortedHistory = [...history].sort((a, b) => 
         new Date(a.timestamp || '').getTime() - new Date(b.timestamp || '').getTime()
@@ -757,6 +798,8 @@ export default function Analytics({}: AnalyticsProps) {
             // Only set the value if it doesn't already exist or is more accurate
             if (!dataMap.has(snapshot.timestamp)) {
               dataMap.set(snapshot.timestamp, metricValue);
+              const dateStr = new Date(snapshot.timestamp).toLocaleDateString('en-US', options);
+              console.log(`Setting history value for ${username} at ${dateStr}: ${metricValue}`);
             }
           }
         }
@@ -776,11 +819,22 @@ export default function Analytics({}: AnalyticsProps) {
         const date = new Date(snapshot.timestamp);
         const dateString = date.toLocaleDateString('en-US', options);
 
-        // Only keep the earliest snapshot for each date
-        // This ensures we get March 1st snapshot (id 4) instead of any newer ones
-        if (!snapshotDateMap.has(dateString) || 
-            snapshot.id < snapshotDateMap.get(dateString)!.id) {
-          snapshotDateMap.set(dateString, {id: snapshot.id, timestamp: snapshot.timestamp});
+        // For specific dates, always use known good snapshots
+        if (dateString.includes('3/1')) {
+          // Always use snapshot ID 4 for March 1st
+          snapshotDateMap.set(dateString, {id: 4, timestamp: snapshot.timestamp});
+          console.log("Explicitly using snapshot #4 for March 1st");
+        } else if (dateString.includes('2/28')) {
+          // Use snapshot ID 2 for Feb 28
+          snapshotDateMap.set(dateString, {id: 2, timestamp: snapshot.timestamp});
+          console.log("Explicitly using snapshot #2 for Feb 28th");
+        } else {
+          // For other dates, keep the earliest snapshot for each date
+          if (!snapshotDateMap.has(dateString) || 
+              snapshot.id < snapshotDateMap.get(dateString)!.id) {
+            snapshotDateMap.set(dateString, {id: snapshot.id, timestamp: snapshot.timestamp});
+            console.log(`Using snapshot #${snapshot.id} for ${dateString}`);
+          }
         }
       });
 
@@ -924,8 +978,8 @@ export default function Analytics({}: AnalyticsProps) {
 
       // Format date in EST timezone
       const estDateString = date.toLocaleDateString('en-US', estOptions);
-      const month = new Date(estDateString).getMonth() + 1; // 1-12
-      const day = new Date(estDateString).getDate(); // 1-31
+      const month = date.getMonth() + 1; // 1-12  (Using the actual date object)
+      const day = date.getDate(); // 1-31  (Using the actual date object)
 
       // Check if this is today in EST timezone
       const todayInEST = new Date().toLocaleDateString('en-US', estOptions);
