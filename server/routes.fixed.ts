@@ -183,10 +183,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const normalizedLiveData = liveData.map(agent => {
         // Add timestamp for DB-sourced agents if not present
         // This handles the case where Agent from database doesn't have timestamp property
+        // Use type casting to safely add timestamp property
+        const agentWithAnyType = agent as any;
         const normalizedAgent: MinimalAgent = {
           ...agent,
           id: typeof agent.id === 'number' ? agent.id.toString() : agent.id,
-          timestamp: agent.hasOwnProperty('timestamp') ? agent.timestamp : new Date()
+          timestamp: Object.prototype.hasOwnProperty.call(agent, 'timestamp') ? 
+            agentWithAnyType.timestamp : 
+            new Date()
         };
         return normalizedAgent;
       });
@@ -319,13 +323,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Process and format each historical entry
         historyData.forEach(agent => {
           // Create snapshot timestamp from creation time if available, or use current time
-          // Determine the appropriate timestamp to use
+          // Due to the database structure, we need to use properties that we know exist
+          // Database Agent objects might not have 'timestamp' property
           let timestamp;
+          
+          // Use bioUpdatedAt if available
           if (agent.bioUpdatedAt) {
             timestamp = convertToEST(agent.bioUpdatedAt);
-          } else if ('timestamp' in agent && agent.timestamp instanceof Date) {
-            timestamp = convertToEST(agent.timestamp);
-          } else {
+          }
+          // Or use the snapshot timestamp if we can find it
+          else if (agent.snapshotId) {
+            // We'll use the creation date of the snapshot this agent belongs to
+            // This is handled later when we process through snapshots
+            timestamp = convertToEST(new Date());
+          } 
+          // If all else fails, use current time
+          else {
             timestamp = convertToEST(new Date());
           }
 
@@ -568,8 +581,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get agents from the database
       const agents = await storage.getAgents(snapshotId, filters);
       
+      // Normalize data for type safety - make sure all required fields exist
+      const normalizedAgents = agents.map(agent => {
+        // Add timestamp and ensure ID is a string for consistent handling
+        const normalizedAgent: MinimalAgent = {
+          ...agent,
+          id: typeof agent.id === 'number' ? agent.id.toString() : agent.id,
+          timestamp: Object.prototype.hasOwnProperty.call(agent, 'timestamp') ? 
+            (agent as any).timestamp : 
+            convertToEST(new Date())
+        };
+        return normalizedAgent;
+      });
+      
       // Apply any additional filtering and sorting that might not be handled at the DB level
-      const { agents: filteredAgents, totalCount } = filterAgents(agents, filters);
+      const { agents: filteredAgents, totalCount } = filterAgents(normalizedAgents, filters);
       
       // Set pagination metadata
       res.setHeader('X-Total-Count', totalCount.toString());
