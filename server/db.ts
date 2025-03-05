@@ -11,15 +11,14 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Connect to PostgreSQL and ensure timezone is set to EST
-const connectionStringWithTZ = `${process.env.DATABASE_URL}?options=timezone%3Damerica%2Fnew_york`;
+// Connect to PostgreSQL
 export const pool = new Pool({ 
-  connectionString: connectionStringWithTZ,
+  connectionString: process.env.DATABASE_URL,
 });
 
-// Set timezone to EST for all queries
-pool.on('connect', (client) => {
-  client.query('SET timezone = \'EST\'');
+// Set timezone to America/New_York (EST/EDT) for all queries
+pool.on('connect', async (client) => {
+  await client.query('SET timezone = \'America/New_York\'');
 });
 
 export const db = drizzle({ client: pool, schema });
