@@ -926,6 +926,8 @@ export default function Analytics({}: AnalyticsProps) {
     );
 
     // Perform data interpolation for sparse datasets
+    console.log(`Final timeline has ${sortedTimestamps.length} unique dates`);
+    
     selectedAgents.forEach(username => {
       const dataMap = agentDataPoints.get(username);
       if (dataMap && dataMap.size > 0) {
@@ -955,9 +957,13 @@ export default function Analytics({}: AnalyticsProps) {
                 const interpolatedValue = lastKnownValue + (ratio * (nextValue - lastKnownValue));
 
                 dataMap.set(timestamp, Math.round(interpolatedValue));
+                const dateStr = new Date(timestamp).toLocaleDateString('en-US', options);
+                console.log(`Interpolated value for ${username} at ${dateStr}: ${Math.round(interpolatedValue)}`);
               } else {
                 // If no future data point, use the last known value
                 dataMap.set(timestamp, lastKnownValue);
+                const dateStr = new Date(timestamp).toLocaleDateString('en-US', options);
+                console.log(`Using last known value for ${username} at ${dateStr}: ${lastKnownValue}`);
               }
             }
           } else {
@@ -1002,6 +1008,7 @@ export default function Analytics({}: AnalyticsProps) {
         dateString: formattedDate, // Human-readable format for the x-axis
         sortValue: date.getTime(), // For sorting
         index: index, // Preserve the order for display
+        xAxisLabel: formattedDate, // Explicit label for x-axis
       };
 
       // Add data for each agent at this timestamp - using snapshot data as the source of truth
@@ -1102,6 +1109,7 @@ export default function Analytics({}: AnalyticsProps) {
 
         // Set the final value in the data point
         dataPoint[username] = value;
+        console.log(`Final value for ${username} at ${formattedDate}: ${value} (${metric})`);
       });
 
       return dataPoint;
