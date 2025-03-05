@@ -36,7 +36,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         <div className="hidden md:flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <a 
-              href="https://www.freysa.ai/digital-twin" 
+              href="https://freysa.ai/digital-twin" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center space-x-3 hover:opacity-90 transition-opacity"
@@ -44,10 +44,16 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
             >
               <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
                 <img 
-                  src="/images/profile-freysa-original.jpg" 
+                  src={import.meta.env.BASE_URL + "images/profile-freysa-original.jpg"}
                   alt="Freysa" 
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    console.error("Image failed to load:", target.src);
+                    // Try alternative path as fallback
+                    target.src = "/client/public/images/profile-freysa-original.jpg";
+                  }}
                 />
               </div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
@@ -124,7 +130,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         <div className="md:hidden flex justify-between items-center">
           <div className="flex items-center">
             <a 
-              href="https://www.freysa.ai/digital-twin" 
+              href="https://freysa.ai/digital-twin" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
@@ -132,10 +138,16 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
             >
               <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow animate-pulse-green">
                 <img 
-                  src="/images/profile-freysa-original.jpg" 
+                  src={import.meta.env.BASE_URL + "images/profile-freysa-original.jpg"}
                   alt="Freysa" 
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    console.error("Image failed to load:", target.src);
+                    // Try alternative path as fallback
+                    target.src = "/client/public/images/profile-freysa-original.jpg";
+                  }}
                 />
               </div>
               <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
