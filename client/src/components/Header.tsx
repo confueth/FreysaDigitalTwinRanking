@@ -51,7 +51,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 />
               </div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
-                Freysa Game Leaderboard
+                Freysa Leaderboard
               </h1>
             </a>
           </div>
@@ -139,7 +139,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 />
               </div>
               <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
-                Freysa Game Leaderboard
+                Freysa Leaderboard
               </h1>
             </a>
           </div>
