@@ -44,15 +44,13 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
             >
               <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
                 <img 
-                  src={import.meta.env.BASE_URL + "images/profile-freysa-original.jpg"}
+                  src="/profile-freysa-original.jpg"
                   alt="Freysa" 
                   className="w-full h-full object-cover"
                   loading="lazy"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     console.error("Image failed to load:", target.src);
-                    // Try alternative path as fallback
-                    target.src = "/client/public/images/profile-freysa-original.jpg";
                   }}
                 />
               </div>
@@ -138,15 +136,13 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
             >
               <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow animate-pulse-green">
                 <img 
-                  src={import.meta.env.BASE_URL + "images/profile-freysa-original.jpg"}
+                  src="/profile-freysa-original.jpg"
                   alt="Freysa" 
                   className="w-full h-full object-cover"
                   loading="lazy"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     console.error("Image failed to load:", target.src);
-                    // Try alternative path as fallback
-                    target.src = "/client/public/images/profile-freysa-original.jpg";
                   }}
                 />
               </div>
