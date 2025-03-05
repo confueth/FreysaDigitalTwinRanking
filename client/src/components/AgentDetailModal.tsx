@@ -200,12 +200,30 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
         
         const data = await response.json();
         
-        // Add humanFeedback for testing if it doesn't exist
+        // Try to fetch human feedback from the external API
+        let humanFeedback = data.humanFeedback;
+        try {
+          console.log(`Fetching human feedback for ${username} from external API`);
+          const feedbackResponse = await fetch(`https://digital-clone-production.onrender.com/digital-clones/clones/${data.mastodonUsername}`);
+          
+          if (feedbackResponse.ok) {
+            const feedbackData = await feedbackResponse.json();
+            if (feedbackData && feedbackData.humanFeedback) {
+              humanFeedback = feedbackData.humanFeedback;
+              console.log(`Found human feedback for ${username}`);
+            } else {
+              console.log(`No human feedback available for ${username} in external API`);
+            }
+          }
+        } catch (feedbackError) {
+          console.error("Failed to fetch human feedback", feedbackError);
+          // Continue with existing data if available
+        }
+        
+        // Enrich data with human feedback if available
         const enrichedData = {
           ...data,
-          // If humanFeedback doesn't exist, provide placeholder demo data
-          humanFeedback: data.humanFeedback || 
-            "This agent responds consistently and maintains the personality of the original user. Human feedback shows it has strong conversation skills."
+          humanFeedback
         };
         
         // Store in cache with timestamp
