@@ -108,8 +108,8 @@
   },
   "scripts": {
     "prepare-deployment": "node scripts/prepare-deployment.js",
-    "build": "npm run prepare-deployment && vite build",
+    "build": "npm run prepare-deployment && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "dev": "tsx server/index.ts",
-    "start": "NODE_ENV=production tsx server/index.ts"
+    "start": "NODE_ENV=production node dist/index.js"
   }
 }

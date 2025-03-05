@@ -1,6 +1,4 @@
 
-#!/usr/bin/env node
-
 // This script checks if we're properly configured for deployment
 console.log('🚀 Preparing for deployment...');
 
