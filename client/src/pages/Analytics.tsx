@@ -416,7 +416,10 @@ export default function Analytics({}: AnalyticsProps) {
     refetchOnWindowFocus: false, // Don't refetch on window focus to reduce unnecessary API calls
   });
 
-  // Handle agent selection/deselection with localStorage updates
+  // Get the helper functions from the hook
+  const { addAgent, removeAgent } = useMyAgents();
+  
+  // Handle agent selection/deselection using the shared hook
   const handleAgentSelect = (username: string) => {
     let newSelectedAgents: string[];
 
@@ -426,6 +429,11 @@ export default function Analytics({}: AnalyticsProps) {
     } else if (selectedAgents.length < 5) {
       // Select new agent
       newSelectedAgents = [...selectedAgents, username];
+      
+      // Add to global myAgents list if not already there
+      if (myAgents && !myAgents.includes(username)) {
+        addAgent(username);
+      }
     } else {
       // Maximum agents reached
       toast({
@@ -436,23 +444,8 @@ export default function Analytics({}: AnalyticsProps) {
       return;
     }
 
-    // Update state
+    // Update local state for the chart
     setSelectedAgents(newSelectedAgents);
-
-    // Save selection to localStorage - but only if it's different from the saved list
-    const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
-    let savedList: string[] = [];
-
-    try {
-      if (savedAgents) {
-        savedList = JSON.parse(savedAgents);
-      }
-    } catch (e) {
-      console.error('Error parsing saved agents:', e);
-    }
-
-    // Update localStorage if needed
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -547,9 +540,11 @@ export default function Analytics({}: AnalyticsProps) {
 
         // If agent is found, add to selection
         setSelectedAgents(newSelectedAgents);
-
-        // Update localStorage with new selection
-        localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
+        
+        // Add to global myAgents list if not already there
+        if (!myAgents.includes(username)) {
+          addAgent(username);
+        }
 
         // Clear the search query
         setSearchQuery('');
@@ -567,9 +562,11 @@ export default function Analytics({}: AnalyticsProps) {
 
     // If we get here, the agent couldn't be found but we'll add it anyway
     setSelectedAgents(newSelectedAgents);
-
-    // Update localStorage with new selection
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
+    
+    // Add to global myAgents list if not already there
+    if (!myAgents.includes(username)) {
+      addAgent(username);
+    }
 
     // Clear the search query
     setSearchQuery('');
