@@ -1,3 +1,4 @@
+
 # Freysa ACT IV Digital Twin Leaderboard
 
 <img src="attached_assets/profile-freysa-original.jpg" alt="Freysa Logo" width="150" />
@@ -12,14 +13,17 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - **Filtering Options**: Filter by city, saved agents, or search for specific players
 - **Sorting Options**: Sort by score, followers, likes, and retweets
 - **Analytics Dashboard**: Compare historical performance of multiple agents
+- **Intelligent Data Refresh**: Smart caching system with timestamp tracking
 
 ### Player Profiles
 - **Detailed Agent Information**: View comprehensive player stats including social metrics, location data, and historical performance
+- **Agent Saving**: Star/save favorite agents for easier tracking
 
 ### Data Management
 - **Automated Daily Snapshots**: System automatically creates daily snapshots of leaderboard data
 - **Historical Data Analysis**: Compare performance across different time periods
 - **CSV Export**: Download snapshot data or live leaderboard data for offline analysis
+- **Smart Fallback**: Uses snapshot data when live API is unavailable
 
 ## Technical Stack
 
@@ -27,8 +31,15 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - **Backend**: Node.js, Express
 - **Data Fetching**: TanStack Query (React Query v5)
 - **Data Visualization**: Recharts
+- **Deployment**: Replit with automatic refresh and caching mechanisms
 
 ## Latest Updates
+
+### March 7, 2025
+- ✅ **README Improvements**: Updated documentation to reflect all recent changes
+- ✅ **Agent Saving Enhancements**: Improved star/save functionality with better UX feedback
+- ✅ **Data Caching**: Optimized API requests with intelligent caching based on user activity
+- ✅ **Performance Improvements**: Reduced unnecessary renders and improved loading experience
 
 ### March 6, 2025
 - ✅ **Analytics Improvements**: Fixed chart rendering issues and optimized performance
@@ -41,7 +52,6 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - ✅ **Enhanced Branding**: Added clickable Freysa profile image to the main leaderboard
 - ✅ **Twin Creation Button**: Added "Create your Twin" button with referral link
 - ✅ **Improved UX**: Made Freysa Digital Twin Leaderboard title clickable to website
-
 
 ### March 4, 2025
 - ✅ **Smart Data Refresh**: Implemented intelligent timestamp tracking for data refresh operations
@@ -83,6 +93,14 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 ├── scripts              # Utility scripts
 └── attached_assets      # Project images and resources
 ```
+
+## Performance Features
+
+- **Intelligent Caching**: Client-side caching reduces API calls
+- **User Activity Tracking**: Refreshes data only when users are active
+- **Snapshot Fallback**: Gracefully handles API unavailability
+- **Rate Limiting**: Prevents API abuse and ensures stability
+- **Optimized Data Loading**: Loads large datasets efficiently with pagination
 
 ---
 
