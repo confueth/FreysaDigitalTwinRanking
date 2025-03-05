@@ -1,4 +1,3 @@
-
 // This script checks if we're properly configured for deployment
 import { readFileSync } from 'fs';
 
