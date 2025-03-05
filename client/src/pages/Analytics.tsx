@@ -925,7 +925,7 @@ export default function Analytics({}: AnalyticsProps) {
   const chartData = prepareChartData();
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 py-4">
       <div className="flex justify-between items-center mb-6">
         <Link to="/">
           <Button 
@@ -939,7 +939,7 @@ export default function Analytics({}: AnalyticsProps) {
         </Link>
       </div>
 
-      <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
+      <h1 className="text-3xl font-bold mb-8 text-left bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
         Advanced Analytics
       </h1>
 
