@@ -20,7 +20,7 @@ export type User = typeof users.$inferSelect;
 // Snapshot schema to store leaderboard snapshots
 export const snapshots = pgTable("snapshots", {
   id: serial("id").primaryKey(),
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
   description: text("description"),
 });
 
@@ -53,8 +53,8 @@ export const agents = pgTable("agents", {
   walletAddress: text("wallet_address"),
   walletBalance: text("wallet_balance"),
   mastodonBio: text("mastodon_bio"),
-  bioUpdatedAt: timestamp("bio_updated_at"),
-  ubiClaimedAt: timestamp("ubi_claimed_at"),
+  bioUpdatedAt: timestamp("bio_updated_at", { withTimezone: true }),
+  ubiClaimedAt: timestamp("ubi_claimed_at", { withTimezone: true }),
 });
 
 export const insertAgentSchema = createInsertSchema(agents)
@@ -85,7 +85,7 @@ export const tweets = pgTable("tweets", {
   id: serial("id").primaryKey(),
   agentId: integer("agent_id").notNull(),
   content: text("content").notNull(),
-  timestamp: timestamp("timestamp").notNull(),
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
   likesCount: integer("likes_count").notNull().default(0),
   retweetsCount: integer("retweets_count").notNull().default(0),
 });
