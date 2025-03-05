@@ -200,30 +200,43 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
         
         const data = await response.json();
         
-        // Try to fetch human feedback from the external API
+        // Try to fetch additional data (human feedback and replies count) from the external API
         let humanFeedback = data.humanFeedback;
+        let repliesCount = data.repliesCount;
+        
         try {
-          console.log(`Fetching human feedback for ${username} from external API`);
-          const feedbackResponse = await fetch(`https://digital-clone-production.onrender.com/digital-clones/clones/${data.mastodonUsername}`);
+          console.log(`Fetching external data for ${username} from external API`);
+          const externalResponse = await fetch(`https://digital-clone-production.onrender.com/digital-clones/clones/${data.mastodonUsername}`);
           
-          if (feedbackResponse.ok) {
-            const feedbackData = await feedbackResponse.json();
-            if (feedbackData && feedbackData.humanFeedback) {
-              humanFeedback = feedbackData.humanFeedback;
+          if (externalResponse.ok) {
+            const externalData = await externalResponse.json();
+            
+            // Extract human feedback if available
+            if (externalData && externalData.humanFeedback) {
+              humanFeedback = externalData.humanFeedback;
               console.log(`Found human feedback for ${username}`);
             } else {
               console.log(`No human feedback available for ${username} in external API`);
             }
+            
+            // Extract replies count if available
+            if (externalData && externalData.repliesCount) {
+              repliesCount = externalData.repliesCount;
+              console.log(`Found replies count for ${username}: ${repliesCount}`);
+            } else {
+              console.log(`No replies count available for ${username} in external API`);
+            }
           }
-        } catch (feedbackError) {
-          console.error("Failed to fetch human feedback", feedbackError);
+        } catch (externalError) {
+          console.error("Failed to fetch external data", externalError);
           // Continue with existing data if available
         }
         
-        // Enrich data with human feedback if available
+        // Enrich data with additional information from external API
         const enrichedData = {
           ...data,
-          humanFeedback
+          humanFeedback,
+          repliesCount
         };
         
         // Store in cache with timestamp
