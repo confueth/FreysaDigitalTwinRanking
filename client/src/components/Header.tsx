@@ -130,7 +130,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
               title="Visit Freysa Digital Twin website"
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow animate-pulse-green">
                 <img 
                   src="/images/profile-freysa-original.jpg" 
                   alt="Freysa" 
