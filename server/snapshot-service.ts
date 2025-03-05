@@ -2,6 +2,7 @@ import { getLiveLeaderboardData, getLiveAgentDetail } from './live-api';
 import { IStorage } from './storage';
 import { LeaderboardEntry, AgentDetails } from '@shared/schema';
 import cron from 'node-cron';
+import { getStartOfDayEST, formatDateEST, getCurrentDateEST, convertToEST } from './date-utils';
 
 let isSnapshotInProgress = false;
 
@@ -14,12 +15,10 @@ export async function createSnapshot(
   storage: IStorage, 
   description?: string
 ): Promise<number | null> {
-  // If no description is provided, generate one with the current date (in UTC)
+  // If no description is provided, generate one with the current date (in EST)
   if (!description) {
-    const date = new Date();
-    const month = date.getUTCMonth() + 1;
-    const day = date.getUTCDate();
-    const year = date.getUTCFullYear();
+    const estDate = convertToEST(new Date());
+    const [month, day, year] = estDate.split(/[\/,\s]+/);
     description = `Daily snapshot - ${month}/${day}/${year}`;
   }
   if (isSnapshotInProgress) {
@@ -106,20 +105,18 @@ export async function createSnapshot(
  */
 async function hasSnapshotForToday(storage: IStorage): Promise<boolean> {
   try {
-    // Get today's date in UTC
-    const today = new Date();
-    // Set to beginning of the day in UTC
-    today.setUTCHours(0, 0, 0, 0);
+    // Get today's date in EST timezone
+    const todayEST = getStartOfDayEST();
     
     // Get all snapshots
     const snapshots = await storage.getSnapshots();
     
-    // Check if any snapshot was created today (using UTC)
+    // Check if any snapshot was created today (using EST timezone)
     return snapshots.some(snapshot => {
+      // Convert snapshot date to EST and get start of day
       const snapshotDate = new Date(snapshot.timestamp);
-      // Set to beginning of the snapshot day in UTC
-      snapshotDate.setUTCHours(0, 0, 0, 0);
-      return snapshotDate.getTime() === today.getTime();
+      const snapshotDateEST = getStartOfDayEST(snapshotDate);
+      return snapshotDateEST.getTime() === todayEST.getTime();
     });
   } catch (error) {
     console.error('Error checking for today\'s snapshot:', error);
@@ -132,17 +129,16 @@ async function hasSnapshotForToday(storage: IStorage): Promise<boolean> {
  * @param storage Storage implementation
  */
 export function scheduleSnapshots(storage: IStorage): void {
-  // Create a snapshot at the end of each day (11:55 PM)
+  // Create a snapshot at the end of each day (11:55 PM in EST timezone)
   cron.schedule('55 23 * * *', async () => {
     console.log('Running end-of-day snapshot creation');
     const hasSnapshotToday = await hasSnapshotForToday(storage);
     
     if (!hasSnapshotToday) {
       console.log('Creating end-of-day snapshot');
-      const date = new Date();
-      const month = date.getUTCMonth() + 1;
-      const day = date.getUTCDate();
-      const year = date.getUTCFullYear();
+      // Use EST date for the description
+      const estDate = convertToEST(new Date());
+      const [month, day, year] = estDate.split(/[\/,\s]+/);
       await createSnapshot(storage, `End of day snapshot - ${month}/${day}/${year}`);
     } else {
       console.log('Snapshot already exists for today, updating it');
@@ -154,11 +150,9 @@ export function scheduleSnapshots(storage: IStorage): void {
         // Delete the existing snapshot
         await storage.deleteSnapshot(latestSnapshot.id);
         
-        // Create a new one for today with updated data
-        const date = new Date();
-        const month = date.getUTCMonth() + 1;
-        const day = date.getUTCDate();
-        const year = date.getUTCFullYear();
+        // Create a new one for today with updated data in EST
+        const estDate = convertToEST(new Date());
+        const [month, day, year] = estDate.split(/[\/,\s]+/);
         await createSnapshot(storage, `End of day snapshot - ${month}/${day}/${year}`);
       }
     }
@@ -216,9 +210,8 @@ export async function findPreviousDaySnapshot(storage: IStorage): Promise<{ id: 
       return null;
     }
     
-    // Define today
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0); // Set to beginning of today
+    // Define today in EST timezone
+    const todayEST = getStartOfDayEST();
     
     // Sort snapshots by timestamp (newest first)
     snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -227,18 +220,19 @@ export async function findPreviousDaySnapshot(storage: IStorage): Promise<{ id: 
     let previousDaySnapshot = null;
     
     for (const snapshot of snapshots) {
+      // Convert snapshot date to EST timezone and get start of day
       const snapshotDate = new Date(snapshot.timestamp);
-      snapshotDate.setUTCHours(0, 0, 0, 0); // Compare just the date part
+      const snapshotDateEST = getStartOfDayEST(snapshotDate);
       
       // If this snapshot is from before today, it's our candidate
-      if (snapshotDate.getTime() < today.getTime()) {
+      if (snapshotDateEST.getTime() < todayEST.getTime()) {
         previousDaySnapshot = snapshot;
         break; // Take the first one (most recent) before today
       }
     }
     
     if (previousDaySnapshot) {
-      console.log(`Found previous day snapshot #${previousDaySnapshot.id} from ${previousDaySnapshot.timestamp}`);
+      console.log(`Found previous day snapshot #${previousDaySnapshot.id} from ${formatDateEST(previousDaySnapshot.timestamp)}`);
     } else {
       console.log('No previous day snapshot found');
     }
