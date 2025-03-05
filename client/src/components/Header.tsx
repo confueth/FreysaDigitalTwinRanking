@@ -42,7 +42,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               className="flex items-center space-x-3 hover:opacity-90 transition-opacity"
               title="Visit Freysa Digital Twin website"
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
                 <img 
                   src="/images/profile-freysa-original.jpg" 
                   alt="Freysa" 
@@ -51,7 +51,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 />
               </div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
-                Freysa Digital Twin Leaderboard
+                Freysa Game Leaderboard
               </h1>
             </a>
           </div>
@@ -139,7 +139,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 />
               </div>
               <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
-                Freysa Leaderboard
+                Freysa Game Leaderboard
               </h1>
             </a>
           </div>
