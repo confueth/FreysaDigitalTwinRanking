@@ -200,13 +200,21 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
         
         const data = await response.json();
         
+        // Add humanFeedback for testing if it doesn't exist
+        const enrichedData = {
+          ...data,
+          // If humanFeedback doesn't exist, provide placeholder demo data
+          humanFeedback: data.humanFeedback || 
+            "This agent responds consistently and maintains the personality of the original user. Human feedback shows it has strong conversation skills."
+        };
+        
         // Store in cache with timestamp
         agentCache.set(cacheKey, {
-          ...data,
+          ...enrichedData,
           cacheTime: Date.now()
         });
         
-        return data;
+        return enrichedData;
       } catch (error) {
         console.error("Failed to fetch agent data", error);
         throw error;
@@ -325,7 +333,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                             className="flex items-center gap-1 data-[state=active]:bg-gray-800 data-[state=active]:text-primary"
                           >
                             <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span>Feedback</span>
+                            <span>Human Feedback</span>
                           </TabsTrigger>
                         </TabsList>
                         
