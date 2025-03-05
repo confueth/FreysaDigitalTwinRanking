@@ -927,6 +927,7 @@ export default function Analytics({}: AnalyticsProps) {
 
     // Perform data interpolation for sparse datasets
     console.log(`Final timeline has ${sortedTimestamps.length} unique dates`);
+    console.log(`About to process interpolation for agents: ${selectedAgents.join(', ')}`);
     
     selectedAgents.forEach(username => {
       const dataMap = agentDataPoints.get(username);
@@ -1020,6 +1021,18 @@ export default function Analytics({}: AnalyticsProps) {
         const dateString = new Date(timestamp).toLocaleDateString('en-US', options);
         let value = 0;
 
+        // First, check if we have interpolated data for this timestamp
+        if (dataMap && dataMap.has(timestamp)) {
+          // Use the interpolated data value - this is crucial! Interpolation was done earlier
+          value = dataMap.get(timestamp) || 0;
+          console.log(`Using interpolated data for ${username} at ${dateString}: ${value}`);
+          
+          // Set the value in the data point and skip further processing
+          dataPoint[username] = value;
+          console.log(`Final value for ${username} at ${formattedDate}: ${value} (${metric}) - from interpolation`);
+          return;
+        }
+
         // Special case for March 1st - ALWAYS use snapshot ID 4 
         // This directly addresses the specific issue on March 1st
         if (dateString.includes('3/1')) {
@@ -1051,6 +1064,7 @@ export default function Analytics({}: AnalyticsProps) {
 
               // Set the value directly and skip further processing
               dataPoint[username] = value;
+              console.log(`Final value for ${username} at ${formattedDate}: ${value} (${metric}) - from March 1st special case`);
               return;
             }
           }
@@ -1102,9 +1116,6 @@ export default function Analytics({}: AnalyticsProps) {
 
             value = metricValue;
           }
-        } else if (dataMap && dataMap.has(timestamp)) {
-          // Fall back to our data map for non-snapshot dates
-          value = dataMap.get(timestamp) || 0;
         }
 
         // Set the final value in the data point
