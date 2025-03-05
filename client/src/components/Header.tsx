@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
+import FreysaImage from '../assets/profile-freysa-original.jpg';
 
 interface HeaderProps {
   selectedView: 'table' | 'cards' | 'timeline';
@@ -44,14 +45,10 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
             >
               <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
                 <img 
-                  src="/profile-freysa-original.jpg"
+                  src={FreysaImage}
                   alt="Freysa" 
                   className="w-full h-full object-cover"
                   loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    console.error("Image failed to load:", target.src);
-                  }}
                 />
               </div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
@@ -136,14 +133,10 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
             >
               <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow animate-pulse-green">
                 <img 
-                  src="/profile-freysa-original.jpg"
+                  src={FreysaImage}
                   alt="Freysa" 
                   className="w-full h-full object-cover"
                   loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    console.error("Image failed to load:", target.src);
-                  }}
                 />
               </div>
               <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
