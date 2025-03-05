@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useMyAgents, MY_AGENTS_KEY } from '@/hooks/use-my-agents';
+import { useMyAgents } from '@/hooks/use-my-agents';
 import { 
   Select,
   SelectContent,
