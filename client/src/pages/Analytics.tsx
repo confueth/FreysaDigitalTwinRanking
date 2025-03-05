@@ -909,16 +909,9 @@ export default function Analytics({}: AnalyticsProps) {
       }
 
       // Use a dynamic object with string indexing for agent data
-      const dataPoint: {
-        timestamp: string;
-        originalTimestamp: string;
-        dateString: string;
-        sortValue: number;
-        index: number;
-        [key: string]: string | number; // Allow dynamic agent usernames as keys
-      } = {
-        timestamp: timestamp, // Keep the original ISO timestamp
-        originalTimestamp: timestamp, // For reference
+      const dataPoint: ChartDataPoint = {
+        timestamp: isToday ? 'Today (Live)' : formattedDate,
+        originalTimestamp: timestamp, // Keep the original timestamp for reference
         dateString: formattedDate, // Human-readable format for the x-axis
         sortValue: date.getTime(), // For sorting
         index: index, // Preserve the order for display
@@ -928,7 +921,11 @@ export default function Analytics({}: AnalyticsProps) {
       selectedAgents.forEach(username => {
         const dataMap = agentDataPoints.get(username);
         if (dataMap && dataMap.has(timestamp)) {
+          // Use the || 0 to ensure we always have a valid number value
           dataPoint[username] = dataMap.get(timestamp) || 0;
+        } else {
+          // Ensure we always have a value, even if the agent doesn't have data for this timestamp
+          dataPoint[username] = 0;
         }
       });
 
