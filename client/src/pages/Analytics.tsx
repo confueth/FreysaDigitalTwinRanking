@@ -390,9 +390,7 @@ export default function Analytics({}: AnalyticsProps) {
       const signal = controller.signal;
 
       try {
-        // Use Promise.all for parallel requests but with a timeout
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-
+        // Use Promise.all for parallel requests but without timeout
         await Promise.all(
           selectedAgents.map(async (username) => {
             try {
@@ -410,8 +408,6 @@ export default function Analytics({}: AnalyticsProps) {
             }
           })
         );
-
-        clearTimeout(timeoutId);
       } catch (error) {
         console.error('Error fetching agent histories:', error);
         // Ensure we return at least empty arrays for all selected agents
@@ -757,7 +753,7 @@ export default function Analytics({}: AnalyticsProps) {
                 metricValue = snapshot.retweetsCount || 0;
                 break;
             }
-            
+
             // Only set the value if it doesn't already exist or is more accurate
             if (!dataMap.has(snapshot.timestamp)) {
               dataMap.set(snapshot.timestamp, metricValue);
@@ -774,12 +770,12 @@ export default function Analytics({}: AnalyticsProps) {
       // Map to track which snapshots correspond to which dates
       // This is crucial for handling cases like March 1st correctly
       const snapshotDateMap = new Map<string, {id: number, timestamp: string}>();
-      
+
       // First pass: map snapshots to their dates to identify the correct snapshot for each date
       snapshots.forEach((snapshot: Snapshot) => {
         const date = new Date(snapshot.timestamp);
         const dateString = date.toLocaleDateString('en-US', options);
-        
+
         // Only keep the earliest snapshot for each date
         // This ensures we get March 1st snapshot (id 4) instead of any newer ones
         if (!snapshotDateMap.has(dateString) || 
@@ -787,7 +783,7 @@ export default function Analytics({}: AnalyticsProps) {
           snapshotDateMap.set(dateString, {id: snapshot.id, timestamp: snapshot.timestamp});
         }
       });
-      
+
       // Second pass: process snapshots
       // We iterate through our date map to ensure we use the correct snapshot for each date
       snapshotDateMap.forEach(({id: snapshotId, timestamp}) => {
@@ -824,7 +820,7 @@ export default function Analytics({}: AnalyticsProps) {
                   metricValue = agent.retweetsCount || 0;
                   break;
               }
-              
+
               // Special debug logging for March 1st data (snapshot id 4)
               const date = new Date(timestamp);
               const dateStr = date.toLocaleDateString('en-US', options);
@@ -832,7 +828,7 @@ export default function Analytics({}: AnalyticsProps) {
               if (isMarFirstSnapshot && username === 'PopularFollow') {
                 console.log(`March 1st data for PopularFollow: ${metricValue} (snapshot ID: ${snapshotId})`);
               }
-              
+
               // Set the value for this timestamp
               dataMap.set(timestamp, metricValue);
             }
@@ -929,7 +925,7 @@ export default function Analytics({}: AnalyticsProps) {
       // Format date in EST timezone
       const estDateString = date.toLocaleDateString('en-US', estOptions);
       const month = new Date(estDateString).getMonth() + 1; // 1-12
-      const day = new Date(estDateString).getDate(); // 1-31
+      const day = new DateestDateString).getDate(); // 1-31
 
       // Check if this is today in EST timezone
       const todayInEST = new Date().toLocaleDateString('en-US', estOptions);
@@ -957,12 +953,12 @@ export default function Analytics({}: AnalyticsProps) {
       // Add data for each agent at this timestamp - using snapshot data as the source of truth
       selectedAgents.forEach(username => {
         const dataMap = agentDataPoints.get(username);
-        
+
         // Check if this is a date that corresponds to a snapshot
         // If so, look up the data directly in the snapshotAgentsCache
         const dateString = new Date(timestamp).toLocaleDateString('en-US', options);
         let value = 0;
-        
+
         // Special case for March 1st - ALWAYS use snapshot ID 4 
         // This directly addresses the specific issue on March 1st
         if (dateString.includes('3/1')) {
@@ -972,10 +968,10 @@ export default function Analytics({}: AnalyticsProps) {
             const march1stAgent = march1stSnapshot.find(
               (a: Agent) => a.mastodonUsername.toLowerCase() === username.toLowerCase()
             );
-            
+
             if (march1stAgent) {
               console.log(`Using reliable snapshot ID 4 data for ${username} on March 1st`);
-              
+
               // Extract the appropriate metric value
               switch (metric) {
                 case 'score':
@@ -991,17 +987,17 @@ export default function Analytics({}: AnalyticsProps) {
                   value = march1stAgent.retweetsCount || 0;
                   break;
               }
-              
+
               // Set the value directly and skip further processing
               dataPoint[username] = value;
               return;
             }
           }
         }
-        
+
         // For all other dates, try to find a snapshot
         let snapshotId = null;
-        
+
         // Have to use a manual loop instead of find() to avoid TypeScript casting issues
         if (snapshots) {
           for (let i = 0; i < snapshots.length; i++) {
@@ -1013,35 +1009,43 @@ export default function Analytics({}: AnalyticsProps) {
             }
           }
         }
-        
+
         if (snapshotId !== null && snapshotAgentsCache[snapshotId]) {
           // We found a snapshot for this date, use its data directly
           const agentInSnapshot = snapshotAgentsCache[snapshotId].find(
             (a: Agent) => a.mastodonUsername.toLowerCase() === username.toLowerCase()
           );
-          
+
           if (agentInSnapshot) {
             // Get the appropriate metric value
+            let metricValue = 0;
             switch (metric) {
               case 'score':
-                value = agentInSnapshot.score;
+                metricValue = agentInSnapshot.score;
                 break;
               case 'followers':
-                value = agentInSnapshot.followersCount || 0;
+                metricValue = agentInSnapshot.followersCount || 0;
                 break;
               case 'likes':
-                value = agentInSnapshot.likesCount || 0;
+                metricValue = agentInSnapshot.likesCount || 0;
                 break;
               case 'retweets':
-                value = agentInSnapshot.retweetsCount || 0;
+                metricValue = agentInSnapshot.retweetsCount || 0;
                 break;
             }
+
+            // Add logging for specific problematic agents
+            if (username.toLowerCase() === "gandhi") {
+              console.log(`Found data for Gandhi in snapshot #${snapshotId}: ${metricValue} (${metric})`);
+            }
+
+            value = metricValue;
           }
         } else if (dataMap && dataMap.has(timestamp)) {
           // Fall back to our data map for non-snapshot dates
           value = dataMap.get(timestamp) || 0;
         }
-        
+
         // Set the final value in the data point
         dataPoint[username] = value;
       });
