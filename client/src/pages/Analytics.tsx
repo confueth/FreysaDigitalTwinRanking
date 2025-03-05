@@ -470,7 +470,7 @@ export default function Analytics({}: AnalyticsProps) {
 
   // Enhanced agent filtering with fuzzy search capabilities
   const filteredAgents = React.useMemo(() => {
-    if (!searchQuery.trim()) return allAvailableAgents || []; // Show all agents by default
+    if (!searchQuery.trim()) return allAvailableAgents?.slice(0, 100) || []; // Show top 100 by default
 
     const searchTermLower = searchQuery.toLowerCase().trim();
 
