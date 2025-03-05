@@ -1,4 +1,4 @@
-# Freysa Game Leaderboard Dashboard
+# Freysa ACT IV Digital Twin Leaderboard
 
 <img src="attached_assets/profile-freysa-original.jpg" alt="Freysa Logo" width="150" />
 
@@ -72,4 +72,4 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 
 ---
 
-Developed with ❤️ for the Freysa.ai community.
+Developed with ❤️ by Confu.eth for the Freysa.ai community.
