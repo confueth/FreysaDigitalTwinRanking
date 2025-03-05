@@ -4,7 +4,6 @@ import { setupVite, serveStatic, log } from "./vite";
 // CSV import removed as it's no longer needed
 import { storage } from "./storage";
 import { scheduleSnapshots } from "./snapshot-service";
-import rateLimit from 'express-rate-limit';
 
 const app = express();
 // Configure trust proxy to handle X-Forwarded-For headers safely in Replit environment
@@ -12,19 +11,6 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Add rate limiting to prevent abuse - increased limit for development
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // increased limit for development and testing
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  // Note: trustProxy was causing a type error as it's not in the API options
-  // We're enabling trust proxy at the Express app level instead
-});
-
-// Apply rate limiting to API routes
-app.use('/api/', apiLimiter);
 
 app.use((req, res, next) => {
   const start = Date.now();
