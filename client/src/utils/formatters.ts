@@ -33,12 +33,12 @@ export function formatCompactNumber(value: number | undefined | null): string {
  * Format a date from string to a readable format with timezone handling
  * @param dateString The date string to format
  * @param formatType The type of formatting to apply
- * @param useUtc If true, treats the date as UTC rather than local time
+ * @param useEST If true, treats the date as EST rather than local time (default true)
  */
 export function formatDate(
   dateString: string | undefined, 
   formatType: 'full' | 'short' | 'game-ends' | 'time' = 'full',
-  useUtc: boolean = false
+  useEST: boolean = true
 ): string {
   if (!dateString) return '';
 
@@ -72,9 +72,9 @@ export function formatDate(
     }
   }
 
-  // Use UTC timezone if specified (for server timestamps)
-  if (useUtc) {
-    options.timeZone = 'UTC';
+  // Use EST timezone by default for all server timestamps
+  if (useEST) {
+    options.timeZone = 'America/New_York';
   }
 
   return date.toLocaleString(undefined, options);
@@ -82,14 +82,21 @@ export function formatDate(
 
 /**
  * Format a timestamp to relative time (e.g. "5 minutes ago")
- * This automatically respects the user's local timezone since
- * it works with date objects in the user's local time
+ * Adjusted to compare dates in EST timezone for consistent comparison with server data
  */
 export function formatRelativeTime(dateString: string | undefined): string {
   if (!dateString) return '';
 
+  // Create date objects in EST timezone for consistent comparison
+  const options = { timeZone: 'America/New_York' };
+  
+  // Parse input date in EST
   const date = new Date(dateString);
+  
+  // Get current time in EST
   const now = new Date();
+  
+  // Calculate time difference
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
