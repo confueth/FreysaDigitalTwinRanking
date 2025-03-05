@@ -310,12 +310,20 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                   {(agent.mastodonBio || agent.humanFeedback) && (
                     <div className="mt-3 sm:mt-4">
                       <Tabs defaultValue={agent.mastodonBio ? "bio" : "feedback"} className="w-full">
-                        <TabsList className="grid w-full max-w-[300px] grid-cols-2">
-                          <TabsTrigger value="bio" disabled={!agent.mastodonBio} className="flex items-center gap-1">
+                        <TabsList className="grid w-full max-w-[300px] grid-cols-2 bg-gray-900/70 p-1">
+                          <TabsTrigger 
+                            value="bio" 
+                            disabled={!agent.mastodonBio} 
+                            className="flex items-center gap-1 data-[state=active]:bg-gray-800 data-[state=active]:text-primary"
+                          >
                             <User className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span>Bio</span>
                           </TabsTrigger>
-                          <TabsTrigger value="feedback" disabled={!agent.humanFeedback} className="flex items-center gap-1">
+                          <TabsTrigger 
+                            value="feedback" 
+                            disabled={!agent.humanFeedback}
+                            className="flex items-center gap-1 data-[state=active]:bg-gray-800 data-[state=active]:text-primary"
+                          >
                             <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span>Feedback</span>
                           </TabsTrigger>
@@ -323,17 +331,25 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                         
                         <TabsContent value="bio" className="mt-2">
                           {agent.mastodonBio ? (
-                            <p className="text-sm sm:text-base text-gray-300">{agent.mastodonBio}</p>
+                            <div className="bg-gray-900/50 rounded-lg p-3 sm:p-4 border border-gray-800">
+                              <p className="text-sm sm:text-base text-gray-300 leading-relaxed">{agent.mastodonBio}</p>
+                            </div>
                           ) : (
-                            <p className="text-sm text-gray-400 italic">No bio available</p>
+                            <div className="bg-gray-900/50 rounded-lg p-3 sm:p-4 border border-gray-800">
+                              <p className="text-sm text-gray-400 italic">No bio available</p>
+                            </div>
                           )}
                         </TabsContent>
                         
                         <TabsContent value="feedback" className="mt-2">
                           {agent.humanFeedback ? (
-                            <p className="text-sm sm:text-base text-gray-300">{agent.humanFeedback}</p>
+                            <div className="bg-gray-900/50 rounded-lg p-3 sm:p-4 border border-gray-800">
+                              <p className="text-sm sm:text-base text-gray-300 leading-relaxed">{agent.humanFeedback}</p>
+                            </div>
                           ) : (
-                            <p className="text-sm text-gray-400 italic">No human feedback available</p>
+                            <div className="bg-gray-900/50 rounded-lg p-3 sm:p-4 border border-gray-800">
+                              <p className="text-sm text-gray-400 italic">No human feedback available</p>
+                            </div>
                           )}
                         </TabsContent>
                       </Tabs>
