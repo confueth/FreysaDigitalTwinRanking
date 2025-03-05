@@ -55,7 +55,7 @@ export default function Footer() {
                 <span>Unofficial Telegram</span>
               </a>
               <a 
-                href="https://opensea.io/collection/freysa-reflections-2049" 
+                href="https://opensea.io/collection/2049-reflections" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center hover:text-blue-400 transition-colors group"
