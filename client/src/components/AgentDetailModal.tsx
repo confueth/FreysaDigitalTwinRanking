@@ -215,17 +215,17 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
             if (externalData && externalData.humanFeedback) {
               humanFeedback = externalData.humanFeedback;
               console.log(`Found human feedback for ${username}`);
-            } else {
-              console.log(`No human feedback available for ${username} in external API`);
             }
             
             // Extract replies count if available
             if (externalData && externalData.repliesCount) {
               repliesCount = externalData.repliesCount;
               console.log(`Found replies count for ${username}: ${repliesCount}`);
-            } else {
-              console.log(`No replies count available for ${username} in external API`);
             }
+            
+            console.log(`External data fetch complete for ${username}`);
+          } else {
+            console.log(`External API returned status ${externalResponse.status} for ${username}`);
           }
         } catch (externalError) {
           console.error("Failed to fetch external data", externalError);
