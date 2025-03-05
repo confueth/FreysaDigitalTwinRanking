@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes.fixed"; // Using the updated routes with EST timezone support
 import { setupVite, serveStatic, log } from "./vite";
 // CSV import removed as it's no longer needed
 import { storage } from "./storage";
