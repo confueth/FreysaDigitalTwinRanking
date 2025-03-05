@@ -1096,12 +1096,12 @@ export default function Analytics({}: AnalyticsProps) {
               </CardHeader>
               <CardContent>
                 {selectedAgents.length === 0 ? (
-                  <div className="h-[400px] flex items-center justify-center flex-col gap-4">
+                  <div className="h-[500px] flex items-center justify-center flex-col gap-4">
                     <p className="text-gray-400">Select agents to view comparison</p>
                     <p className="text-sm text-gray-500">Choose from the list on the left</p>
                   </div>
                 ) : isLoadingHistories ? (
-                  <div className="h-[400px] flex flex-col items-center justify-center">
+                  <div className="h-[500px] flex flex-col items-center justify-center">
                     <div className="w-full max-w-md">
                       <div className="mb-4 flex items-center justify-center">
                         <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
@@ -1113,18 +1113,18 @@ export default function Analytics({}: AnalyticsProps) {
                     </div>
                   </div>
                 ) : chartData.length === 0 ? (
-                  <div className="h-[400px] flex items-center justify-center flex-col gap-4">
+                  <div className="h-[500px] flex items-center justify-center flex-col gap-4">
                     <p className="text-gray-400">No historical data available</p>
                     <p className="text-sm text-gray-500">Try selecting different agents</p>
                   </div>
                 ) : (
-                  <div className="h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={250}>
+                  <div className="h-[500px]">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={400}>
                       <LineChart
                         data={chartData}
                         width={500}
-                        height={300}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 40 }}
+                        height={400}
+                        margin={{ top: 10, right: 30, left: 10, bottom: 50 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                         <XAxis 
@@ -1142,6 +1142,10 @@ export default function Analytics({}: AnalyticsProps) {
                         <YAxis 
                           tick={{ fill: '#9ca3af' }} 
                           tickFormatter={(value) => formatNumber(value)}
+                          allowDecimals={false}
+                          domain={['auto', 'auto']}
+                          tickCount={8}
+                          width={80}
                         />
                         <Tooltip 
                           formatter={(value: any) => [formatNumber(value), ""]}
