@@ -53,7 +53,7 @@ export interface AgentFilters {
   minScore?: number;
   maxScore?: number;
   city?: string;
-  sortBy?: 'score' | 'score_asc' | 'followers' | 'likes' | 'retweets';
+  sortBy?: 'score' | 'score_asc' | 'followers' | 'likes' | 'retweets' | 'score_change';
   page?: number;
   limit?: number;
 }

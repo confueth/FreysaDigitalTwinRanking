@@ -431,7 +431,7 @@ export function filterAgents(agents: Agent[] | MinimalAgent[], filters: {
   minScore?: number;
   maxScore?: number;
   city?: string;
-  sortBy?: 'score' | 'score_asc' | 'followers' | 'likes' | 'retweets';
+  sortBy?: 'score' | 'score_asc' | 'followers' | 'likes' | 'retweets' | 'score_change';
   page?: number;
   limit?: number;
 }) {
@@ -470,6 +470,13 @@ export function filterAgents(agents: Agent[] | MinimalAgent[], filters: {
         break;
       case 'score_asc':
         filteredAgents.sort((a, b) => a.score - b.score);
+        break;
+      case 'score_change':
+        filteredAgents.sort((a, b) => {
+          const changeA = a.prevScore !== null && a.prevScore !== undefined ? a.score - a.prevScore : 0;
+          const changeB = b.prevScore !== null && b.prevScore !== undefined ? b.score - b.prevScore : 0;
+          return changeB - changeA; // High to low
+        });
         break;
       case 'followers':
         filteredAgents.sort((a, b) => (b.followersCount || 0) - (a.followersCount || 0));

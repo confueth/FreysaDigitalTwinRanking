@@ -109,6 +109,9 @@ export function applyAllFilters(
         case 'followers': return agent.followersCount || 0;
         case 'likes': return agent.likesCount || 0;
         case 'retweets': return agent.retweetsCount || 0;
+        case 'score_change': 
+          return agent.prevScore !== null && agent.prevScore !== undefined ? 
+            agent.score - agent.prevScore : 0; // Score change
         default: return agent.score; // Default case includes 'score'
       }
     };
