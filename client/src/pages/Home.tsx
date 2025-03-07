@@ -79,14 +79,16 @@ export default function Home() {
     queryKey: [
       `/api/agents`, 
       { 
-        limit: 2000 // Get a larger batch once to reduce API calls
+        limit: 2000, // Get a larger batch once to reduce API calls
+        sortBy: filters.sortBy // Include current sort in the query key to trigger refetch when sort changes
       }
     ],
     queryFn: async ({ queryKey }) => {
-      const [baseUrl] = queryKey;
+      const [baseUrl, params] = queryKey;
+      const queryParams = params as { limit: number, sortBy?: string };
       
       // Check if we have data in sessionStorage cache
-      const cacheKey = `leaderboard_data_live`;
+      const cacheKey = `leaderboard_data_live_${queryParams.sortBy || 'default'}`;
       const cachedData = sessionStorage.getItem(cacheKey);
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
       
@@ -101,7 +103,14 @@ export default function Home() {
       
       try {
         console.log('Fetching fresh leaderboard data');
-        const response = await fetch(`${baseUrl}?limit=2000`, {
+        // Include sortBy in the API request to ensure server-side sorting
+        const url = new URL(baseUrl as string, window.location.origin);
+        url.searchParams.append('limit', '2000');
+        if (queryParams.sortBy) {
+          url.searchParams.append('sortBy', queryParams.sortBy);
+        }
+        
+        const response = await fetch(url.toString(), {
           credentials: 'include',
         });
         
@@ -143,9 +152,34 @@ export default function Home() {
     queryKey: [
       `/api/snapshots/${selectedSnapshot}/agents`, 
       { 
-        limit: 2000
+        limit: 2000,
+        sortBy: filters.sortBy // Pass sort to snapshot API call as well
       }
     ],
+    // Custom query function to include the sort parameter in the API request
+    queryFn: async ({ queryKey }) => {
+      if (!selectedSnapshot) return [];
+      
+      const [baseUrl, params] = queryKey;
+      const queryParams = params as { limit: number, sortBy?: string };
+      
+      // Build URL with parameters
+      const url = new URL(baseUrl as string, window.location.origin);
+      url.searchParams.append('limit', '2000');
+      if (queryParams.sortBy) {
+        url.searchParams.append('sortBy', queryParams.sortBy);
+      }
+      
+      const response = await fetch(url.toString(), {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch snapshot agents data');
+      }
+      
+      return await response.json();
+    },
     // Only run this query if we have a valid snapshot ID AND either:
     // 1. The live data request failed with an error, OR
     // 2. The live data returned an empty array (API down but returns empty)
