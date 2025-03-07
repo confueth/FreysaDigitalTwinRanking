@@ -40,7 +40,7 @@ export interface AgentFilters {
   minScore?: number;
   maxScore?: number;
   city?: string;
-  sortBy?: 'score' | 'score_asc' | 'followers' | 'likes' | 'retweets';
+  sortBy?: 'score' | 'score_asc' | 'followers' | 'likes' | 'retweets' | 'score_change';
   page?: number;
   limit?: number;
 }
@@ -153,6 +153,13 @@ export class MemStorage implements IStorage {
           break;
         case 'score_asc':
           result.sort((a, b) => a.score - b.score);
+          break;
+        case 'score_change':
+          result.sort((a, b) => {
+            const changeA = a.prevScore !== undefined ? a.score - a.prevScore : 0;
+            const changeB = b.prevScore !== undefined ? b.score - b.prevScore : 0;
+            return changeB - changeA; // High to low
+          });
           break;
         case 'followers':
           result.sort((a, b) => {
@@ -487,6 +494,22 @@ export class DatabaseStorage implements IStorage {
         case 'score_asc':
           queryBuilder = queryBuilder.orderBy(asc(agents.score));
           break;
+        case 'score_change':
+          // For score_change, we need to post-process the results since 
+          // we can't express this complex calculation in SQL easily
+          // We'll fetch all agents and sort them in memory
+          const allAgents = await queryBuilder;
+          return allAgents
+            .filter(agent => agent.prevScore !== null) // Only agents with previous scores
+            .sort((a, b) => {
+              const changeA = a.prevScore !== null ? a.score - a.prevScore : 0;
+              const changeB = b.prevScore !== null ? b.score - b.prevScore : 0;
+              return changeB - changeA; // High to low
+            })
+            .slice(
+              filters.page && filters.limit ? (filters.page - 1) * filters.limit : 0,
+              filters.page && filters.limit ? (filters.page - 1) * filters.limit + filters.limit : undefined
+            );
         case 'followers':
           queryBuilder = queryBuilder.orderBy(desc(agents.followersCount));
           break;

@@ -137,8 +137,11 @@ export function applyAllFilters(
   // Manage cache size to prevent memory leaks
   if (filterCache.size >= MAX_CACHE_SIZE) {
     // Remove oldest entry (first key in the map)
-    const firstKey = filterCache.keys().next().value;
-    filterCache.delete(firstKey);
+    const iterator = filterCache.keys();
+    const firstKey = iterator.next().value;
+    if (firstKey !== undefined) {
+      filterCache.delete(firstKey);
+    }
   }
   
   filterCache.set(cacheKey, result);

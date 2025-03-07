@@ -573,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         minScore: req.query.minScore ? parseInt(req.query.minScore as string) : undefined,
         maxScore: req.query.maxScore ? parseInt(req.query.maxScore as string) : undefined,
         city: req.query.city as string | undefined,
-        sortBy: req.query.sortBy as "score" | "score_asc" | "followers" | "likes" | "retweets" | undefined,
+        sortBy: req.query.sortBy as "score" | "score_asc" | "followers" | "likes" | "retweets" | "score_change" | undefined,
         page: req.query.page ? parseInt(req.query.page as string) : 1,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
       };
