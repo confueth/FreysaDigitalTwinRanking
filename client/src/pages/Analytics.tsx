@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import { Home, RefreshCw, Loader2, Download } from 'lucide-react';
+import { Home, RefreshCw, Loader2, Download, User, Users } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer 
@@ -263,6 +264,31 @@ export default function Analytics({}: AnalyticsProps) {
       }
     }
   }, []);
+  
+  // Listen for changes to My Agents in localStorage to keep our state in sync
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === MY_AGENTS_KEY && e.newValue !== null) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setMyAgents(parsed);
+            
+            // If we're in "My Agents Only" mode, update the selected agents
+            if (showMyAgentsOnly) {
+              // Limit to maximum 5 agents for the chart
+              setSelectedAgents(parsed.slice(0, 5));
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing updated My Agents:', e);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [showMyAgentsOnly]);
 
   // Fetch agents for each snapshot when snapshots are loaded
   useEffect(() => {
@@ -483,9 +509,24 @@ export default function Analytics({}: AnalyticsProps) {
     setSearchQuery(e.target.value);
   };
 
-  // Enhanced agent filtering with fuzzy search capabilities
+  // Enhanced agent filtering with fuzzy search capabilities and My Agents Only filter
   const filteredAgents = React.useMemo(() => {
-    if (!searchQuery.trim()) return allAvailableAgents?.slice(0, 100) || []; // Show top 100 by default
+    // First filter by My Agents if that toggle is enabled
+    let baseAgents = allAvailableAgents || [];
+    
+    if (showMyAgentsOnly) {
+      // Filter to only show agents in the myAgents list
+      baseAgents = baseAgents.filter(agent => 
+        myAgents.some(username => 
+          username.toLowerCase() === agent.mastodonUsername.toLowerCase()
+        )
+      );
+    }
+    
+    // Then apply search filter if there's a search query
+    if (!searchQuery.trim()) {
+      return baseAgents.slice(0, 100); // Show top 100 by default
+    }
 
     const searchTermLower = searchQuery.toLowerCase().trim();
 
@@ -515,7 +556,7 @@ export default function Analytics({}: AnalyticsProps) {
     };
 
     // Calculate scores for each agent
-    const scoredAgents = allAvailableAgents?.map((agent: Agent) => {
+    const scoredAgents = baseAgents.map((agent: Agent) => {
       const username = agent.mastodonUsername || '';
       const similarityScore = calculateSimilarity(username, searchTermLower);
       return { agent, score: similarityScore };
@@ -533,7 +574,7 @@ export default function Analytics({}: AnalyticsProps) {
     }
 
     return matchingAgents;
-  }, [allAvailableAgents, searchQuery, searchedAgent]);
+  }, [allAvailableAgents, searchQuery, searchedAgent, showMyAgentsOnly, myAgents]);
 
   // Handle special case when an agent isn't found but user wants to add them
   const handleCustomAgentSelect = async () => {
