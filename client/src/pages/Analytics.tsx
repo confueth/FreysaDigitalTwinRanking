@@ -50,6 +50,8 @@ export default function Analytics({}: AnalyticsProps) {
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [metric, setMetric] = useState<'score' | 'followers' | 'likes' | 'retweets'>('score');
+  const [showMyAgentsOnly, setShowMyAgentsOnly] = useState<boolean>(false);
+  const [myAgents, setMyAgents] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -240,14 +242,20 @@ export default function Analytics({}: AnalyticsProps) {
       try {
         const parsed = JSON.parse(savedAgents);
         if (Array.isArray(parsed)) {
-          // Limit to maximum 5 agents for performance
-          setSelectedAgents(parsed.slice(0, 5));
+          // Set myAgents state with all saved agents
+          setMyAgents(parsed);
+          
+          // Only if not showing My Agents only, initialize selectedAgents
+          if (!showMyAgentsOnly) {
+            // Limit to maximum 5 agents for performance
+            setSelectedAgents(parsed.slice(0, 5));
 
-          if (parsed.length > 5) {
-            toast({
-              title: "Note",
-              description: "Only the first 5 saved agents are loaded for comparison.",
-            });
+            if (parsed.length > 5) {
+              toast({
+                title: "Note",
+                description: "Only the first 5 saved agents are loaded for comparison.",
+              });
+            }
           }
         }
       } catch (e) {
@@ -425,7 +433,7 @@ export default function Analytics({}: AnalyticsProps) {
     refetchOnWindowFocus: false, // Don't refetch on window focus to reduce unnecessary API calls
   });
 
-  // Handle agent selection/deselection with localStorage updates
+  // Handle agent selection/deselection for comparison only (doesn't update My Agents)
   const handleAgentSelect = (username: string) => {
     let newSelectedAgents: string[];
 
@@ -445,23 +453,30 @@ export default function Analytics({}: AnalyticsProps) {
       return;
     }
 
-    // Update state
+    // Update state for the current comparison, but don't save to My Agents
     setSelectedAgents(newSelectedAgents);
-
-    // Save selection to localStorage - but only if it's different from the saved list
-    const savedAgents = localStorage.getItem(MY_AGENTS_KEY);
-    let savedList: string[] = [];
-
-    try {
-      if (savedAgents) {
-        savedList = JSON.parse(savedAgents);
+  };
+  
+  // Handle toggling between My Agents and All Agents view
+  const handleToggleMyAgents = () => {
+    const newState = !showMyAgentsOnly;
+    
+    // Update the state
+    setShowMyAgentsOnly(newState);
+    
+    // If we're turning on My Agents view, update the selected agents to match
+    if (newState && myAgents.length > 0) {
+      // Limit to maximum 5 agents for the chart
+      const agentsToShow = myAgents.slice(0, 5);
+      setSelectedAgents(agentsToShow);
+      
+      if (myAgents.length > 5) {
+        toast({
+          title: "Note",
+          description: "Only the first 5 saved agents are loaded for comparison.",
+        });
       }
-    } catch (e) {
-      console.error('Error parsing saved agents:', e);
     }
-
-    // Update localStorage if needed
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -557,9 +572,6 @@ export default function Analytics({}: AnalyticsProps) {
         // If agent is found, add to selection
         setSelectedAgents(newSelectedAgents);
 
-        // Update localStorage with new selection
-        localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
-
         // Clear the search query
         setSearchQuery('');
 
@@ -576,9 +588,6 @@ export default function Analytics({}: AnalyticsProps) {
 
     // If we get here, the agent couldn't be found but we'll add it anyway
     setSelectedAgents(newSelectedAgents);
-
-    // Update localStorage with new selection
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(newSelectedAgents));
 
     // Clear the search query
     setSearchQuery('');
@@ -1166,6 +1175,23 @@ export default function Analytics({}: AnalyticsProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* My Agents Toggle */}
+                  <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-800">
+                    <div className="flex items-center space-x-2">
+                      {showMyAgentsOnly ? (
+                        <User className="h-4 w-4 text-emerald-400" />
+                      ) : (
+                        <Users className="h-4 w-4 text-gray-400" />
+                      )}
+                      <Label className="text-sm font-medium text-blue-300">Show My Agents Only</Label>
+                    </div>
+                    <Switch
+                      checked={showMyAgentsOnly}
+                      onCheckedChange={handleToggleMyAgents}
+                      className={showMyAgentsOnly ? "bg-emerald-600" : ""}
+                    />
+                  </div>
+                
                   <div className="space-y-2">
                     <Label htmlFor="metric">Metric</Label>
                     <Select 
