@@ -284,6 +284,7 @@ export default function Sidebar({
             <SelectContent className="bg-gray-900 border-gray-700">
               <SelectItem value="score" className="focus:bg-blue-900/20 focus:text-blue-400">Score (High to Low)</SelectItem>
               <SelectItem value="score_asc" className="focus:bg-blue-900/20 focus:text-blue-400">Score (Low to High)</SelectItem>
+              <SelectItem value="score_change" className="focus:bg-blue-900/20 focus:text-blue-400">Score Change (Improved)</SelectItem>
               <SelectItem value="followers" className="focus:bg-blue-900/20 focus:text-blue-400">Followers (High to Low)</SelectItem>
               <SelectItem value="likes" className="focus:bg-blue-900/20 focus:text-blue-400">Likes (High to Low)</SelectItem>
               <SelectItem value="retweets" className="focus:bg-blue-900/20 focus:text-blue-400">Retweets (High to Low)</SelectItem>
