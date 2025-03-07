@@ -39,30 +39,70 @@ export default function Sidebar({
   
   const isMobile = useIsMobile();
 
-  // Handle search input
+  // Handle search input with auto-apply
   const handleSearch = () => {
     onFilterChange({ search: searchValue });
   };
 
-  // Handle search on Enter key
+  // Handle search on Enter key or input change with debounce
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSearch();
     }
   };
-
-  // Handle applying filters
-  const handleApplyFilters = () => {
-    onFilterChange({
-      minScore: minScore ? parseInt(minScore) : undefined,
-      maxScore: maxScore ? parseInt(maxScore) : undefined,
-      city: city === 'all' ? undefined : city,
-      sortBy: sortBy as AgentFilters['sortBy']
-    });
+  
+  // Handle search input change with debounce
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setSearchValue(newValue);
     
-    if (isMobile) {
-      setFiltersVisible(false);
-    }
+    // Apply search filter automatically after a short delay (debounce)
+    setTimeout(() => {
+      if (newValue === searchValue) {
+        onFilterChange({ search: newValue });
+      }
+    }, 300);
+  };
+
+  // Auto apply score range filters with debounce
+  const handleMinScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setMinScore(newValue);
+    
+    // Apply with slight delay to avoid too many API calls during typing
+    setTimeout(() => {
+      onFilterChange({
+        minScore: newValue ? parseInt(newValue) : undefined
+      });
+    }, 500);
+  };
+  
+  const handleMaxScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setMaxScore(newValue);
+    
+    // Apply with slight delay to avoid too many API calls during typing
+    setTimeout(() => {
+      onFilterChange({
+        maxScore: newValue ? parseInt(newValue) : undefined
+      });
+    }, 500);
+  };
+  
+  // Auto apply city filter
+  const handleCityChange = (selectedCity: string) => {
+    setCity(selectedCity);
+    onFilterChange({
+      city: selectedCity === 'all' ? undefined : selectedCity
+    });
+  };
+  
+  // Auto apply sort filter
+  const handleSortChange = (selectedSort: string) => {
+    setSortBy(selectedSort);
+    onFilterChange({
+      sortBy: selectedSort as AgentFilters['sortBy']
+    });
   };
   
   // Handle resetting all filters
@@ -109,7 +149,7 @@ export default function Sidebar({
               id="mobileSearchInput"
               placeholder="Search..."
               value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              onChange={handleSearchInputChange}
               onKeyDown={handleSearchKeyDown}
               className="w-full bg-gray-800 border border-gray-700 text-white pr-10"
             />
@@ -154,7 +194,7 @@ export default function Sidebar({
               id="searchInput"
               placeholder="Username or city..."
               value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              onChange={handleSearchInputChange}
               onKeyDown={handleSearchKeyDown}
               className="w-full bg-gray-800 border border-gray-700 text-white focus:border-blue-500/50 transition-colors duration-200"
             />
@@ -245,14 +285,14 @@ export default function Sidebar({
               type="number"
               placeholder="Min"
               value={minScore}
-              onChange={(e) => setMinScore(e.target.value)}
+              onChange={handleMinScoreChange}
               className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm focus:border-blue-500/50 transition-colors duration-200"
             />
             <Input
               type="number"
               placeholder="Max"
               value={maxScore}
-              onChange={(e) => setMaxScore(e.target.value)}
+              onChange={handleMaxScoreChange}
               className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm focus:border-blue-500/50 transition-colors duration-200"
             />
           </div>
@@ -260,7 +300,7 @@ export default function Sidebar({
         
         <div className="mb-3">
           <Label className="block text-sm font-medium mb-1 text-blue-300">City</Label>
-          <Select value={city} onValueChange={setCity}>
+          <Select value={city} onValueChange={handleCityChange}>
             <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200">
               <SelectValue placeholder="All Cities" />
             </SelectTrigger>
@@ -277,7 +317,7 @@ export default function Sidebar({
         
         <div className="mb-3">
           <Label className="block text-sm font-medium mb-1 text-blue-300">Sort By</Label>
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={sortBy} onValueChange={handleSortChange}>
             <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200">
               <SelectValue />
             </SelectTrigger>
@@ -316,20 +356,13 @@ export default function Sidebar({
           )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex justify-center">
           <Button 
-            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all duration-300 text-sm py-1 h-8 shadow-md"
-            onClick={handleApplyFilters}
-          >
-            Apply
-          </Button>
-          
-          <Button 
-            className="flex-1 bg-gray-800 hover:bg-red-800/70 text-white text-sm py-1 h-8 transition-colors duration-300 border border-red-600/30"
+            className="w-full bg-gray-800 hover:bg-red-800/70 text-white text-sm py-1 h-8 transition-colors duration-300 border border-red-600/30"
             onClick={handleResetFilters}
           >
-            <FilterX className="h-3.5 w-3.5 mr-1 text-red-400" />
-            Reset
+            <FilterX className="h-3.5 w-3.5 mr-1.5 text-red-400" />
+            Reset All Filters
           </Button>
         </div>
       </div>
