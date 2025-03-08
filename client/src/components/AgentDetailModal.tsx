@@ -206,7 +206,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
         
         try {
           console.log(`Fetching external data for ${username} from external API`);
-          const externalResponse = await fetch(`https://determined-smile-production-e0d1.up.railway.app/digital-clones/clones/${data.mastodonUsername}`);
+          const externalResponse = await fetch(`https://digital-clone-production.onrender.com/digital-clones/clones/${data.mastodonUsername}`);
           
           if (externalResponse.ok) {
             const externalData = await externalResponse.json();
@@ -516,7 +516,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
 
               <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center items-center sm:gap-3 gap-2">
                 <a 
-                  href={`https://determined-smile-production-e0d1.up.railway.app/digital-clones/clones/${agent.mastodonUsername}`}
+                  href={`https://digital-clone-production.onrender.com/digital-clones/clones/${agent.mastodonUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto"

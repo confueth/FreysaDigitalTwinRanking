@@ -20,7 +20,7 @@ export function useGameStatus() {
   return useQuery<GameStatus>({
     queryKey: ["gameStatus"],
     queryFn: async () => {
-      const response = await axios.get<GameStatus>("https://determined-smile-production-e0d1.up.railway.app/digital-clones/status");
+      const response = await axios.get<GameStatus>("https://digital-clone-production.onrender.com/digital-clones/status");
       return response.data;
     },
     refetchOnWindowFocus: false,
