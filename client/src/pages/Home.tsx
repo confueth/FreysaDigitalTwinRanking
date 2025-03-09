@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
 import LeaderboardTable from '@/components/LeaderboardTable';
 import StatCards from '@/components/StatCards';
-import TokenInfo from '@/components/TokenInfo';
+import GameInfo from '@/components/GameInfo';
 import AgentDetailModal from '@/components/AgentDetailModal';
 import { Agent, AgentFilters, Snapshot, SnapshotStats } from '@/types/agent';
 import { formatDate } from '@/utils/formatters';
@@ -523,7 +523,7 @@ export default function Home() {
           />
           
           <div className="flex-grow p-4 overflow-auto">
-            <TokenInfo />
+            <GameInfo />
             
             <StatCards 
               stats={stats} 
@@ -563,7 +563,7 @@ export default function Home() {
         <div className="md:hidden flex flex-col">
           {/* Game Stats above filters in mobile view */}
           <div className="p-3 pb-0">
-            <TokenInfo />
+            <GameInfo />
           </div>
           
           <Sidebar 

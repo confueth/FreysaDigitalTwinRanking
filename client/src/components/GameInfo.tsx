@@ -2,10 +2,13 @@ import React from 'react';
 import { formatNumber, formatCurrency } from '@/utils/formatters';
 import { Trophy, TrendingUp, Users, Award, Sparkles, Zap, Clock, Flame, Timer } from 'lucide-react';
 import { useGameStatus } from '@/hooks/use-game-status';
-import { Skeleton } from './ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function TokenInfo() {
+export default function GameInfo() {
   const { data: gameStatus, isLoading, error } = useGameStatus();
+  
+  // Log the API response for debugging
+  console.log("Game status data:", gameStatus);
   
   // Calculate days remaining
   const endDate = gameStatus ? new Date(gameStatus.endsAt) : new Date();
@@ -108,7 +111,7 @@ export default function TokenInfo() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400 text-sm">Prize in ETH</span>
-                    <span className="font-medium text-white">{gameStatus.prizePoolEth.toFixed(2)} ETH</span>
+                    <span className="font-medium text-white">{typeof gameStatus.prizePoolEth === 'number' ? gameStatus.prizePoolEth.toFixed(2) : gameStatus.prizePoolEth} ETH</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400 text-sm">End Date</span>

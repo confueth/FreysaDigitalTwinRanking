@@ -7,6 +7,9 @@ export interface GameStatus {
   ethUsdPrice: number;      // Current price of ETH
   endsAt: string;           // Game ending date and time
   entryPriceInEth: number;  // Price to create a digital twin
+  population: number;       // Total number of digital twins
+  ubiClaimTime: string;     // Time when the UBI claim period ends
+  nextUbiClaimTime: string; // Time when the next UBI claim period starts
 }
 
 // Cache the game status for 5 minutes to ensure good performance
