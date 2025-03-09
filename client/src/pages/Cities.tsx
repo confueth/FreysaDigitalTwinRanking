@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CityStatistics from '@/components/CityStatistics';
 import { Agent } from '@/types/agent';
@@ -40,7 +40,7 @@ export default function Cities() {
   const cityStats = useMemo(() => {
     if (!selectedCity || !filteredAgents.length) return null;
     
-    const totalScore = filteredAgents.reduce((sum, agent) => sum + agent.score, 0);
+    const totalScore = filteredAgents.reduce((sum: number, agent: Agent) => sum + agent.score, 0);
     const avgScore = totalScore / filteredAgents.length;
     const topAgent = [...filteredAgents].sort((a, b) => b.score - a.score)[0];
     
@@ -123,10 +123,13 @@ export default function Cities() {
           </div>
         </div>
       ) : (
-        <CityStatistics 
-          agents={agents}
-          isLoading={isLoading}
-        />
+        <div className={selectedCity ? "opacity-50" : ""}>
+          <h2 className="text-xl font-bold mb-3">Global City Distribution</h2>
+          <CityStatistics 
+            agents={agents}
+            isLoading={isLoading}
+          />
+        </div>
       )}
     </div>
   );
