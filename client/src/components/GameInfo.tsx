@@ -7,9 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function GameInfo() {
   const { data: gameStatus, isLoading, error } = useGameStatus();
   
-  // Log the API response for debugging
-  console.log("Game status data:", gameStatus);
-  
   // Calculate days remaining
   const endDate = gameStatus ? new Date(gameStatus.endsAt) : new Date();
   const today = new Date();
@@ -86,7 +83,14 @@ export default function GameInfo() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400 text-sm">Entry Price</span>
-                    <span className="font-medium text-white">{gameStatus.entryPriceInEth} ETH</span>
+                    <span className="font-medium text-white">
+                      {typeof gameStatus.entryPriceInEth === 'number' 
+                        ? gameStatus.entryPriceInEth 
+                        : typeof gameStatus.entryPriceInEth === 'string'
+                          ? gameStatus.entryPriceInEth
+                          : '0.00'
+                      } ETH
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400 text-sm">UBI Claim End</span>
@@ -111,7 +115,14 @@ export default function GameInfo() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400 text-sm">Prize in ETH</span>
-                    <span className="font-medium text-white">{typeof gameStatus.prizePoolEth === 'number' ? gameStatus.prizePoolEth.toFixed(2) : gameStatus.prizePoolEth} ETH</span>
+                    <span className="font-medium text-white">
+                      {typeof gameStatus.prizePoolEth === 'number' 
+                        ? gameStatus.prizePoolEth.toFixed(2) 
+                        : typeof gameStatus.prizePoolEth === 'string'
+                          ? parseFloat(gameStatus.prizePoolEth).toFixed(2)
+                          : '0.00'
+                      } ETH
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400 text-sm">End Date</span>
