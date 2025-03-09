@@ -9,11 +9,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Cities() {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
   
   // Fetch agents data
   const { data: agentsData, isLoading } = useQuery<Agent[]>({
     queryKey: ['/api/agents'],
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  // Query cities for filter dropdown
+  const { data: cities } = useQuery<string[]>({
+    queryKey: ['/api/cities'],
+    staleTime: 60 * 60 * 1000, // 1 hour - cities change very rarely
   });
   
   // Update local state when data loads
@@ -22,6 +29,33 @@ export default function Cities() {
       setAgents(agentsData);
     }
   }, [agentsData]);
+
+  // Filter agents by city if one is selected
+  const filteredAgents = useMemo(() => {
+    if (!selectedCity) return agents;
+    return agents.filter(agent => agent.city === selectedCity);
+  }, [agents, selectedCity]);
+
+  // Calculate city-specific stats when a city is selected
+  const cityStats = useMemo(() => {
+    if (!selectedCity || !filteredAgents.length) return null;
+    
+    const totalScore = filteredAgents.reduce((sum, agent) => sum + agent.score, 0);
+    const avgScore = totalScore / filteredAgents.length;
+    const topAgent = [...filteredAgents].sort((a, b) => b.score - a.score)[0];
+    
+    return {
+      name: selectedCity,
+      count: filteredAgents.length,
+      avgScore,
+      totalScore,
+      topAgent
+    };
+  }, [filteredAgents, selectedCity]);
+
+  const handleCitySelect = (city: string) => {
+    setSelectedCity(prev => prev === city ? null : city);
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -41,7 +75,44 @@ export default function Cities() {
         <p className="text-gray-300 mb-4">
           Explore how Digital Twins are distributed across different cities. This data provides insights into the geographic spread of the Freysa ecosystem and helps identify emerging hubs of activity.
         </p>
+        
+        {cities && cities.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {cities.map(city => (
+              <Button
+                key={city}
+                variant={selectedCity === city ? "default" : "outline"} 
+                size="sm"
+                onClick={() => handleCitySelect(city)}
+                className={selectedCity === city ? "bg-primary" : "border-primary/40"}
+              >
+                {city}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {selectedCity && cityStats && (
+        <div className="bg-gray-800 rounded-lg p-4 mb-6">
+          <h2 className="text-xl font-bold mb-3">{selectedCity} Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-900 rounded-lg p-3 border border-primary/30">
+              <div className="text-sm text-gray-400 mb-1">Total Agents</div>
+              <div className="text-2xl font-bold">{cityStats.count}</div>
+            </div>
+            <div className="bg-gray-900 rounded-lg p-3 border border-primary/30">
+              <div className="text-sm text-gray-400 mb-1">Average Score</div>
+              <div className="text-2xl font-bold">{Math.round(cityStats.avgScore).toLocaleString()}</div>
+            </div>
+            <div className="bg-gray-900 rounded-lg p-3 border border-primary/30">
+              <div className="text-sm text-gray-400 mb-1">Top Agent</div>
+              <div className="text-xl font-medium truncate">{cityStats.topAgent?.mastodonUsername}</div>
+              <div className="text-sm text-primary">{cityStats.topAgent?.score.toLocaleString()} points</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="w-full">
