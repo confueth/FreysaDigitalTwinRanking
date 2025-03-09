@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
-import { BarChart4 } from "lucide-react";
+import { Home } from "lucide-react";
 
 /**
  * CityStats page component
@@ -66,7 +66,7 @@ export default function CityStats() {
               size="sm" 
               className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
             >
-              <BarChart4 className="h-4 w-4" />
+              <Home className="h-4 w-4" />
               <span>Back to Leaderboard</span>
             </Button>
           </Link>

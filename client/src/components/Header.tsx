@@ -91,8 +91,10 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  <path d="M8 21H5a2 2 0 01-2-2V9.5a2 2 0 011-1.73l7-4.2a2 2 0 012 0l7 4.2a2 2 0 011 1.73V19a2 2 0 01-2 2h-3"></path>
+                  <circle cx="12" cy="13" r="3"></circle>
+                  <path d="M5 12H2"></path>
+                  <path d="M22 12h-3"></path>
                 </svg>
                 <span>City Stats</span>
               </Button>
@@ -297,8 +299,10 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    <path d="M8 21H5a2 2 0 01-2-2V9.5a2 2 0 011-1.73l7-4.2a2 2 0 012 0l7 4.2a2 2 0 011 1.73V19a2 2 0 01-2 2h-3"></path>
+                    <circle cx="12" cy="13" r="3"></circle>
+                    <path d="M5 12H2"></path>
+                    <path d="M22 12h-3"></path>
                   </svg>
                   <span>City Stats</span>
                 </Button>
