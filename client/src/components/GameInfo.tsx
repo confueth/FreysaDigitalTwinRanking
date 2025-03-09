@@ -66,47 +66,10 @@ export default function GameInfo() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 gap-4">
-              <div className="bg-gray-800/30 rounded-lg p-4 transform transition-all duration-300 hover:bg-gray-800/40 border border-blue-500/5 hover:border-blue-500/20">
-                <div className="flex items-center mb-2">
-                  <Flame className="h-5 w-5 mr-2 text-blue-400" />
-                  <h3 className="font-semibold text-gradient-blue-purple">Game Stats</h3>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400 text-sm">Prize in ETH</span>
-                    <span className="font-medium text-white">
-                      {typeof gameStatus.prizePoolEth === 'number' 
-                        ? gameStatus.prizePoolEth.toFixed(2) 
-                        : typeof gameStatus.prizePoolEth === 'string'
-                          ? parseFloat(gameStatus.prizePoolEth).toFixed(2)
-                          : '0.00'
-                      } ETH
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400 text-sm">End Date</span>
-                    <span className="font-medium text-white">{new Date(gameStatus.endsAt).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400 text-sm">Entry Price</span>
-                    <span className="font-medium text-white">
-                      {typeof gameStatus.entryPriceInEth === 'number' 
-                        ? gameStatus.entryPriceInEth 
-                        : typeof gameStatus.entryPriceInEth === 'string'
-                          ? gameStatus.entryPriceInEth
-                          : '0.00'
-                      } ETH
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-center items-center py-2">
-                <div className="text-sm text-gray-500 flex items-center">
-                  <Zap className="h-4 w-4 mr-1.5 text-blue-500/70" />
-                  <span>Game data is updated every 5 minutes</span>
-                </div>
+            <div className="flex justify-center items-center py-2 mt-2">
+              <div className="text-sm text-gray-500 flex items-center">
+                <Zap className="h-4 w-4 mr-1.5 text-blue-500/70" />
+                <span>Game data is updated every 5 minutes</span>
               </div>
             </div>
           </>
