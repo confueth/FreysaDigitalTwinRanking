@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
 import { useApiWithRetry } from "@/hooks/use-api-with-retry";
 import { Agent } from "@/types/agent";
 import CityStatistics from "@/components/CityStatistics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Helmet, HelmetProvider } from "react-helmet-async";
+import { Helmet } from "react-helmet-async";
+import { Link } from "wouter";
+import { ChevronLeft } from "lucide-react";
 
 /**
  * CityStats page component
@@ -51,10 +53,20 @@ export default function CityStats() {
       </Helmet>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-2">City Statistics</h1>
-        <p className="text-gray-400">
-          Explore how agents perform across different cities around the world
-        </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">City Statistics</h1>
+            <p className="text-gray-400">
+              Explore how agents perform across different cities around the world
+            </p>
+          </div>
+          <Link to="/">
+            <Button variant="outline" className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400">
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back to Leaderboard
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {loading ? (
