@@ -13,7 +13,7 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
  */
 export default function CityStats() {
   // Load agent data with retry capabilities
-  const { data: agents, isLoading, error } = useApiWithRetry<Agent[]>({
+  const { data: agents, loading, error } = useApiWithRetry<Agent[]>({
     url: "/api/agents",
     dependencies: [],
     initialData: [],
@@ -57,7 +57,7 @@ export default function CityStats() {
         </p>
       </div>
 
-      {isLoading ? (
+      {loading ? (
         <Card className="bg-gray-800 border-gray-700 text-white mb-6">
           <CardHeader>
             <Skeleton className="h-8 w-48 bg-gray-700" />
@@ -79,7 +79,7 @@ export default function CityStats() {
           <CardContent>
             <CityStatistics 
               agents={agents || []} 
-              isLoading={isLoading} 
+              isLoading={loading} 
             />
           </CardContent>
         </Card>
