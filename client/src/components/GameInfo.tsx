@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatNumber, formatCurrency } from '@/utils/formatters';
-import { Trophy, TrendingUp, Users, Award, Sparkles, Zap, Clock, Flame, Timer } from 'lucide-react';
+import { Trophy, TrendingUp, Users, Award, Sparkles, Zap, Flame, Timer } from 'lucide-react';
 import { useGameStatus } from '@/hooks/use-game-status';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -74,35 +74,7 @@ export default function GameInfo() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-800/30 rounded-lg p-4 transform transition-all duration-300 hover:bg-gray-800/40 border border-blue-500/5 hover:border-blue-500/20">
-                <div className="flex items-center mb-2">
-                  <Clock className="h-5 w-5 mr-2 text-blue-400" />
-                  <h3 className="font-semibold text-gradient-blue-purple">Game Timing</h3>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400 text-sm">Entry Price</span>
-                    <span className="font-medium text-white">
-                      {typeof gameStatus.entryPriceInEth === 'number' 
-                        ? gameStatus.entryPriceInEth 
-                        : typeof gameStatus.entryPriceInEth === 'string'
-                          ? gameStatus.entryPriceInEth
-                          : '0.00'
-                      } ETH
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400 text-sm">UBI Claim End</span>
-                    <span className="font-medium text-white">{new Date(gameStatus.ubiClaimTime).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400 text-sm">Next UBI</span>
-                    <span className="font-medium text-white">{new Date(gameStatus.nextUbiClaimTime).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-              
+            <div className="grid grid-cols-1 gap-4">
               <div className="bg-gray-800/30 rounded-lg p-4 transform transition-all duration-300 hover:bg-gray-800/40 border border-blue-500/5 hover:border-blue-500/20">
                 <div className="flex items-center mb-2">
                   <Flame className="h-5 w-5 mr-2 text-blue-400" />
@@ -128,10 +100,21 @@ export default function GameInfo() {
                     <span className="text-gray-400 text-sm">End Date</span>
                     <span className="font-medium text-white">{new Date(gameStatus.endsAt).toLocaleDateString()}</span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 text-sm">Entry Price</span>
+                    <span className="font-medium text-white">
+                      {typeof gameStatus.entryPriceInEth === 'number' 
+                        ? gameStatus.entryPriceInEth 
+                        : typeof gameStatus.entryPriceInEth === 'string'
+                          ? gameStatus.entryPriceInEth
+                          : '0.00'
+                      } ETH
+                    </span>
+                  </div>
                 </div>
               </div>
               
-              <div className="md:col-span-2 flex justify-center items-center py-2">
+              <div className="flex justify-center items-center py-2">
                 <div className="text-sm text-gray-500 flex items-center">
                   <Zap className="h-4 w-4 mr-1.5 text-blue-500/70" />
                   <span>Game data is updated every 5 minutes</span>
