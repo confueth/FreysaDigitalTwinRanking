@@ -149,8 +149,8 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         {/* Mobile Header Layout */}
         <div className="md:hidden flex justify-between items-center">
           <div className="flex items-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow animate-pulse-green shadow-md">
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border border-primary ring-1 ring-green-500 glow shadow-sm">
                 <img 
                   src={FreysaImage}
                   alt="Freysa" 
@@ -158,102 +158,22 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   loading="lazy"
                 />
               </div>
-              <h1 className="text-sm font-bold text-gradient-blue-purple truncate max-w-[180px]">
+              <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
                 Freysa Leaderboard
               </h1>
-            </div>
+            </Link>
           </div>
           
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 p-1 h-8 w-8 touch-target"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-gray-800 border border-gray-700 text-white w-56 shadow-lg animate-reveal-scale">
-                <div className="px-2 py-1.5 text-xs font-medium text-blue-400">View Options</div>
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700 flex items-center gap-2"
-                  onClick={() => onViewChange('table')}
-                >
-                  <div className={`w-2 h-2 rounded-full ${selectedView === 'table' ? 'bg-blue-500 animate-pulse-soft' : 'bg-gray-600'}`}></div>
-                  Table View
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700 flex items-center gap-2"
-                  onClick={() => onViewChange('cards')}
-                >
-                  <div className={`w-2 h-2 rounded-full ${selectedView === 'cards' ? 'bg-blue-500 animate-pulse-soft' : 'bg-gray-600'}`}></div>
-                  Card View
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700 flex items-center gap-2"
-                  onClick={() => onViewChange('timeline')}
-                >
-                  <div className={`w-2 h-2 rounded-full ${selectedView === 'timeline' ? 'bg-blue-500 animate-pulse-soft' : 'bg-gray-600'}`}></div>
-                  Timeline View
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-700" />
-                <div className="px-2 py-1.5 text-xs font-medium text-green-400">Navigation</div>
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700 flex items-center gap-2"
-                  asChild
-                >
-                  <Link to="/" className="w-full">
-                    <Home className="h-4 w-4 mr-1.5" />
-                    Home
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700 flex items-center gap-2"
-                  asChild
-                >
-                  <Link to="/my-agents" className="w-full">
-                    <Users className="h-4 w-4 mr-1.5" />
-                    My Agents
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700 flex items-center gap-2"
-                  asChild
-                >
-                  <Link to="/analytics" className="w-full">
-                    <BarChart2 className="h-4 w-4 mr-1.5" />
-                    Analytics
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700 flex items-center gap-2"
-                  asChild
-                >
-                  <Link to="/city-stats" className="w-full">
-                    <Earth className="h-4 w-4 mr-1.5" />
-                    City Stats
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-700" />
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700 flex items-center gap-2"
-                  asChild
-                >
-                  <a 
-                    href="https://freysa.ai/digital-twin?ref=Navali" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-full"
-                    title="Create your own Digital Twin with referral"
-                  >
-                    <ArrowUpRight className="h-4 w-4 mr-1.5" />
-                    Create Digital Twin
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link to="/my-agents">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1 h-8 w-8 p-0 touch-target justify-center"
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+            </Link>
             
             <Button 
               variant="ghost" 
