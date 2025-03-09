@@ -61,9 +61,13 @@ export default function CityStats() {
             </p>
           </div>
           <Link to="/">
-            <Button variant="outline" className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400">
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to Leaderboard
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
+            >
+              <Home className="h-4 w-4" />
+              <span>Back to Leaderboard</span>
             </Button>
           </Link>
         </div>
