@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatNumber, formatCurrency } from '@/utils/formatters';
-import { Trophy, TrendingUp, Users, Award, Sparkles, Zap, Flame, Timer } from 'lucide-react';
+import { Trophy, TrendingUp, Award, Sparkles, Zap, Flame, Timer } from 'lucide-react';
 import { useGameStatus } from '@/hooks/use-game-status';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -38,15 +38,7 @@ export default function GameInfo() {
           </div>
         ) : gameStatus ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gray-800/50 rounded-lg p-3 transform transition-transform duration-300 hover:scale-105 border border-blue-500/10 hover:border-blue-500/30">
-                <div className="text-gray-400 text-xs mb-1 flex items-center">
-                  <Users className="h-3.5 w-3.5 mr-1 text-blue-400" />
-                  <span>Total Players</span>
-                </div>
-                <div className="text-lg font-bold text-white">{formatNumber(gameStatus.population)}</div>
-              </div>
-              
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-gray-800/50 rounded-lg p-3 transform transition-transform duration-300 hover:scale-105 border border-blue-500/10 hover:border-blue-500/30">
                 <div className="text-gray-400 text-xs mb-1 flex items-center">
                   <TrendingUp className="h-3.5 w-3.5 mr-1 text-blue-400" />
@@ -78,7 +70,7 @@ export default function GameInfo() {
               <div className="bg-gray-800/30 rounded-lg p-4 transform transition-all duration-300 hover:bg-gray-800/40 border border-blue-500/5 hover:border-blue-500/20">
                 <div className="flex items-center mb-2">
                   <Flame className="h-5 w-5 mr-2 text-blue-400" />
-                  <h3 className="font-semibold text-gradient-blue-purple">Prize Details</h3>
+                  <h3 className="font-semibold text-gradient-blue-purple">Game Stats</h3>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
