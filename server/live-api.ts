@@ -54,26 +54,18 @@ const MAX_AGENT_CACHE_SIZE = 100; // Maximum number of agent details to cache
  * Update the cities cache from new agent data
  */
 function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
-  // Only update if we don't already have city data or if it's been over 24 hours
-  const now = Date.now();
-  const ONE_DAY = 24 * 60 * 60 * 1000;
+  // Create a new Set for cities
+  cachedCities = new Set<string>();
   
-  if (!cachedCities || cachedCities.size === 0 || now - lastFetchTime > ONE_DAY) {
-    // Initialize the Set if needed
-    if (!cachedCities) {
-      cachedCities = new Set<string>();
+  // Add cities to the set
+  for (let i = 0; i < agents.length; i++) {
+    const agent = agents[i];
+    if (agent.city) {
+      cachedCities.add(agent.city);
     }
-    
-    // Add new cities to the set
-    for (let i = 0; i < agents.length; i++) {
-      const agent = agents[i];
-      if (agent.city) {
-        cachedCities.add(agent.city);
-      }
-    }
-    
-    console.log(`Updated cities cache with ${cachedCities.size} cities`);
   }
+  
+  console.log(`Updated cities cache with ${cachedCities.size} cities`);
 }
 
 /**
@@ -552,10 +544,25 @@ export async function getLiveStats() {
  * @returns Array of city names
  */
 export function getAvailableCities(): string[] {
-  if (cachedCities) {
+  // If we have a cities cache, return it
+  if (cachedCities && cachedCities.size > 0) {
+    console.log(`Returning ${cachedCities.size} cities from cache`);
     // Convert Set to Array for API response
     return Array.from(cachedCities);
   }
+  
+  // If we have leaderboard data but no cities cache, rebuild it
+  if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
+    console.log('Rebuilding cities cache from leaderboard data');
+    updateCachedCities(cachedLeaderboardData);
+    return Array.from(cachedCities || []);
+  }
+  
+  // No cache and no data - trigger a data fetch
+  console.log('No city data available, triggering leaderboard fetch');
+  setTimeout(() => {
+    getLiveLeaderboardData();
+  }, 10);
   
   return [];
 }

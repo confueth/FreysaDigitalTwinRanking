@@ -117,14 +117,23 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
     if (!agents?.length) return [];
     
     const totalAgents = agents.length;
+    console.log(`Processing ${totalAgents} agents for city statistics`);
     
     // Use Map for better performance on large datasets
     const cityMap = new Map<string, { count: number; totalScore: number }>();
     
+    // Count agents with city data
+    let agentsWithCityData = 0;
+    
     // Single loop through agents (more efficient than reduce)
     for (let i = 0; i < agents.length; i++) {
       const agent = agents[i];
-      const city = agent.city || 'Unknown';
+      // Normalize city data to handle null, undefined, and empty strings
+      let city = 'Unknown';
+      if (agent.city) {
+        city = agent.city;
+        agentsWithCityData++;
+      }
       
       const existing = cityMap.get(city);
       if (existing) {
@@ -137,6 +146,9 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
         });
       }
     }
+    
+    console.log(`Found ${agentsWithCityData} agents with city data (${(agentsWithCityData/totalAgents*100).toFixed(1)}%)`);
+    console.log(`Found ${cityMap.size} unique cities`);
     
     // Pre-allocate array size for performance
     const result: CityData[] = new Array(cityMap.size);
