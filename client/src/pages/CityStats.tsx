@@ -12,14 +12,14 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
  * This page displays statistics about agents grouped by city
  */
 export default function CityStats() {
-  // Load agent data with retry capabilities
+  // Load ALL agent data with retry capabilities and high limit to get accurate city counts
   const { data: agents, loading, error } = useApiWithRetry<Agent[]>({
-    url: "/api/agents",
+    url: "/api/agents?limit=10000", // Set very high limit to get all agents
     dependencies: [],
     initialData: [],
     maxRetries: 3,
     retryDelay: 1000,
-    cacheKey: "agents-city-stats",
+    cacheKey: "agents-city-stats-full",
   });
 
   // If data loading fails, show error message

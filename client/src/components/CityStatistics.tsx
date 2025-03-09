@@ -112,7 +112,7 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
     setActiveTab(value);
   }, []);
 
-  // Highly optimized city data calculation
+  // Highly optimized city data calculation with improved logging for debugging
   const cityData = useMemo(() => {
     if (!agents?.length) return [];
     
@@ -125,6 +125,9 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
     // Count agents with city data
     let agentsWithCityData = 0;
     
+    // Track agents per city for debugging
+    const cityCounts: Record<string, number> = {};
+    
     // Single loop through agents (more efficient than reduce)
     for (let i = 0; i < agents.length; i++) {
       const agent = agents[i];
@@ -133,6 +136,9 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
       if (agent.city) {
         city = agent.city;
         agentsWithCityData++;
+        
+        // Track for debugging
+        cityCounts[city] = (cityCounts[city] || 0) + 1;
       }
       
       const existing = cityMap.get(city);
@@ -149,6 +155,11 @@ const CityStatistics: React.FC<CityStatisticsProps> = ({ agents, isLoading }) =>
     
     console.log(`Found ${agentsWithCityData} agents with city data (${(agentsWithCityData/totalAgents*100).toFixed(1)}%)`);
     console.log(`Found ${cityMap.size} unique cities`);
+    
+    // Log city distribution for debugging
+    Object.keys(cityCounts).forEach(city => {
+      console.log(`City ${city}: ${cityCounts[city]} agents`);
+    });
     
     // Pre-allocate array size for performance
     const result: CityData[] = new Array(cityMap.size);
