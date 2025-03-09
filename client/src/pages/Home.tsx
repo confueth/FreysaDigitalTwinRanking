@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import { LineChart } from 'lucide-react';
+import { LineChart, Earth, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
 import LeaderboardTable from '@/components/LeaderboardTable';
