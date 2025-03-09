@@ -110,6 +110,15 @@ export default function Footer() {
                 <ExternalLink className="h-3.5 w-3.5 mr-1.5 text-blue-500 group-hover:text-blue-400" />
                 <span>Official Website</span>
               </a>
+              <a 
+                href="https://freysa.ai/digital-twin?ref=Navali" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center hover:text-blue-400 transition-colors group"
+              >
+                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-green-500 group-hover:text-green-400" />
+                <span>Create your Twin</span>
+              </a>
             </div>
           </div>
         </div>
