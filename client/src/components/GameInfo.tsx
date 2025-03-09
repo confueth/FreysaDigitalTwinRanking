@@ -21,7 +21,7 @@ export default function GameInfo() {
       <div className="relative z-10">
         <h2 className="text-xl font-bold mb-4 flex items-center text-gradient-animated">
           <Trophy className="h-5 w-5 mr-2 text-blue-400" />
-          Freysa Game Statistics
+          Game Stats
           <Sparkles className="h-4 w-4 ml-2 text-blue-400 animate-pulse-soft" />
         </h2>
         
@@ -73,10 +73,6 @@ export default function GameInfo() {
                   <h3 className="font-semibold text-gradient-blue-purple">Game Stats</h3>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400 text-sm">1st Place</span>
-                    <span className="font-medium bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">{formatCurrency(gameStatus.prizePool)}</span>
-                  </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400 text-sm">Prize in ETH</span>
                     <span className="font-medium text-white">
