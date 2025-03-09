@@ -102,15 +102,15 @@ export default function StatCards({ stats, snapshotTime, firstLoadTime, isLoadin
 
       {/* Leaderboard Stats Section */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-3">Leaderboard Stats</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+        <h2 className="text-lg font-bold text-white mb-3 px-1">Leaderboard Stats</h2>
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">Total Agents</p>
                 <h3 className="text-xl font-bold" id="totalAgents">{stats?.totalAgents || 0}</h3>
               </div>
-              <div className="rounded-full bg-blue-500 bg-opacity-20 p-1.5">
+              <div className="rounded-full bg-blue-500 bg-opacity-20 p-2">
                 <Users className="h-4 w-4 text-blue-500" />
               </div>
             </div>
@@ -119,13 +119,13 @@ export default function StatCards({ stats, snapshotTime, firstLoadTime, isLoadin
             </div>
           </div>
           
-          <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+          <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-xs">Avg Score</p>
                 <h3 className="text-xl font-bold" id="avgScore">{formatNumber(stats?.avgScore || 0)}</h3>
               </div>
-              <div className="rounded-full bg-purple-500 bg-opacity-20 p-1.5">
+              <div className="rounded-full bg-purple-500 bg-opacity-20 p-2">
                 <BarChart2 className="h-4 w-4 text-purple-500" />
               </div>
             </div>
@@ -134,13 +134,13 @@ export default function StatCards({ stats, snapshotTime, firstLoadTime, isLoadin
             </div>
           </div>
           
-          <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+          <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-gray-400 text-xs">First Load Refresh Time</p>
+              <div className="pr-2">
+                <p className="text-gray-400 text-xs">Last Data Refresh</p>
                 <h3 className="text-base font-bold" id="firstLoadTime">{formatDate(firstLoadTime || snapshotTime, 'short', true)}</h3>
               </div>
-              <div className="rounded-full bg-green-500 bg-opacity-20 p-1.5">
+              <div className="rounded-full bg-green-500 bg-opacity-20 p-2 flex-shrink-0">
                 <Clock className="h-4 w-4 text-green-500" />
               </div>
             </div>

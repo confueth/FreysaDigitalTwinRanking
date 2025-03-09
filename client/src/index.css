@@ -340,4 +340,41 @@
   .badge-outline-glow {
     @apply border border-blue-500/30 text-blue-300 hover:border-blue-500/50 transition-colors duration-200;
   }
+  
+  /* Mobile optimizations */
+  .mobile-card {
+    @apply rounded-lg border border-gray-700/50 bg-gray-800/90 p-4 shadow-sm transition-all duration-300;
+  }
+  
+  .mobile-card-hover {
+    @apply hover:border-gray-600 hover:bg-gray-800 hover:shadow-md;
+  }
+  
+  .mobile-nav-button {
+    @apply flex items-center justify-start w-full px-4 py-2 rounded-md text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors duration-200;
+  }
+  
+  .mobile-menu-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Dark backdrop for modals on mobile */
+  .mobile-backdrop {
+    @apply fixed inset-0 bg-black/80 backdrop-blur-sm z-40;
+  }
+  
+  /* Safe area padding for mobile devices */
+  .safe-area-padding {
+    @apply pt-safe pb-safe pl-safe pr-safe;
+  }
+  
+  /* Bottom navigation for mobile */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-gray-900/90 backdrop-blur-md border-t border-gray-800 z-30 px-2 py-1 flex items-center justify-around md:hidden;
+  }
+  
+  /* Improved touch targets for mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
 }

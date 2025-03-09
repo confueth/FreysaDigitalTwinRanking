@@ -97,10 +97,10 @@ export default function LeaderboardTable({
     return (
       <TableRow 
         key={agent.id} 
-        className={`hover:bg-gray-700 cursor-pointer ${isSaved ? 'bg-emerald-900/20' : ''}`}
+        className={`mobile-card-hover transition-all duration-200 ${isSaved ? 'bg-emerald-900/20 border-l-2 border-l-emerald-500/50' : ''}`}
         onClick={() => onAgentSelect(agent.mastodonUsername)}
       >
-        <TableCell className="px-2 py-3 whitespace-nowrap">
+        <TableCell className="px-3 py-3 whitespace-nowrap">
           <div className="flex items-center">
             <span className="text-base font-semibold">{agent.rank}</span>
             {agent.prevRank && agent.rank !== agent.prevRank && (
@@ -110,24 +110,34 @@ export default function LeaderboardTable({
             )}
           </div>
         </TableCell>
-        <TableCell className="px-2 py-3 whitespace-nowrap">
+        <TableCell className="px-3 py-3 whitespace-nowrap">
           <div className="flex items-center">
-            <img 
-              className="h-7 w-7 rounded-full"
-              src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
-              alt={`${agent.mastodonUsername} avatar`}
-            />
-            <div className="ml-2">
+            <div className="relative">
+              <img 
+                className="h-8 w-8 rounded-full object-cover border border-gray-700"
+                src={agent.avatarUrl || `https://ui-avatars.com/api/?name=${agent.mastodonUsername}&background=random`}
+                alt={`${agent.mastodonUsername} avatar`}
+                loading="lazy"
+              />
+              {isSaved && (
+                <div className="absolute -top-1 -right-1 h-3 w-3 bg-emerald-500 rounded-full ring-1 ring-gray-900"></div>
+              )}
+            </div>
+            <div className="ml-2.5">
               <div className="flex items-center">
-                <span className="text-xs font-medium">@{agent.mastodonUsername.length > 12 ? 
+                <span className="text-xs font-medium text-white">@{agent.mastodonUsername.length > 12 ? 
                   `${agent.mastodonUsername.substring(0, 10)}...` : agent.mastodonUsername}</span>
-                {isSaved && <span className="ml-1 text-xs text-emerald-400">★</span>}
+                {agent.city && (
+                  <span className="ml-1.5 text-[10px] text-gray-400 hidden xs:inline-block">
+                    {agent.city.replace('_', ' ')}
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </TableCell>
-        <TableCell className="px-2 py-3 whitespace-nowrap">
-          <div className="text-xs font-semibold">{formatCompactNumber(agent.score)}</div>
+        <TableCell className="px-3 py-3 whitespace-nowrap">
+          <div className="text-sm font-semibold text-white">{formatCompactNumber(agent.score)}</div>
           {agent.prevScore !== undefined && agent.score !== agent.prevScore && (
             <div className={`text-xs ${getScoreChangeClass(agent.score, agent.prevScore)}`}>
               {agent.score === agent.prevScore ? (
@@ -140,8 +150,8 @@ export default function LeaderboardTable({
             </div>
           )}
         </TableCell>
-        <TableCell className="px-2 py-3 whitespace-nowrap text-right">
-          <div className="flex justify-end space-x-1">
+        <TableCell className="px-3 py-3 whitespace-nowrap text-right">
+          <div className="flex justify-end space-x-1.5">
             {/* Save/Unsave button */}
             {onToggleSaveAgent && (
               <Button
@@ -298,8 +308,13 @@ export default function LeaderboardTable({
       <div className="bg-gray-900 px-4 py-3 flex items-center justify-between">
         {/* Mobile pagination */}
         <div className="flex-1 flex justify-between items-center sm:hidden">
-          <div className="text-xs text-gray-400 mr-2">
-            Page {currentPage} of {totalPages}
+          <div className="text-xs text-gray-400 mr-2 flex items-center">
+            <span className="mr-1 text-white font-medium">{currentPage}</span>
+            <span className="mx-0.5">/</span>
+            <span>{totalPages}</span>
+            <span className="ml-1.5 text-[10px] text-gray-500">
+              ({(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalAgents)})
+            </span>
           </div>
           <div className="flex space-x-2">
             <Button
@@ -307,18 +322,20 @@ export default function LeaderboardTable({
               size="sm"
               disabled={currentPage <= 1}
               onClick={() => onPageChange(currentPage - 1)}
-              className="p-0 w-8 h-8 border border-gray-700 text-sm rounded-md text-white bg-gray-800 hover:bg-gray-700"
+              className="touch-target p-0 w-8 h-8 border border-gray-700 text-sm rounded-md text-white bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Previous</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               disabled={currentPage >= totalPages}
               onClick={() => onPageChange(currentPage + 1)}
-              className="p-0 w-8 h-8 border border-gray-700 text-sm rounded-md text-white bg-gray-800 hover:bg-gray-700"
+              className="touch-target p-0 w-8 h-8 border border-gray-700 text-sm rounded-md text-white bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Next</span>
             </Button>
           </div>
         </div>
