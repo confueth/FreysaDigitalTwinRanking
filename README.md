@@ -35,6 +35,12 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 
 ## Latest Updates
 
+### March 9, 2025
+- ✅ **Documentation Update**: Updated README with latest project changes and features
+- ✅ **Chart Optimization**: Fixed chart rendering issues with width and height handling
+- ✅ **Data Refresh Reliability**: Enhanced data refresh mechanisms for better reliability
+- ✅ **User Experience Enhancements**: Improved feedback during snapshot loading and data transitions
+
 ### March 7, 2025
 - ✅ **README Improvements**: Updated documentation to reflect all recent changes
 - ✅ **Agent Saving Enhancements**: Improved star/save functionality with better UX feedback
