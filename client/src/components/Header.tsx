@@ -33,7 +33,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
   return (
     <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
       <div className="container mx-auto px-4 py-3">
-        {/* Desktop Header */}
+        {/* Desktop Header Layout */}
         <div className="hidden md:flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-3">
@@ -115,16 +115,10 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
           </div>
         </div>
         
-        {/* Mobile Header */}
+        {/* Mobile Header Layout */}
         <div className="md:hidden flex justify-between items-center">
           <div className="flex items-center">
-            <a 
-              href="https://freysa.ai/digital-twin" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
-              title="Visit Freysa Digital Twin website"
-            >
+            <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow animate-pulse-green">
                 <img 
                   src={FreysaImage}
@@ -136,7 +130,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
                 Freysa Leaderboard
               </h1>
-            </a>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
@@ -209,7 +203,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
           </div>
         </div>
         
-        {/* Mobile Menu */}
+        {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden pt-4 pb-2 border-t border-gray-800 mt-3">
             <div className="grid grid-cols-2 gap-2">

@@ -16,7 +16,7 @@ import { formatDate } from '@/utils/formatters';
 import { applyAllFilters } from '@/utils/FilterUtils';
 import FreysaImage from '../assets/profile-freysa-original.jpg';
 
-// Constants
+// Local storage key for saved agents
 const MY_AGENTS_KEY = 'freysa-my-agents';
 
 export default function Home() {
@@ -566,8 +566,17 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Mobile layout */}
+        {/* Mobile layout - Game status moved above Sidebar/Filters */}
         <div className="md:hidden flex flex-col">
+          <div className="p-3">
+            <StatCards 
+              stats={stats} 
+              snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
+              firstLoadTime={firstLoadTime}
+              isLoading={!stats}
+            />
+          </div>
+          
           <Sidebar 
             filters={filters}
             onFilterChange={handleFilterChange}
@@ -579,13 +588,6 @@ export default function Home() {
           />
           
           <div className="p-3">
-            <StatCards 
-              stats={stats} 
-              snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
-              firstLoadTime={firstLoadTime}
-              isLoading={!stats}
-            />
-            
             <div className="flex flex-col justify-between items-start mb-3 gap-1">
               <h2 className="text-lg font-bold">{viewTitle}</h2>
               <div>
