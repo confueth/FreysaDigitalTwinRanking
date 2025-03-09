@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
-import { ChevronLeft } from "lucide-react";
+import { Home } from "lucide-react";
 
 /**
  * CityStats page component
