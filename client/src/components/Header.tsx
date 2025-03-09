@@ -66,7 +66,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 />
               </div>
               <h1 className="text-xl font-bold text-gradient-animated">
-                Freysa Leaderboard
+                Freysa Digital Twin Leaderboard
               </h1>
             </div>
           </div>
@@ -158,8 +158,8 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   loading="lazy"
                 />
               </div>
-              <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
-                Freysa Leaderboard
+              <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[140px]">
+                Freysa Digital<br /> Twin Leaderboard
               </h1>
             </Link>
           </div>
@@ -169,7 +169,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1 h-8 w-8 p-0 touch-target justify-center"
+                className="bg-gray-800 hover:bg-gray-700 border-gray-700 h-8 w-8 p-0 touch-target flex items-center justify-center"
               >
                 <Users className="h-4 w-4" />
               </Button>
