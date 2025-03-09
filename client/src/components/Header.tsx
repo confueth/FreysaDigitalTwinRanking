@@ -83,6 +83,20 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 <span>Analytics</span>
               </Button>
             </Link>
+
+            <Link to="/city-stats">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>City Stats</span>
+              </Button>
+            </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -179,6 +193,14 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   className="hover:bg-gray-700"
                   asChild
                 >
+                  <Link to="/city-stats" className="w-full">
+                    City Stats
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  asChild
+                >
                   <a 
                     href="https://freysa.ai/digital-twin?ref=Navali" 
                     target="_blank" 
@@ -264,6 +286,21 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 >
                   <BarChart2 className="h-4 w-4" />
                   <span>Analytics</span>
+                </Button>
+              </Link>
+              
+              <Link to="/city-stats" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                  <span>City Stats</span>
                 </Button>
               </Link>
             </div>

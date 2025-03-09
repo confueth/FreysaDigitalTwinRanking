@@ -1,92 +1,89 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Agent } from '@/types/agent';
-import CityStatistics from '@/components/CityStatistics';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Link } from 'wouter';
-import { Home } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useApiWithRetry } from "@/hooks/use-api-with-retry";
+import { Agent } from "@/types/agent";
+import CityStatistics from "@/components/CityStatistics";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 
+/**
+ * CityStats page component
+ * 
+ * This page displays statistics about agents grouped by city
+ */
 export default function CityStats() {
-  const { toast } = useToast();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Query agents with filters - use live data
-  const { 
-    data: agents, 
-    isLoading,
-    refetch
-  } = useQuery<Agent[]>({
-    queryKey: [`/api/agents`, { limit: 2000 }],
-    staleTime: 5 * 60 * 1000, // 5 minutes
+  // Load agent data with retry capabilities
+  const { data: agents, isLoading, error } = useApiWithRetry<Agent[]>({
+    url: "/api/agents",
+    dependencies: [],
+    initialData: [],
+    maxRetries: 3,
+    retryDelay: 1000,
+    cacheKey: "agents-city-stats",
   });
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetch();
-      toast({
-        title: "Data Refreshed",
-        description: "City statistics have been updated with the latest data.",
-        variant: "default"
-      });
-    } catch (error) {
-      toast({
-        title: "Refresh Failed",
-        description: "There was an error refreshing the data. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  // If data loading fails, show error message
+  if (error) {
+    return (
+      <div className="container mx-auto p-4 max-w-7xl">
+        <Card className="bg-gray-800 border-gray-700 text-white mb-6">
+          <CardHeader>
+            <CardTitle className="text-center text-red-400">Error Loading City Statistics</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-gray-300 mb-4">
+              We encountered an error while loading the city statistics data. Please try again later.
+            </p>
+            <p className="text-gray-400 text-sm">
+              Error details: {(error as Error).message}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-100">City Statistics</h1>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-gray-800 hover:bg-gray-700 border-gray-700"
-            onClick={handleRefresh}
-            disabled={isLoading || isRefreshing}
-          >
-            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
-          </Button>
-          <Link to="/">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
-            >
-              <Home className="h-4 w-4" />
-              <span>Back to Home</span>
-            </Button>
-          </Link>
-        </div>
+    <div className="container mx-auto p-4 max-w-7xl">
+      <Helmet>
+        <title>City Statistics | Freysa Leaderboard</title>
+        <meta name="description" content="Explore statistics about Freysa Digital Twin agents by city" />
+      </Helmet>
+
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white mb-2">City Statistics</h1>
+        <p className="text-gray-400">
+          Explore how agents perform across different cities around the world
+        </p>
       </div>
 
-      <p className="text-gray-400 mb-6">
-        View agent distribution and statistics by city. The charts show how Digital Twins are distributed across different cities
-        and their average scores per location.
-      </p>
-
-      <div className="grid grid-cols-1 gap-6">
-        {agents && agents.length > 0 ? (
-          <CityStatistics 
-            agents={agents}
-            isLoading={isLoading}
-          />
-        ) : (
-          <div className="bg-gray-800 rounded-lg p-8 text-center">
-            <p className="text-gray-400">
-              {isLoading ? 'Loading city statistics...' : 'No city data available'}
-            </p>
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <Card className="bg-gray-800 border-gray-700 text-white mb-6">
+          <CardHeader>
+            <Skeleton className="h-8 w-48 bg-gray-700" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-full bg-gray-700" />
+              <Skeleton className="h-4 w-full bg-gray-700" />
+              <Skeleton className="h-4 w-full bg-gray-700" />
+              <Skeleton className="h-4 w-2/3 bg-gray-700" />
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="bg-gray-800 border-gray-700 text-white mb-6">
+          <CardHeader>
+            <CardTitle>City Distribution & Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CityStatistics 
+              agents={agents || []} 
+              isLoading={isLoading} 
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
