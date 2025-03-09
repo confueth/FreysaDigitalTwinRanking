@@ -493,6 +493,7 @@ export default function Home() {
                 variant="outline" 
                 className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
               >
+                <Users className="h-4 w-4 mr-1" />
                 <span>My Agents</span>
               </Button>
             </Link>
@@ -512,10 +513,7 @@ export default function Home() {
                 variant="outline" 
                 className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
+                <Earth className="h-4 w-4 mr-1" />
                 <span>City Stats</span>
               </Button>
             </Link>
