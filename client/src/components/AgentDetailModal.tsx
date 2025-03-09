@@ -308,20 +308,32 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-gray-800 border border-gray-700 text-white p-0 w-[calc(100vw-16px)] sm:w-auto max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto rounded-lg">
+      <DialogContent className="bg-gray-800 border border-gray-700 text-white p-0 w-[calc(100vw-16px)] sm:w-auto max-w-4xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto rounded-lg animate-reveal-scale">
         <DialogTitle className="sr-only">Agent Details for {username}</DialogTitle>
         <DialogDescription className="sr-only">
           Detailed information about this agent including stats and recent activity
         </DialogDescription>
         
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute top-3 right-3 z-50 text-white/80 hover:text-white hover:bg-black/20 rounded-full touch-target"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5" />
+          <span className="sr-only">Close dialog</span>
+        </Button>
+        
         <div className="relative">
-          <div className="h-32 sm:h-40 bg-gradient-to-r from-purple-900 to-indigo-900" />
+          <div className="h-32 sm:h-40 bg-gradient-to-r from-purple-900 to-indigo-900 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40"></div>
+          </div>
           <div className="absolute bottom-0 transform translate-y-1/2 left-4 sm:left-8">
             {isLoading ? (
-              <Skeleton className="h-16 w-16 sm:h-24 sm:w-24 rounded-full border-3 sm:border-4 border-gray-800" />
+              <Skeleton className="h-16 w-16 sm:h-24 sm:w-24 rounded-full border-3 sm:border-4 border-gray-800 shadow-lg" />
             ) : (
               <img 
-                className="h-16 w-16 sm:h-24 sm:w-24 rounded-full border-3 sm:border-4 border-gray-800" 
+                className="h-16 w-16 sm:h-24 sm:w-24 rounded-full border-3 sm:border-4 border-gray-800 shadow-lg object-cover" 
                 src={agent?.avatarUrl || `https://ui-avatars.com/api/?name=${username}&background=random`} 
                 alt={`@${username} avatar`}
                 loading="lazy"
@@ -337,13 +349,15 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
             <>
               <div className="flex flex-col md:flex-row justify-between">
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl sm:text-2xl font-bold truncate">@{agent.mastodonUsername}</h2>
-                  {agent.city && (
-                    <div className="flex items-center space-x-1 sm:space-x-2 mt-1">
-                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                      <span className="text-sm sm:text-base text-gray-400">{agent.city}</span>
-                    </div>
-                  )}
+                  <div className="flex flex-col xs:flex-row xs:items-center gap-2">
+                    <h2 className="text-xl sm:text-2xl font-bold truncate">@{agent.mastodonUsername}</h2>
+                    {agent.city && (
+                      <div className="flex items-center mt-1 xs:mt-0 bg-gray-700/30 py-1 px-2 rounded-full self-start">
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-300 mr-1" />
+                        <span className="text-xs sm:text-sm text-gray-300">{agent.city}</span>
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Bio/Human Feedback Tabs */}
                   {(agent.mastodonBio || agent.humanFeedback) && (
@@ -423,21 +437,21 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
               </div>
               
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 sm:mt-8">
-                <div className="bg-gray-900 rounded-lg p-3 sm:p-4 text-center">
-                  <div className="text-lg sm:text-xl font-bold">{formatCompactNumber(agent.followersCount)}</div>
-                  <div className="text-xs sm:text-sm text-gray-400">Followers</div>
+                <div className="bg-gray-900 rounded-lg p-3 sm:p-4 text-center hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md">
+                  <div className="text-lg sm:text-xl font-bold text-blue-400">{formatCompactNumber(agent.followersCount)}</div>
+                  <div className="text-xs sm:text-sm text-gray-300">Followers</div>
                 </div>
-                <div className="bg-gray-900 rounded-lg p-3 sm:p-4 text-center">
-                  <div className="text-lg sm:text-xl font-bold">{formatCompactNumber(agent.likesCount)}</div>
-                  <div className="text-xs sm:text-sm text-gray-400">Likes</div>
+                <div className="bg-gray-900 rounded-lg p-3 sm:p-4 text-center hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md">
+                  <div className="text-lg sm:text-xl font-bold text-red-400">{formatCompactNumber(agent.likesCount)}</div>
+                  <div className="text-xs sm:text-sm text-gray-300">Likes</div>
                 </div>
-                <div className="bg-gray-900 rounded-lg p-3 sm:p-4 text-center">
-                  <div className="text-lg sm:text-xl font-bold">{formatCompactNumber(agent.retweetsCount)}</div>
-                  <div className="text-xs sm:text-sm text-gray-400">Retweets</div>
+                <div className="bg-gray-900 rounded-lg p-3 sm:p-4 text-center hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md">
+                  <div className="text-lg sm:text-xl font-bold text-green-400">{formatCompactNumber(agent.retweetsCount)}</div>
+                  <div className="text-xs sm:text-sm text-gray-300">Retweets</div>
                 </div>
-                <div className="bg-gray-900 rounded-lg p-3 sm:p-4 text-center">
-                  <div className="text-lg sm:text-xl font-bold">{formatCompactNumber(agent.repliesCount)}</div>
-                  <div className="text-xs sm:text-sm text-gray-400">Replies</div>
+                <div className="bg-gray-900 rounded-lg p-3 sm:p-4 text-center hover:bg-gray-800 transition-colors duration-200 shadow-sm hover:shadow-md">
+                  <div className="text-lg sm:text-xl font-bold text-purple-400">{formatCompactNumber(agent.repliesCount)}</div>
+                  <div className="text-xs sm:text-sm text-gray-300">Replies</div>
                 </div>
               </div>
               
@@ -468,22 +482,31 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
               
               {agent.tweets && agent.tweets.length > 0 && (
                 <div className="mt-6 sm:mt-8">
-                  <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Recent Tweets</h3>
-                  <div className="space-y-3 sm:space-y-4 max-h-60 sm:max-h-80 overflow-y-auto pr-1">
-                    {agent.tweets.slice(0, 10).map((tweet: TweetData) => (
-                      <div key={tweet.id} className="bg-gray-900 rounded-lg p-3 sm:p-4">
-                        <p className="mb-2 text-sm sm:text-base">{formatTweetContent(tweet.content)}</p>
-                        <div className="flex flex-col sm:flex-row sm:justify-between text-xs sm:text-sm text-gray-400">
-                          <span className="mb-2 sm:mb-0">{formatDate(tweet.timestamp, 'full', true)}</span>
+                  <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center">
+                    <span className="mr-2">Recent Activity</span>
+                    <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full">{agent.tweets.length}</span>
+                  </h3>
+                  <div className="space-y-3 sm:space-y-4 max-h-60 sm:max-h-80 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                    {agent.tweets.slice(0, 10).map((tweet: TweetData, index: number) => (
+                      <div 
+                        key={tweet.id} 
+                        className={`bg-gray-900 rounded-lg p-3 sm:p-4 border border-gray-800 hover:border-gray-700 transition-all duration-200 shadow-sm hover:shadow-md ${index === 0 ? 'animate-fade-in-up' : ''}`}
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <p className="mb-2 text-sm sm:text-base text-gray-200 leading-relaxed">{formatTweetContent(tweet.content)}</p>
+                        <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center text-xs sm:text-sm text-gray-400">
+                          <div className="mb-2 xs:mb-0 bg-gray-800/50 rounded-full px-2 py-0.5 self-start">
+                            {formatDate(tweet.timestamp, 'full', true)}
+                          </div>
                           <div className="flex space-x-3 sm:space-x-4">
-                            <div className="flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <div className="flex items-center bg-gray-800/50 rounded-full px-2 py-0.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
                               </svg>
                               <span>{tweet.likesCount}</span>
                             </div>
-                            <div className="flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <div className="flex items-center bg-gray-800/50 rounded-full px-2 py-0.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-green-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                               </svg>
                               <span>{tweet.retweetsCount}</span>
@@ -493,10 +516,12 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                       </div>
                     ))}
                     {agent.tweets.length > 10 && (
-                      <div className="mt-2 text-center">
-                        <span className="text-gray-400 text-xs sm:text-sm">
-                          Showing 10 of {agent.tweets.length} tweets
-                        </span>
+                      <div className="mt-3 text-center">
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm px-2 py-1 h-auto">
+                          <span className="text-gray-300">
+                            View all {agent.tweets.length} posts
+                          </span>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -514,14 +539,18 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                 </div>
               </div>
 
-              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center items-center sm:gap-3 gap-2">
+              <div className="mt-6 sm:mt-8 flex flex-col xs:flex-row justify-center items-center gap-3">
                 <a 
                   href={`https://digital-clone-production.onrender.com/digital-clones/clones/${agent.mastodonUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto"
+                  className="w-full xs:w-auto"
                 >
-                  <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center gap-1 w-full sm:w-auto">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/50 hover:text-blue-300 transition-all duration-200 flex items-center justify-center gap-1.5 w-full xs:w-auto touch-target"
+                  >
                     <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span className="text-xs sm:text-sm">View API Data</span>
                   </Button>
@@ -530,14 +559,26 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                   href={`https://social.freysa.ai/@${agent.mastodonUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto"
+                  className="w-full xs:w-auto"
                 >
-                  <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center gap-1 w-full sm:w-auto">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-200 flex items-center justify-center gap-1.5 w-full xs:w-auto touch-target"
+                  >
                     <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="text-xs sm:text-sm">View Mastadon Profile</span>
+                    <span className="text-xs sm:text-sm">View Mastodon Profile</span>
                   </Button>
-                  
                 </a>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onClose}
+                  className="border-gray-700 hover:bg-gray-800 text-gray-300 transition-all duration-200 flex items-center justify-center gap-1.5 w-full xs:w-auto touch-target"
+                >
+                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">Close</span>
+                </Button>
               </div>
             </>
           ) : (
