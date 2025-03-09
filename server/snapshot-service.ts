@@ -129,8 +129,8 @@ async function hasSnapshotForToday(storage: IStorage): Promise<boolean> {
  * @param storage Storage implementation
  */
 export function scheduleSnapshots(storage: IStorage): void {
-  // Create a snapshot at the end of each day (11:55 PM in EST timezone)
-  cron.schedule('55 23 * * *', async () => {
+  // Create a snapshot at the end of each day (11:59 PM in EST timezone)
+  cron.schedule('59 23 * * *', async () => {
     console.log('Running end-of-day snapshot creation');
     const hasSnapshotToday = await hasSnapshotForToday(storage);
     
