@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, BarChart2, Menu, X, Users } from 'lucide-react';
-import { Link } from 'wouter';
+import { ChevronDown, BarChart2, Menu, X, Users, Earth, Home, ArrowUpRight } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import FreysaImage from '../assets/profile-freysa-original.jpg';
@@ -19,6 +20,7 @@ interface HeaderProps {
 export default function Header({ selectedView, onViewChange }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const [location] = useLocation();
   
   const viewLabels = {
     'table': 'Table View',
@@ -29,6 +31,24 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+  
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (mobileMenuOpen && !target.closest('header')) {
+        setMobileMenuOpen(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [mobileMenuOpen]);
+  
+  // Close mobile menu on location change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
 
   return (
     <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
