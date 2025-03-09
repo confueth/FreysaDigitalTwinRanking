@@ -4,14 +4,6 @@ export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
-    screens: {
-      'xs': '480px',
-      'sm': '640px',
-      'md': '768px',
-      'lg': '1024px',
-      'xl': '1280px',
-      '2xl': '1536px',
-    },
     extend: {
       borderRadius: {
         lg: "var(--radius)",
@@ -87,95 +79,12 @@ export default {
             height: "0",
           },
         },
-        "fade-in-up": {
-          "0%": {
-            opacity: "0",
-            transform: "translateY(10px)",
-          },
-          "100%": {
-            opacity: "1", 
-            transform: "translateY(0)",
-          },
-        },
-        "fade-in-down": {
-          "0%": {
-            opacity: "0",
-            transform: "translateY(-10px)",
-          },
-          "100%": {
-            opacity: "1",
-            transform: "translateY(0)",
-          },
-        },
-        "fade-in": {
-          "0%": {
-            opacity: "0",
-          },
-          "100%": {
-            opacity: "1",
-          },
-        },
-        "reveal-scale": {
-          "0%": {
-            opacity: "0",
-            transform: "scale(0.95)",
-          },
-          "100%": {
-            opacity: "1",
-            transform: "scale(1)",
-          },
-        },
-        "slide-in-right": {
-          "0%": {
-            transform: "translateX(100%)",
-            opacity: "0",
-          },
-          "100%": {
-            transform: "translateX(0)",
-            opacity: "1",
-          },
-        },
-        "slide-in-left": {
-          "0%": {
-            transform: "translateX(-100%)",
-            opacity: "0",
-          },
-          "100%": {
-            transform: "translateX(0)",
-            opacity: "1",
-          },
-        },
-        "pulse-green": {
-          "0%, 100%": {
-            "box-shadow": "0 0 0 0 rgba(52, 211, 153, 0.7)",
-          },
-          "50%": {
-            "box-shadow": "0 0 0 8px rgba(52, 211, 153, 0)",
-          },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in-up": "fade-in-up 0.3s ease-out",
-        "fade-in-down": "fade-in-down 0.3s ease-out",
-        "fade-in": "fade-in 0.3s ease-out",
-        "reveal-scale": "reveal-scale 0.3s ease-out",
-        "slide-in-right": "slide-in-right 0.3s ease-out",
-        "slide-in-left": "slide-in-left 0.3s ease-out",
-        "pulse-green": "pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-      },
-      spacing: {
-        'safe-top': 'env(safe-area-inset-top)',
-        'safe-bottom': 'env(safe-area-inset-bottom)',
-        'safe-left': 'env(safe-area-inset-left)',
-        'safe-right': 'env(safe-area-inset-right)',
       },
     },
   },
-  plugins: [
-    require("tailwindcss-animate"), 
-    require("@tailwindcss/typography"),
-    require("tailwind-scrollbar")
-  ],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;

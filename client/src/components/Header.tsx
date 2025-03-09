@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, BarChart2, Menu, X, Users, Earth, Home, ArrowUpRight } from 'lucide-react';
-import { Link, useLocation } from 'wouter';
+import { ChevronDown, BarChart2, Menu, X, Users } from 'lucide-react';
+import { Link } from 'wouter';
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import FreysaImage from '../assets/profile-freysa-original.jpg';
@@ -20,7 +19,6 @@ interface HeaderProps {
 export default function Header({ selectedView, onViewChange }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [location] = useLocation();
   
   const viewLabels = {
     'table': 'Table View',
@@ -31,33 +29,15 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-  
-  // Close mobile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (mobileMenuOpen && !target.closest('header')) {
-        setMobileMenuOpen(false);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [mobileMenuOpen]);
-  
-  // Close mobile menu on location change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location]);
 
   return (
-    <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-40 backdrop-blur-sm bg-opacity-90 shadow-md">
-      <div className="container-responsive py-3">
+    <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
+      <div className="container mx-auto px-4 py-3">
         {/* Desktop Header Layout */}
         <div className="hidden md:flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green shadow-lg">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
                 <img 
                   src={FreysaImage}
                   alt="Freysa" 
@@ -65,8 +45,8 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   loading="lazy"
                 />
               </div>
-              <h1 className="text-xl font-bold text-gradient-animated">
-                Freysa Digital Twin Leaderboard
+              <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
+                Freysa Leaderboard
               </h1>
             </div>
           </div>
@@ -76,7 +56,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               href="https://freysa.ai/digital-twin?ref=Navali" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-sm px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg btn-hover"
+              className="text-sm px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
               title="Create your own Digital Twin with referral"
             >
               Create your Digital Twin
@@ -86,7 +66,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1 shadow-sm hover:shadow btn-hover"
+                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
               >
                 <Users className="h-4 w-4" />
                 <span>My Agents</span>
@@ -97,7 +77,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1 shadow-sm hover:shadow btn-hover"
+                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
               >
                 <BarChart2 className="h-4 w-4" />
                 <span>Analytics</span>
@@ -108,21 +88,21 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1 shadow-sm hover:shadow btn-hover"
+                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
               >
-                <Earth className="h-4 w-4" />
+
                 <span>City Stats</span>
               </Button>
             </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-gray-800 hover:bg-gray-700 border-gray-700 shadow-sm hover:shadow btn-hover">
+                <Button variant="outline" size="sm" className="bg-gray-800 hover:bg-gray-700 border-gray-700">
                   <span>{viewLabels[selectedView]}</span>
                   <ChevronDown className="h-4 w-4 ml-1" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-gray-800 border border-gray-700 text-white shadow-lg animate-fade-in-down">
+              <DropdownMenuContent className="bg-gray-800 border border-gray-700 text-white">
                 <DropdownMenuItem 
                   className="hover:bg-gray-700"
                   onClick={() => onViewChange('table')}
@@ -149,8 +129,8 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         {/* Mobile Header Layout */}
         <div className="md:hidden flex justify-between items-center">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border border-primary shadow-sm">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow animate-pulse-green">
                 <img 
                   src={FreysaImage}
                   alt="Freysa" 
@@ -158,13 +138,79 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   loading="lazy"
                 />
               </div>
-              <h1 className="text-sm font-bold text-green-400 truncate max-w-[100px]">
-                Freysa
+              <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
+                Freysa Leaderboard
               </h1>
-            </Link>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="bg-gray-800 hover:bg-gray-700 border-gray-700 p-1 h-8 w-8">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-gray-800 border border-gray-700 text-white">
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  onClick={() => onViewChange('table')}
+                >
+                  Table View
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  onClick={() => onViewChange('cards')}
+                >
+                  Card View
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  onClick={() => onViewChange('timeline')}
+                >
+                  Timeline View
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  asChild
+                >
+                  <Link to="/my-agents" className="w-full">
+                    My Agents
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  asChild
+                >
+                  <Link to="/analytics" className="w-full">
+                    Analytics
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  asChild
+                >
+                  <Link to="/city-stats" className="w-full">
+                    City Stats
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700"
+                  asChild
+                >
+                  <a 
+                    href="https://freysa.ai/digital-twin?ref=Navali" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-full"
+                    title="Create your own Digital Twin with referral"
+                  >
+                    Create Twin
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button 
               variant="ghost" 
               size="sm" 
@@ -178,109 +224,90 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pt-4 pb-2 border-t border-gray-800 mt-3 animate-slide-in-right">
-            <div className="mb-4">
-              <h3 className="text-xs font-medium text-blue-400 mb-2 uppercase tracking-wider">View Mode</h3>
-              <div className="flex flex-row items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar">
-                <Button
-                  variant={selectedView === 'table' ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${selectedView === 'table' ? 'bg-blue-600 hover:bg-blue-700 shadow-md' : 'bg-gray-800'} border-gray-700 whitespace-nowrap touch-target`}
-                  onClick={() => {
-                    onViewChange('table');
-                    setMobileMenuOpen(false);
-                  }}
+          <div className="md:hidden pt-4 pb-2 border-t border-gray-800 mt-3">
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={selectedView === 'table' ? 'default' : 'outline'}
+                size="sm"
+                className={`${selectedView === 'table' ? 'bg-primary' : 'bg-gray-800'} border-gray-700`}
+                onClick={() => {
+                  onViewChange('table');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Table View
+              </Button>
+              
+              <Button
+                variant={selectedView === 'cards' ? 'default' : 'outline'}
+                size="sm"
+                className={`${selectedView === 'cards' ? 'bg-primary' : 'bg-gray-800'} border-gray-700`}
+                onClick={() => {
+                  onViewChange('cards');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Card View
+              </Button>
+              
+              <Button
+                variant={selectedView === 'timeline' ? 'default' : 'outline'}
+                size="sm"
+                className={`${selectedView === 'timeline' ? 'bg-primary' : 'bg-gray-800'} border-gray-700`}
+                onClick={() => {
+                  onViewChange('timeline');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Timeline View
+              </Button>
+              
+              <Link to="/my-agents" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  Table View
+                  <Users className="h-4 w-4" />
+                  <span>My Agents</span>
                 </Button>
-                
-                <Button
-                  variant={selectedView === 'cards' ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${selectedView === 'cards' ? 'bg-blue-600 hover:bg-blue-700 shadow-md' : 'bg-gray-800'} border-gray-700 whitespace-nowrap touch-target`}
-                  onClick={() => {
-                    onViewChange('cards');
-                    setMobileMenuOpen(false);
-                  }}
+              </Link>
+              
+              <Link to="/analytics" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  Card View
+                  <BarChart2 className="h-4 w-4" />
+                  <span>Analytics</span>
                 </Button>
-                
-                <Button
-                  variant={selectedView === 'timeline' ? 'default' : 'outline'}
-                  size="sm"
-                  className={`${selectedView === 'timeline' ? 'bg-blue-600 hover:bg-blue-700 shadow-md' : 'bg-gray-800'} border-gray-700 whitespace-nowrap touch-target`}
-                  onClick={() => {
-                    onViewChange('timeline');
-                    setMobileMenuOpen(false);
-                  }}
+              </Link>
+              
+              <Link to="/city-stats" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  Timeline View
+
+                  <span>City Stats</span>
                 </Button>
-              </div>
+              </Link>
             </div>
             
-            <div className="mb-4">
-              <h3 className="text-xs font-medium text-green-400 mb-2 uppercase tracking-wider">Navigation</h3>
-              <div className="space-y-2">
-                <Link to="/" className="w-full">
-                  <Button 
-                    variant="ghost"
-                    className="w-full justify-start hover:bg-gray-800 text-gray-300 hover:text-white mobile-nav-button touch-target"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Home className="h-4 w-4 mr-3" />
-                    <span>Home</span>
-                  </Button>
-                </Link>
-                
-                <Link to="/my-agents" className="w-full">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start hover:bg-gray-800 text-gray-300 hover:text-white mobile-nav-button touch-target"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Users className="h-4 w-4 mr-3" />
-                    <span>My Agents</span>
-                  </Button>
-                </Link>
-                
-                <Link to="/analytics" className="w-full">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start hover:bg-gray-800 text-gray-300 hover:text-white mobile-nav-button touch-target"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <BarChart2 className="h-4 w-4 mr-3" />
-                    <span>Analytics</span>
-                  </Button>
-                </Link>
-                
-                <Link to="/city-stats" className="w-full">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start hover:bg-gray-800 text-gray-300 hover:text-white mobile-nav-button touch-target"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Earth className="h-4 w-4 mr-3" />
-                    <span>City Stats</span>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            
-            <div className="mt-4 w-full">
+            <div className="mt-3 w-full">
               <a 
                 href="https://freysa.ai/digital-twin?ref=Navali" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="block w-full text-center text-sm px-3 py-2.5 rounded-md bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg touch-target"
+                className="block w-full text-center text-sm px-3 py-2 rounded-md bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <div className="flex items-center justify-center">
-                  <ArrowUpRight className="h-4 w-4 mr-2" />
-                  <span>Create your Digital Twin</span>
-                </div>
+                Create your Digital Twin
               </a>
             </div>
           </div>
