@@ -110,7 +110,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 size="sm" 
                 className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
               >
-
+                <Earth className="h-4 w-4" />
                 <span>City Stats</span>
               </Button>
             </Link>
@@ -171,51 +171,70 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-gray-800 border border-gray-700 text-white">
+              <DropdownMenuContent className="bg-gray-800 border border-gray-700 text-white w-56">
+                <div className="px-2 py-1.5 text-xs font-medium text-gray-400">View Options</div>
                 <DropdownMenuItem 
-                  className="hover:bg-gray-700"
+                  className="hover:bg-gray-700 flex items-center gap-2"
                   onClick={() => onViewChange('table')}
                 >
+                  <div className={`w-1.5 h-1.5 rounded-full ${selectedView === 'table' ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                   Table View
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  className="hover:bg-gray-700"
+                  className="hover:bg-gray-700 flex items-center gap-2"
                   onClick={() => onViewChange('cards')}
                 >
+                  <div className={`w-1.5 h-1.5 rounded-full ${selectedView === 'cards' ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                   Card View
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  className="hover:bg-gray-700"
+                  className="hover:bg-gray-700 flex items-center gap-2"
                   onClick={() => onViewChange('timeline')}
                 >
+                  <div className={`w-1.5 h-1.5 rounded-full ${selectedView === 'timeline' ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                   Timeline View
                 </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-700" />
+                <div className="px-2 py-1.5 text-xs font-medium text-gray-400">Navigation</div>
                 <DropdownMenuItem 
-                  className="hover:bg-gray-700"
+                  className="hover:bg-gray-700 flex items-center gap-2"
+                  asChild
+                >
+                  <Link to="/" className="w-full">
+                    <Home className="h-4 w-4 mr-1" />
+                    Home
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="hover:bg-gray-700 flex items-center gap-2"
                   asChild
                 >
                   <Link to="/my-agents" className="w-full">
+                    <Users className="h-4 w-4 mr-1" />
                     My Agents
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  className="hover:bg-gray-700"
+                  className="hover:bg-gray-700 flex items-center gap-2"
                   asChild
                 >
                   <Link to="/analytics" className="w-full">
+                    <BarChart2 className="h-4 w-4 mr-1" />
                     Analytics
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  className="hover:bg-gray-700"
+                  className="hover:bg-gray-700 flex items-center gap-2"
                   asChild
                 >
                   <Link to="/city-stats" className="w-full">
+                    <Earth className="h-4 w-4 mr-1" />
                     City Stats
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-700" />
                 <DropdownMenuItem 
-                  className="hover:bg-gray-700"
+                  className="hover:bg-gray-700 flex items-center gap-2"
                   asChild
                 >
                   <a 
@@ -225,7 +244,8 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                     className="w-full"
                     title="Create your own Digital Twin with referral"
                   >
-                    Create Twin
+                    <ArrowUpRight className="h-4 w-4 mr-1" />
+                    Create Digital Twin
                   </a>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -244,90 +264,109 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pt-4 pb-2 border-t border-gray-800 mt-3">
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant={selectedView === 'table' ? 'default' : 'outline'}
-                size="sm"
-                className={`${selectedView === 'table' ? 'bg-primary' : 'bg-gray-800'} border-gray-700`}
-                onClick={() => {
-                  onViewChange('table');
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Table View
-              </Button>
-              
-              <Button
-                variant={selectedView === 'cards' ? 'default' : 'outline'}
-                size="sm"
-                className={`${selectedView === 'cards' ? 'bg-primary' : 'bg-gray-800'} border-gray-700`}
-                onClick={() => {
-                  onViewChange('cards');
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Card View
-              </Button>
-              
-              <Button
-                variant={selectedView === 'timeline' ? 'default' : 'outline'}
-                size="sm"
-                className={`${selectedView === 'timeline' ? 'bg-primary' : 'bg-gray-800'} border-gray-700`}
-                onClick={() => {
-                  onViewChange('timeline');
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Timeline View
-              </Button>
-              
-              <Link to="/my-agents" className="w-full">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
-                  onClick={() => setMobileMenuOpen(false)}
+          <div className="md:hidden pt-4 pb-2 border-t border-gray-800 mt-3 animate-fade-in-up">
+            <div className="mb-4">
+              <h3 className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">View Mode</h3>
+              <div className="flex flex-row items-center space-x-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                <Button
+                  variant={selectedView === 'table' ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${selectedView === 'table' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-800'} border-gray-700 whitespace-nowrap`}
+                  onClick={() => {
+                    onViewChange('table');
+                    setMobileMenuOpen(false);
+                  }}
                 >
-                  <Users className="h-4 w-4" />
-                  <span>My Agents</span>
+                  Table View
                 </Button>
-              </Link>
-              
-              <Link to="/analytics" className="w-full">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
-                  onClick={() => setMobileMenuOpen(false)}
+                
+                <Button
+                  variant={selectedView === 'cards' ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${selectedView === 'cards' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-800'} border-gray-700 whitespace-nowrap`}
+                  onClick={() => {
+                    onViewChange('cards');
+                    setMobileMenuOpen(false);
+                  }}
                 >
-                  <BarChart2 className="h-4 w-4" />
-                  <span>Analytics</span>
+                  Card View
                 </Button>
-              </Link>
-              
-              <Link to="/city-stats" className="w-full">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
-                  onClick={() => setMobileMenuOpen(false)}
+                
+                <Button
+                  variant={selectedView === 'timeline' ? 'default' : 'outline'}
+                  size="sm"
+                  className={`${selectedView === 'timeline' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-800'} border-gray-700 whitespace-nowrap`}
+                  onClick={() => {
+                    onViewChange('timeline');
+                    setMobileMenuOpen(false);
+                  }}
                 >
-
-                  <span>City Stats</span>
+                  Timeline View
                 </Button>
-              </Link>
+              </div>
             </div>
             
-            <div className="mt-3 w-full">
+            <div className="mb-4">
+              <h3 className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Navigation</h3>
+              <div className="space-y-2">
+                <Link to="/" className="w-full">
+                  <Button 
+                    variant="ghost"
+                    className="w-full justify-start hover:bg-gray-800 text-gray-300 hover:text-white"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Home className="h-4 w-4 mr-3" />
+                    <span>Home</span>
+                  </Button>
+                </Link>
+                
+                <Link to="/my-agents" className="w-full">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start hover:bg-gray-800 text-gray-300 hover:text-white"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Users className="h-4 w-4 mr-3" />
+                    <span>My Agents</span>
+                  </Button>
+                </Link>
+                
+                <Link to="/analytics" className="w-full">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start hover:bg-gray-800 text-gray-300 hover:text-white"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <BarChart2 className="h-4 w-4 mr-3" />
+                    <span>Analytics</span>
+                  </Button>
+                </Link>
+                
+                <Link to="/city-stats" className="w-full">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start hover:bg-gray-800 text-gray-300 hover:text-white"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Earth className="h-4 w-4 mr-3" />
+                    <span>City Stats</span>
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            
+            <div className="mt-4 w-full">
               <a 
                 href="https://freysa.ai/digital-twin?ref=Navali" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="block w-full text-center text-sm px-3 py-2 rounded-md bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
+                className="block w-full text-center text-sm px-3 py-2.5 rounded-md bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Create your Digital Twin
+                <div className="flex items-center justify-center">
+                  <ArrowUpRight className="h-4 w-4 mr-2" />
+                  <span>Create your Digital Twin</span>
+                </div>
               </a>
             </div>
           </div>
