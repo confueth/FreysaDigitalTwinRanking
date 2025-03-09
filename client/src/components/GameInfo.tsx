@@ -1,6 +1,6 @@
 import React from 'react';
-import { formatNumber, formatCurrency } from '@/utils/formatters';
-import { Trophy, TrendingUp, Award, Sparkles, Zap, Flame, Timer } from 'lucide-react';
+import { formatCurrency } from '@/utils/formatters';
+import { TrendingUp, Award, Zap, Timer } from 'lucide-react';
 import { useGameStatus } from '@/hooks/use-game-status';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -19,11 +19,6 @@ export default function GameInfo() {
       
       {/* Card content */}
       <div className="relative z-10">
-        <h2 className="text-xl font-bold mb-4 flex items-center text-gradient-animated">
-          <Trophy className="h-5 w-5 mr-2 text-blue-400" />
-          Game Stats
-          <Sparkles className="h-4 w-4 ml-2 text-blue-400 animate-pulse-soft" />
-        </h2>
         
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
