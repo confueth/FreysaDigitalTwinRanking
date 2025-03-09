@@ -554,15 +554,7 @@ export default function Home() {
               onToggleSaveAgent={handleToggleSaveAgent}
             />
             
-            {/* City Statistics */}
-            {displayDataSource.length > 0 && (
-              <div className="mt-6">
-                <CityStatistics 
-                  agents={displayDataSource}
-                  isLoading={isLoading}
-                />
-              </div>
-            )}
+            {/* City Statistics moved to dedicated page */}
           </div>
         </div>
         
@@ -611,15 +603,7 @@ export default function Home() {
               />
             </div>
             
-            {/* City Statistics for Mobile */}
-            {displayDataSource.length > 0 && (
-              <div className="mt-4">
-                <CityStatistics 
-                  agents={displayDataSource}
-                  isLoading={isLoading}
-                />
-              </div>
-            )}
+            {/* City Statistics moved to dedicated page */}
           </div>
         </div>
       </main>
