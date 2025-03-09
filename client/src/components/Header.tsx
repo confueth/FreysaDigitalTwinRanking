@@ -150,7 +150,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         <div className="md:hidden flex justify-between items-center">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border border-primary ring-1 ring-green-500 glow shadow-sm">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border border-primary shadow-sm">
                 <img 
                   src={FreysaImage}
                   alt="Freysa" 
@@ -158,27 +158,17 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                   loading="lazy"
                 />
               </div>
-              <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[140px]">
-                Freysa Digital<br /> Twin Leaderboard
+              <h1 className="text-sm font-bold text-green-400 truncate max-w-[100px]">
+                Freysa
               </h1>
             </Link>
           </div>
           
           <div className="flex items-center gap-2">
-            <Link to="/my-agents">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-gray-800 hover:bg-gray-700 border-gray-700 h-8 w-8 p-0 touch-target flex items-center justify-center"
-              >
-                <Users className="h-4 w-4" />
-              </Button>
-            </Link>
-            
             <Button 
               variant="ghost" 
               size="sm" 
-              className="p-1 h-8 w-8 text-white touch-target"
+              className="p-1 h-8 w-8 text-white"
               onClick={toggleMobileMenu}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
