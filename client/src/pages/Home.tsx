@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
 import LeaderboardTable from '@/components/LeaderboardTable';
 import StatCards from '@/components/StatCards';
-import TokenInfo from '@/components/TokenInfo';
+import CityStatistics from '@/components/CityStatistics';
+
 import AgentDetailModal from '@/components/AgentDetailModal';
 import { Agent, AgentFilters, Snapshot, SnapshotStats } from '@/types/agent';
 import { formatDate } from '@/utils/formatters';
@@ -523,8 +524,6 @@ export default function Home() {
           />
           
           <div className="flex-grow p-4 overflow-auto">
-            <TokenInfo />
-            
             <StatCards 
               stats={stats} 
               snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
@@ -555,17 +554,20 @@ export default function Home() {
               onToggleSaveAgent={handleToggleSaveAgent}
             />
             
-            {/* City Statistics moved to dedicated page */}
+            {/* City Statistics */}
+            {displayDataSource.length > 0 && (
+              <div className="mt-6">
+                <CityStatistics 
+                  agents={displayDataSource}
+                  isLoading={isLoading}
+                />
+              </div>
+            )}
           </div>
         </div>
         
         {/* Mobile layout */}
         <div className="md:hidden flex flex-col">
-          {/* Game Stats above filters in mobile view */}
-          <div className="p-3 pb-0">
-            <TokenInfo />
-          </div>
-          
           <Sidebar 
             filters={filters}
             onFilterChange={handleFilterChange}
@@ -609,7 +611,15 @@ export default function Home() {
               />
             </div>
             
-            {/* City Statistics moved to dedicated page */}
+            {/* City Statistics for Mobile */}
+            {displayDataSource.length > 0 && (
+              <div className="mt-4">
+                <CityStatistics 
+                  agents={displayDataSource}
+                  isLoading={isLoading}
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>

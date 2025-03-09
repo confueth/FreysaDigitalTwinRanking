@@ -15,7 +15,6 @@ const Home = lazy(() => import("@/pages/Home"));
 const AgentDetail = lazy(() => import("@/pages/AgentDetail"));
 const Analytics = lazy(() => import("@/pages/Analytics"));
 const MyAgents = lazy(() => import("@/pages/MyAgents"));
-const Cities = lazy(() => import("@/pages/Cities"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -95,11 +94,6 @@ function Router() {
             <Route path="/my-agents">
               <PageErrorBoundary>
                 <MyAgents />
-              </PageErrorBoundary>
-            </Route>
-            <Route path="/cities">
-              <PageErrorBoundary>
-                <Cities />
               </PageErrorBoundary>
             </Route>
             <Route>

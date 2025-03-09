@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, BarChart2, Menu, X, Users, Map } from 'lucide-react';
+import { ChevronDown, BarChart2, Menu, X, Users } from 'lucide-react';
 import { Link } from 'wouter';
 import { 
   DropdownMenu,
@@ -36,7 +36,13 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         {/* Desktop Header */}
         <div className="hidden md:flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-3">
+            <a 
+              href="https://freysa.ai/digital-twin" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center space-x-3 hover:opacity-90 transition-opacity"
+              title="Visit Freysa Digital Twin website"
+            >
               <div className="w-10 h-10 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
                 <img 
                   src={FreysaImage}
@@ -48,7 +54,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
                 Freysa Leaderboard
               </h1>
-            </div>
+            </a>
           </div>
           
           <div className="flex items-center gap-4">
@@ -81,17 +87,6 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               >
                 <BarChart2 className="h-4 w-4" />
                 <span>Analytics</span>
-              </Button>
-            </Link>
-            
-            <Link to="/cities">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-1"
-              >
-                <Map className="h-4 w-4" />
-                <span>Cities</span>
               </Button>
             </Link>
             
@@ -129,7 +124,13 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
         {/* Mobile Header */}
         <div className="md:hidden flex justify-between items-center">
           <div className="flex items-center">
-            <div className="flex items-center space-x-2">
+            <a 
+              href="https://freysa.ai/digital-twin" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
+              title="Visit Freysa Digital Twin website"
+            >
               <div className="w-8 h-8 rounded-full overflow-hidden bg-primary border-2 border-primary ring-1 ring-green-500 glow animate-pulse-green">
                 <img 
                   src={FreysaImage}
@@ -141,7 +142,7 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
               <h1 className="text-sm font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate max-w-[180px]">
                 Freysa Leaderboard
               </h1>
-            </div>
+            </a>
           </div>
           
           <div className="flex items-center gap-2">
@@ -184,14 +185,6 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 >
                   <Link to="/analytics" className="w-full">
                     Analytics
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="hover:bg-gray-700"
-                  asChild
-                >
-                  <Link to="/cities" className="w-full">
-                    Cities
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
@@ -283,18 +276,6 @@ export default function Header({ selectedView, onViewChange }: HeaderProps) {
                 >
                   <BarChart2 className="h-4 w-4" />
                   <span>Analytics</span>
-                </Button>
-              </Link>
-              
-              <Link to="/cities" className="w-full">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center justify-center gap-1 w-full"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Map className="h-4 w-4" />
-                  <span>Cities</span>
                 </Button>
               </Link>
             </div>
