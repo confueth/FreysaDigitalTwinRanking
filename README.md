@@ -35,6 +35,13 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 
 ## Latest Updates
 
+### March 10, 2025
+- ✅ **Responsive Layout Improvements**: Enhanced homepage layout with better spacing and consistent appearance across different screen sizes
+- ✅ **Fixed UI Rendering Issues**: Resolved icon positioning issues on large monitors with proper containment
+- ✅ **Two-Column Layout**: Implemented space-efficient two-column layouts for filters and stat cards on larger screens
+- ✅ **Added Hover Effects**: Enhanced interactive elements with subtle hover effects for better user experience
+- ✅ **Optimized Mobile Experience**: Improved touch targets and spacing for mobile users
+
 ### March 9, 2025
 - ✅ **Documentation Update**: Updated README with latest project changes and features
 - ✅ **Chart Optimization**: Fixed chart rendering issues with width and height handling
@@ -107,6 +114,15 @@ An interactive web application for tracking and analyzing Freysa game leaderboar
 - **Snapshot Fallback**: Gracefully handles API unavailability
 - **Rate Limiting**: Prevents API abuse and ensures stability
 - **Optimized Data Loading**: Loads large datasets efficiently with pagination
+
+## Responsive Design Features
+
+- **Adaptive Layout**: Optimized layouts for mobile, tablet, and desktop displays
+- **Grid System**: Responsive grid layouts that adjust based on screen size
+- **Sticky Components**: Fixed-position header and sidebar for better navigation on large screens
+- **Overflow Protection**: Prevents content overflow on any screen size with proper containment
+- **Flexible Card System**: Card components that maintain consistency across all device sizes
+- **Touch-Friendly Interface**: Properly sized touch targets for mobile users
 
 ---
 
