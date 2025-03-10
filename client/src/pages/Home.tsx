@@ -455,17 +455,13 @@ export default function Home() {
 
   return (
     <div>
-      <div className="bg-gray-900 border-b border-gray-800 py-4">
-        <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 flex justify-between items-center">
-          <div className="flex items-center">
+      <div className="bg-gray-900 border-b border-gray-800 py-4 sticky top-0 z-10 w-full">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
+          <div className="flex items-center mb-3 sm:mb-0">
             <a 
-              
-              target="_blank" 
-              rel="noopener noreferrer"
               className="flex items-center gap-3 hover:opacity-90 transition-opacity"
-              
             >
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green flex-shrink-0">
                 <img 
                   src={FreysaImage}
                   alt="Freysa" 
@@ -473,28 +469,29 @@ export default function Home() {
                   loading="lazy"
                 />
               </div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent truncate">
                 Freysa Digital Twin Leaderboard
               </h1>
             </a>
           </div>
           
-          <div className="flex items-center gap-2 sm:gap-3">
-            
-            
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
             <Link to="/my-agents">
               <Button 
                 variant="outline" 
+                size="sm"
                 className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
               >
                 <Users className="h-4 w-4 mr-1" />
-                <span>My Agents</span>
+                <span className="hidden sm:inline">My Agents</span>
+                <span className="sm:hidden">Agents</span>
               </Button>
             </Link>
             
             <Link to="/analytics">
               <Button 
                 variant="outline" 
+                size="sm"
                 className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
               >
                 <LineChart className="h-4 w-4 mr-1" />
@@ -505,36 +502,42 @@ export default function Home() {
             <Link to="/city-stats">
               <Button 
                 variant="outline" 
+                size="sm"
                 className="border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
               >
                 <Earth className="h-4 w-4 mr-1" />
-                <span>City Stats</span>
+                <span className="hidden sm:inline">City Stats</span>
+                <span className="sm:hidden">Cities</span>
               </Button>
             </Link>
           </div>
         </div>
       </div>
       
-      <main className="flex flex-col">
+      <main className="flex flex-col max-w-screen-2xl mx-auto w-full">
         {/* Desktop layout */}
         <div className="hidden md:flex flex-row">
-          <Sidebar 
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            cities={cities || []}
-            isLoading={snapshotsLoading}
-            showMyAgents={showMyAgentsOnly}
-            onToggleMyAgents={handleToggleMyAgents}
-            myAgents={myAgents}
-          />
-          
-          <div className="flex-grow p-4 overflow-auto">
-            <StatCards 
-              stats={stats} 
-              snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
-              firstLoadTime={firstLoadTime}
-              isLoading={!stats}
+          <div className="w-80 flex-shrink-0 max-h-[calc(100vh-70px)] sticky top-[70px] overflow-y-auto">
+            <Sidebar 
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              cities={cities || []}
+              isLoading={snapshotsLoading}
+              showMyAgents={showMyAgentsOnly}
+              onToggleMyAgents={handleToggleMyAgents}
+              myAgents={myAgents}
             />
+          </div>
+          
+          <div className="flex-grow p-4 overflow-x-auto">
+            <div className="mb-6">
+              <StatCards 
+                stats={stats} 
+                snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
+                firstLoadTime={firstLoadTime}
+                isLoading={!stats}
+              />
+            </div>
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
               <h2 className="text-xl font-bold">{viewTitle}</h2>
@@ -547,25 +550,25 @@ export default function Home() {
               </div>
             </div>
             
-            <LeaderboardTable 
-              agents={displayAgents}
-              onAgentSelect={handleAgentSelect}
-              currentPage={filters.page || 1}
-              onPageChange={handlePageChange}
-              totalAgents={totalAgentsCount}
-              pageSize={filters.limit || 25}
-              isLoading={isLoading}
-              savedAgents={myAgents}
-              onToggleSaveAgent={handleToggleSaveAgent}
-            />
-            
-
+            <div className="overflow-x-auto">
+              <LeaderboardTable 
+                agents={displayAgents}
+                onAgentSelect={handleAgentSelect}
+                currentPage={filters.page || 1}
+                onPageChange={handlePageChange}
+                totalAgents={totalAgentsCount}
+                pageSize={filters.limit || 25}
+                isLoading={isLoading}
+                savedAgents={myAgents}
+                onToggleSaveAgent={handleToggleSaveAgent}
+              />
+            </div>
           </div>
         </div>
         
-        {/* Mobile layout - Game status moved above Sidebar/Filters */}
-        <div className="md:hidden flex flex-col">
-          <div className="p-3">
+        {/* Mobile layout - optimized for better spacing */}
+        <div className="md:hidden flex flex-col px-3">
+          <div className="py-3">
             <StatCards 
               stats={stats} 
               snapshotTime={currentSnapshot ? formatDate(currentSnapshot.timestamp) : ''}
@@ -584,8 +587,8 @@ export default function Home() {
             myAgents={myAgents}
           />
           
-          <div className="p-3">
-            <div className="flex flex-col justify-between items-start mb-3 gap-1">
+          <div className="py-3">
+            <div className="flex flex-col justify-between items-start mb-4 gap-1">
               <h2 className="text-lg font-bold">{viewTitle}</h2>
               <div>
                 <span className="text-gray-400 text-xs">
@@ -596,21 +599,21 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="overflow-x-auto -mx-3">
-              <LeaderboardTable 
-                agents={displayAgents}
-                onAgentSelect={handleAgentSelect}
-                currentPage={filters.page || 1}
-                onPageChange={handlePageChange}
-                totalAgents={totalAgentsCount}
-                pageSize={filters.limit || 25}
-                isLoading={isLoading}
-                savedAgents={myAgents}
-                onToggleSaveAgent={handleToggleSaveAgent}
-              />
+            <div className="overflow-x-auto -mx-3 px-3">
+              <div className="min-w-full">
+                <LeaderboardTable 
+                  agents={displayAgents}
+                  onAgentSelect={handleAgentSelect}
+                  currentPage={filters.page || 1}
+                  onPageChange={handlePageChange}
+                  totalAgents={totalAgentsCount}
+                  pageSize={filters.limit || 25}
+                  isLoading={isLoading}
+                  savedAgents={myAgents}
+                  onToggleSaveAgent={handleToggleSaveAgent}
+                />
+              </div>
             </div>
-            
-
           </div>
         </div>
       </main>

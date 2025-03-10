@@ -310,4 +310,26 @@
   .badge-outline-glow {
     @apply border border-blue-500/30 text-blue-300 hover:border-blue-500/50 transition-colors duration-200;
   }
+  
+  /* Layout utilities for responsive design */
+  .app-container {
+    @apply w-full max-w-screen-2xl mx-auto;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
+  
+  .sidebar-fixed {
+    @apply sticky top-[70px] max-h-[calc(100vh-70px)] overflow-y-auto;
+  }
+  
+  .content-container {
+    @apply flex-grow p-4 overflow-x-auto;
+  }
+  
+  /* Card hover animations */
+  .card-interactive {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-blue-600/10 hover:-translate-y-1 border border-gray-700 hover:border-blue-600/30;
+  }
 }

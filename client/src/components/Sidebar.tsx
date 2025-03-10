@@ -140,7 +140,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside className={`w-full md:w-64 bg-gray-900 border-b md:border-b-0 md:border-r border-gray-800 p-4 md:h-[calc(100vh-64px)] md:sticky md:top-16 md:overflow-y-auto`}>
+    <aside className="w-full bg-gray-900 border-b md:border-b-0 md:border-r border-gray-800 p-4 md:p-6 md:pr-4">
       {/* Mobile search and filter toggle */}
       <div className="flex flex-col md:hidden mb-4">
         <div className="flex items-center gap-2 mb-3">
@@ -178,8 +178,8 @@ export default function Sidebar({
         {!filtersVisible && (
           <div className="flex items-center text-xs text-gray-400 flex-wrap gap-1">
             {filters.city && <span className="bg-gray-800 px-2 py-1 rounded-full">City: {filters.city}</span>}
-            {filters.minScore && <span className="bg-gray-800 px-2 py-1 rounded-full">Min Score: {filters.minScore}</span>}
-            {filters.maxScore && <span className="bg-gray-800 px-2 py-1 rounded-full">Max Score: {filters.maxScore}</span>}
+            {filters.minScore && <span className="bg-gray-800 px-2 py-1 rounded-full">Min: {filters.minScore}</span>}
+            {filters.maxScore && <span className="bg-gray-800 px-2 py-1 rounded-full">Max: {filters.maxScore}</span>}
             {filters.sortBy && <span className="bg-gray-800 px-2 py-1 rounded-full">Sort: {filters.sortBy.replace('_', ' ')}</span>}
           </div>
         )}
@@ -187,7 +187,7 @@ export default function Sidebar({
       
       {/* Desktop search and filters */}
       <div className="hidden md:block">
-        <div className="mb-4">
+        <div className="mb-5">
           <h2 className="text-lg font-semibold mb-2 text-gradient-animated">Search</h2>
           <div className="relative mb-2">
             <Input
@@ -211,7 +211,7 @@ export default function Sidebar({
         </div>
         
         {/* Desktop filter header with toggle */}
-        <div className="mb-2 flex justify-between items-center">
+        <div className="mb-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold text-gradient-animated">Filters</h2>
             <Button
@@ -278,62 +278,8 @@ export default function Sidebar({
           </h2>
         )}
         
-        <div className="mb-3">
-          <Label className="block text-sm font-medium mb-1 text-blue-300">Score Range</Label>
-          <div className="flex space-x-2">
-            <Input
-              type="number"
-              placeholder="Min"
-              value={minScore}
-              onChange={handleMinScoreChange}
-              className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm focus:border-blue-500/50 transition-colors duration-200"
-            />
-            <Input
-              type="number"
-              placeholder="Max"
-              value={maxScore}
-              onChange={handleMaxScoreChange}
-              className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm focus:border-blue-500/50 transition-colors duration-200"
-            />
-          </div>
-        </div>
-        
-        <div className="mb-3">
-          <Label className="block text-sm font-medium mb-1 text-blue-300">City</Label>
-          <Select value={city} onValueChange={handleCityChange}>
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200">
-              <SelectValue placeholder="All Cities" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-700">
-              <SelectItem value="all" className="focus:bg-blue-900/20 focus:text-blue-400">All Cities</SelectItem>
-              {cities.map((city) => (
-                <SelectItem key={city} value={city} className="focus:bg-blue-900/20 focus:text-blue-400">
-                  {city}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="mb-3">
-          <Label className="block text-sm font-medium mb-1 text-blue-300">Sort By</Label>
-          <Select value={sortBy} onValueChange={handleSortChange}>
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-700">
-              <SelectItem value="score" className="focus:bg-blue-900/20 focus:text-blue-400">Score (High to Low)</SelectItem>
-              <SelectItem value="score_asc" className="focus:bg-blue-900/20 focus:text-blue-400">Score (Low to High)</SelectItem>
-              <SelectItem value="score_change" className="focus:bg-blue-900/20 focus:text-blue-400">Score Change (Improved)</SelectItem>
-              <SelectItem value="followers" className="focus:bg-blue-900/20 focus:text-blue-400">Followers (High to Low)</SelectItem>
-              <SelectItem value="likes" className="focus:bg-blue-900/20 focus:text-blue-400">Likes (High to Low)</SelectItem>
-              <SelectItem value="retweets" className="focus:bg-blue-900/20 focus:text-blue-400">Retweets (High to Low)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-                {/* My Agents Toggle */}
-        <div className="mb-4">
+        {/* My Agents Toggle at top for better visibility */}
+        <div className="mb-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {showMyAgents ? (
@@ -355,8 +301,67 @@ export default function Sidebar({
             </div>
           )}
         </div>
+        
+        {/* Two column layout on larger screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+          <div className="space-y-3">
+            <div>
+              <Label className="block text-sm font-medium mb-1 text-blue-300">City</Label>
+              <Select value={city} onValueChange={handleCityChange}>
+                <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200">
+                  <SelectValue placeholder="All Cities" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700">
+                  <SelectItem value="all" className="focus:bg-blue-900/20 focus:text-blue-400">All Cities</SelectItem>
+                  {cities.map((city) => (
+                    <SelectItem key={city} value={city} className="focus:bg-blue-900/20 focus:text-blue-400">
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label className="block text-sm font-medium mb-1 text-blue-300">Sort By</Label>
+              <Select value={sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white text-sm focus:ring-blue-500/30 focus:border-blue-500/50 transition-all duration-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700">
+                  <SelectItem value="score" className="focus:bg-blue-900/20 focus:text-blue-400">Score (High to Low)</SelectItem>
+                  <SelectItem value="score_asc" className="focus:bg-blue-900/20 focus:text-blue-400">Score (Low to High)</SelectItem>
+                  <SelectItem value="score_change" className="focus:bg-blue-900/20 focus:text-blue-400">Score Change (Improved)</SelectItem>
+                  <SelectItem value="followers" className="focus:bg-blue-900/20 focus:text-blue-400">Followers (High to Low)</SelectItem>
+                  <SelectItem value="likes" className="focus:bg-blue-900/20 focus:text-blue-400">Likes (High to Low)</SelectItem>
+                  <SelectItem value="retweets" className="focus:bg-blue-900/20 focus:text-blue-400">Retweets (High to Low)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <Label className="block text-sm font-medium mb-1 text-blue-300">Score Range</Label>
+            <div className="flex space-x-2">
+              <Input
+                type="number"
+                placeholder="Min"
+                value={minScore}
+                onChange={handleMinScoreChange}
+                className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm focus:border-blue-500/50 transition-colors duration-200"
+              />
+              <Input
+                type="number"
+                placeholder="Max"
+                value={maxScore}
+                onChange={handleMaxScoreChange}
+                className="w-1/2 bg-gray-800 border border-gray-700 text-white text-sm focus:border-blue-500/50 transition-colors duration-200"
+              />
+            </div>
+          </div>
+        </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-6">
           <Button 
             className="w-full bg-gray-800 hover:bg-red-800/70 text-white text-sm py-1 h-8 transition-colors duration-300 border border-red-600/30"
             onClick={handleResetFilters}
