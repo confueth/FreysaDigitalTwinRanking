@@ -457,11 +457,11 @@ export default function Home() {
         <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 flex justify-between items-center">
           <div className="flex items-center">
             <a 
-              href="https://www.freysa.ai/digital-twin" 
+              
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-3 hover:opacity-90 transition-opacity"
-              title="Visit Freysa Digital Twin website"
+              
             >
               <div className="w-12 h-12 rounded-full overflow-hidden bg-primary border-2 border-primary ring-2 ring-green-500 glow animate-pulse-green">
                 <img 
@@ -478,15 +478,7 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3">
-            <a 
-              href="https://freysa.ai/digital-twin?ref=Navali" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sm px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
-              title="Create your own Digital Twin with referral"
-            >
-              Create your Twin
-            </a>
+            
             
             <Link to="/my-agents">
               <Button 

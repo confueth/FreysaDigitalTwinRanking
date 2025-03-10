@@ -332,7 +332,7 @@ export default function LeaderboardTable({
             <p className="text-sm text-gray-400">
               Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
               <span className="font-medium">{Math.min(currentPage * pageSize, totalAgents)}</span> of{' '}
-              <span className="font-medium">{totalAgents}</span> agents
+              <span className="font-medium">{totalAgents}</span> Digital Twins
             </p>
           </div>
           <div>
