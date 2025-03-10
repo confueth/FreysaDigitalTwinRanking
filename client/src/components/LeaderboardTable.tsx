@@ -1,3 +1,4 @@
+import React from 'react';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,13 +92,13 @@ export default function LeaderboardTable({
   }
 
   // Responsive column rendering
-  const renderMobileTableRow = (agent: Agent) => {
+  const renderMobileTableRow = (agent: Agent, index: number) => {
     const isSaved = savedAgents.includes(agent.mastodonUsername);
 
     return (
       <TableRow 
         key={agent.id} 
-        className={`hover:bg-gray-700 cursor-pointer ${isSaved ? 'bg-emerald-900/20' : ''}`}
+        className={`${index > 0 ? 'border-t border-gray-700' : ''} hover:bg-gray-700 cursor-pointer ${isSaved ? 'bg-emerald-900/20' : ''}`}
         onClick={() => onAgentSelect(agent.mastodonUsername)}
       >
         <TableCell className="px-2 py-3 whitespace-nowrap">
@@ -176,13 +177,13 @@ export default function LeaderboardTable({
     );
   };
 
-  const renderDesktopTableRow = (agent: Agent) => {
+  const renderDesktopTableRow = (agent: Agent, index: number) => {
     const isSaved = savedAgents.includes(agent.mastodonUsername);
 
     return (
       <TableRow 
         key={agent.id} 
-        className={`hover:bg-gray-700 cursor-pointer ${isSaved ? 'bg-emerald-900/20' : ''}`}
+        className={`${index > 0 ? 'border-t border-gray-700' : ''} hover:bg-gray-700 cursor-pointer ${isSaved ? 'bg-emerald-900/20' : ''}`}
         onClick={() => onAgentSelect(agent.mastodonUsername)}
       >
         <TableCell className="px-4 py-3 whitespace-nowrap">
@@ -288,9 +289,11 @@ export default function LeaderboardTable({
               <TableHead className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-700">
-            {agents.map((agent) => (
-              isMobile ? renderMobileTableRow(agent) : renderDesktopTableRow(agent)
+          <TableBody>
+            {agents.map((agent, index) => (
+              isMobile 
+                ? renderMobileTableRow(agent, index)
+                : renderDesktopTableRow(agent, index)
             ))}
           </TableBody>
         </Table>
