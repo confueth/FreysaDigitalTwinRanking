@@ -1,12 +1,13 @@
 import React, { useMemo, useState, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatNumber, formatCompactNumber } from '@/utils/formatters';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Agent } from '@/types/agent';
+import { ChevronDownIcon, MapPinIcon } from 'lucide-react';
 
 interface TopPerformersByCityProps {
   agents: Agent[];
@@ -93,86 +94,115 @@ const TopPerformersByCity: React.FC<TopPerformersByCityProps> = ({
     );
   }
 
+  // Find the currently selected city data
+  const selectedCityData = cityData.find(item => item.city === selectedCity);
+
+  // Handle city selection change
+  const handleCityChange = (value: string) => {
+    setSelectedCity(value);
+  };
+
   return (
     <Card className="bg-gray-800 border-gray-700 text-white">
       <CardHeader>
         <CardTitle className="text-xl font-bold">Top Performers By City</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue={selectedCity || undefined} onValueChange={setSelectedCity} className="w-full">
-          <TabsList className="flex mb-4 gap-1 overflow-x-auto">
-            {cityData.map(({ city }) => (
-              <TabsTrigger 
-                key={city} 
-                value={city}
-                className="text-xs sm:text-sm font-medium px-4 py-2 min-w-[100px] flex-shrink-0 transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md"
-              >
-                {formatCityName(city)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
-          {cityData.map(({ city, agents: cityAgents, totalAgents }) => (
-            <TabsContent key={city} value={city} className="space-y-3">
-              <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
-                <h3 className="text-lg font-semibold text-emerald-400">
-                  {formatCityName(city)}
-                </h3>
-                <Badge className="bg-emerald-600/20 text-emerald-300 border-emerald-500 hover:bg-emerald-600/30">
-                  {totalAgents} {totalAgents === 1 ? 'Agent' : 'Agents'}
-                </Badge>
-              </div>
-              
-              <div className="space-y-3">
-                {cityAgents.map((agent, index) => (
-                  <div 
-                    key={agent.id} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-gray-700/80 hover:bg-gray-600 cursor-pointer transition-colors border border-gray-600 hover:border-emerald-500 shadow-sm hover:shadow-md"
-                    onClick={() => handleAgentClick(agent.mastodonUsername)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-white font-bold text-xs ${
-                        index === 0 ? 'bg-yellow-500' : 
-                        index === 1 ? 'bg-gray-400' : 
-                        index === 2 ? 'bg-amber-700' : 
-                        'bg-gray-600'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      <Avatar className="h-10 w-10 border-2 border-gray-600">
-                        <AvatarImage src={agent.avatarUrl || ''} alt={agent.mastodonUsername} />
-                        <AvatarFallback className="bg-gray-600 text-gray-100 font-semibold">
-                          {agent.mastodonUsername.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="overflow-hidden">
-                        <p className="text-sm font-medium text-white truncate">
-                          {agent.mastodonUsername}
-                        </p>
-                        <div className="flex items-center space-x-2 text-xs text-gray-300">
-                          {agent.followersCount !== undefined && (
-                            <span>{formatCompactNumber(agent.followersCount)} followers</span>
-                          )}
-                          {agent.likesCount !== undefined && (
-                            <span>• {formatCompactNumber(agent.likesCount)} likes</span>
-                          )}
-                        </div>
-                      </div>
+        <div className="mb-4">
+          <Select 
+            value={selectedCity || undefined} 
+            onValueChange={handleCityChange}
+          >
+            <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white">
+              <SelectValue placeholder="Select a city">
+                {selectedCity && (
+                  <div className="flex items-center gap-2">
+                    <MapPinIcon className="h-4 w-4 text-emerald-400" />
+                    <span>{formatCityName(selectedCity || '')}</span>
+                  </div>
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-gray-700 border-gray-600 text-white">
+              {cityData.map(({ city, totalAgents }) => (
+                <SelectItem 
+                  key={city} 
+                  value={city}
+                  className="focus:bg-emerald-600 focus:text-white hover:bg-gray-600"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span>{formatCityName(city)}</span>
+                    <span className="text-xs text-emerald-400">
+                      {totalAgents} {totalAgents === 1 ? 'Agent' : 'Agents'}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {selectedCityData && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+              <h3 className="text-lg font-semibold text-emerald-400 flex items-center gap-2">
+                <MapPinIcon className="h-5 w-5" />
+                {formatCityName(selectedCityData.city)}
+              </h3>
+              <Badge className="bg-emerald-600/20 text-emerald-300 border-emerald-500 hover:bg-emerald-600/30">
+                {selectedCityData.totalAgents} {selectedCityData.totalAgents === 1 ? 'Agent' : 'Agents'}
+              </Badge>
+            </div>
+            
+            <div className="space-y-3">
+              {selectedCityData.agents.map((agent, index) => (
+                <div 
+                  key={agent.id} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-gray-700/80 hover:bg-gray-600 cursor-pointer transition-colors border border-gray-600 hover:border-emerald-500 shadow-sm hover:shadow-md"
+                  onClick={() => handleAgentClick(agent.mastodonUsername)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-white font-bold text-xs ${
+                      index === 0 ? 'bg-yellow-500' : 
+                      index === 1 ? 'bg-gray-400' : 
+                      index === 2 ? 'bg-amber-700' : 
+                      'bg-gray-600'
+                    }`}>
+                      {index + 1}
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-emerald-400">
-                        {formatNumber(agent.score)}
+                    <Avatar className="h-10 w-10 border-2 border-gray-600">
+                      <AvatarImage src={agent.avatarUrl || ''} alt={agent.mastodonUsername} />
+                      <AvatarFallback className="bg-gray-600 text-gray-100 font-semibold">
+                        {agent.mastodonUsername.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-medium text-white truncate">
+                        {agent.mastodonUsername}
                       </p>
-                      <p className="text-xs text-gray-300">
-                        Global Rank #{agent.rank}
-                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-300">
+                        {agent.followersCount !== undefined && (
+                          <span>{formatCompactNumber(agent.followersCount)} followers</span>
+                        )}
+                        {agent.likesCount !== undefined && (
+                          <span>• {formatCompactNumber(agent.likesCount)} likes</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-emerald-400">
+                      {formatNumber(agent.score)}
+                    </p>
+                    <p className="text-xs text-gray-300">
+                      Global Rank #{agent.rank}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -186,10 +216,15 @@ const TopPerformersSkeletonLoader = memo(() => {
         <Skeleton className="h-7 w-48 bg-gray-700" />
       </CardHeader>
       <CardContent>
-        <div className="flex mb-6 gap-1 overflow-x-auto">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-10 w-[100px] flex-shrink-0 bg-gray-700 rounded-md" />
-          ))}
+        <div className="mb-6">
+          <Skeleton className="h-10 w-full bg-gray-700 rounded-md" />
+        </div>
+        
+        <div className="mb-4">
+          <div className="flex justify-between items-center pb-2">
+            <Skeleton className="h-6 w-32 bg-gray-700" />
+            <Skeleton className="h-6 w-20 bg-gray-700 rounded-full" />
+          </div>
         </div>
         
         <div className="space-y-3">
