@@ -43,7 +43,7 @@ export default function CityStats() {
   // If data loading fails, show error message
   if (error) {
     return (
-      <div className="container mx-auto p-4 max-w-7xl">
+      <div className="app-container px-4 py-4">
         <Card className="bg-gray-800 border-gray-700 text-white mb-6">
           <CardHeader>
             <CardTitle className="text-center text-red-400">Error Loading City Statistics</CardTitle>
@@ -62,7 +62,7 @@ export default function CityStats() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
+    <div className="app-container px-4 py-4">
       <Helmet>
         <title>City Statistics | Freysa Leaderboard</title>
         <meta name="description" content="Explore statistics about Freysa Digital Twin agents by city" />

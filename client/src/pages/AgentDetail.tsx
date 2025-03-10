@@ -62,7 +62,7 @@ export default function AgentDetail() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-6">
+      <div className="app-container px-4 py-6">
         <Button 
           variant="ghost" 
           className="mb-6 flex items-center gap-2" 

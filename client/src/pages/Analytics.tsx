@@ -1180,7 +1180,7 @@ export default function Analytics({}: AnalyticsProps) {
   const chartData = prepareChartData();
 
   return (
-    <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 py-4">
+    <div className="app-container px-4 sm:px-6 py-4">
       <div className="flex justify-between items-center mb-6">
         <Link to="/">
           <Button 
