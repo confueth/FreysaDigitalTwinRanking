@@ -100,14 +100,14 @@ const TopPerformersByCity: React.FC<TopPerformersByCityProps> = ({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={selectedCity || undefined} onValueChange={setSelectedCity} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-4 gap-1 overflow-x-auto sm:grid-cols-6">
+          <TabsList className="flex mb-4 gap-1 overflow-x-auto">
             {cityData.map(({ city }) => (
               <TabsTrigger 
                 key={city} 
                 value={city}
-                className="text-xs sm:text-sm font-medium px-2 py-1.5 transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md"
+                className="text-xs sm:text-sm font-medium px-4 py-2 min-w-[100px] flex-shrink-0 transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md"
               >
-                {isMobile ? formatCityName(city).substring(0, 3) : formatCityName(city)}
+                {formatCityName(city)}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -186,15 +186,30 @@ const TopPerformersSkeletonLoader = memo(() => {
         <Skeleton className="h-7 w-48 bg-gray-700" />
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between mb-6 overflow-x-auto">
+        <div className="flex mb-6 gap-1 overflow-x-auto">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-8 w-20 bg-gray-700 rounded-md mr-2" />
+            <Skeleton key={i} className="h-10 w-[100px] flex-shrink-0 bg-gray-700 rounded-md" />
           ))}
         </div>
         
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-14 w-full bg-gray-700 rounded-md" />
+            <div key={i} className="p-3 rounded-lg border border-gray-600 bg-gray-700/80">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Skeleton className="h-7 w-7 rounded-full bg-gray-600" />
+                  <Skeleton className="h-10 w-10 rounded-full bg-gray-600" />
+                  <div>
+                    <Skeleton className="h-4 w-28 bg-gray-600 mb-1" />
+                    <Skeleton className="h-3 w-20 bg-gray-600" />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Skeleton className="h-4 w-16 bg-gray-600 mb-1" />
+                  <Skeleton className="h-3 w-14 bg-gray-600" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </CardContent>
