@@ -100,12 +100,12 @@ const TopPerformersByCity: React.FC<TopPerformersByCityProps> = ({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={selectedCity || undefined} onValueChange={setSelectedCity} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-4 overflow-x-auto sm:grid-cols-6">
+          <TabsList className="grid grid-cols-3 mb-4 gap-1 overflow-x-auto sm:grid-cols-6">
             {cityData.map(({ city }) => (
               <TabsTrigger 
                 key={city} 
                 value={city}
-                className="text-xs sm:text-sm px-2 py-1"
+                className="text-xs sm:text-sm font-medium px-2 py-1.5 transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md"
               >
                 {isMobile ? formatCityName(city).substring(0, 3) : formatCityName(city)}
               </TabsTrigger>
@@ -114,11 +114,11 @@ const TopPerformersByCity: React.FC<TopPerformersByCityProps> = ({
           
           {cityData.map(({ city, agents: cityAgents, totalAgents }) => (
             <TabsContent key={city} value={city} className="space-y-3">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-md font-medium text-gray-300">
+              <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                <h3 className="text-lg font-semibold text-emerald-400">
                   {formatCityName(city)}
                 </h3>
-                <Badge variant="outline" className="bg-gray-700 text-gray-300">
+                <Badge className="bg-emerald-600/20 text-emerald-300 border-emerald-500 hover:bg-emerald-600/30">
                   {totalAgents} {totalAgents === 1 ? 'Agent' : 'Agents'}
                 </Badge>
               </div>
@@ -127,36 +127,44 @@ const TopPerformersByCity: React.FC<TopPerformersByCityProps> = ({
                 {cityAgents.map((agent, index) => (
                   <div 
                     key={agent.id} 
-                    className="flex items-center justify-between p-2 rounded-md bg-gray-700 hover:bg-gray-600 cursor-pointer transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-gray-700/80 hover:bg-gray-600 cursor-pointer transition-colors border border-gray-600 hover:border-emerald-500 shadow-sm hover:shadow-md"
                     onClick={() => handleAgentClick(agent.mastodonUsername)}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0 text-gray-400 font-semibold w-6 text-center">
-                        #{index + 1}
+                      <div className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-white font-bold text-xs ${
+                        index === 0 ? 'bg-yellow-500' : 
+                        index === 1 ? 'bg-gray-400' : 
+                        index === 2 ? 'bg-amber-700' : 
+                        'bg-gray-600'
+                      }`}>
+                        {index + 1}
                       </div>
-                      <Avatar className="h-8 w-8 border border-gray-600">
+                      <Avatar className="h-10 w-10 border-2 border-gray-600">
                         <AvatarImage src={agent.avatarUrl || ''} alt={agent.mastodonUsername} />
-                        <AvatarFallback className="bg-gray-600 text-gray-300">
+                        <AvatarFallback className="bg-gray-600 text-gray-100 font-semibold">
                           {agent.mastodonUsername.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="overflow-hidden">
-                        <p className="text-sm font-medium text-gray-200 truncate">
+                        <p className="text-sm font-medium text-white truncate">
                           {agent.mastodonUsername}
                         </p>
-                        <div className="flex items-center space-x-2 text-xs text-gray-400">
+                        <div className="flex items-center space-x-2 text-xs text-gray-300">
                           {agent.followersCount !== undefined && (
                             <span>{formatCompactNumber(agent.followersCount)} followers</span>
+                          )}
+                          {agent.likesCount !== undefined && (
+                            <span>• {formatCompactNumber(agent.likesCount)} likes</span>
                           )}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-emerald-400">
+                      <p className="text-sm font-bold text-emerald-400">
                         {formatNumber(agent.score)}
                       </p>
-                      <p className="text-xs text-gray-400">
-                        Rank #{agent.rank}
+                      <p className="text-xs text-gray-300">
+                        Global Rank #{agent.rank}
                       </p>
                     </div>
                   </div>
