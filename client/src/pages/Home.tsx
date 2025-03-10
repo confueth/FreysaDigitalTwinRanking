@@ -230,9 +230,17 @@ export default function Home() {
   
   // Handle toggling save/unsave agent
   const handleToggleSaveAgent = (username: string) => {
-    if (myAgents.includes(username)) {
+    // Calculate the new list of saved agents - using a callback to ensure we work with latest state
+    const isCurrentlySaved = myAgents.includes(username);
+    
+    if (isCurrentlySaved) {
       // Remove from saved agents
-      setMyAgents(prev => prev.filter(agent => agent !== username));
+      setMyAgents(prev => {
+        const updated = prev.filter(agent => agent !== username);
+        // Update localStorage with new list inside the callback
+        localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updated));
+        return updated;
+      });
       
       toast({
         title: 'Agent Removed',
@@ -240,24 +248,18 @@ export default function Home() {
       });
     } else {
       // Add to saved agents
-      setMyAgents(prev => [...prev, username]);
+      setMyAgents(prev => {
+        const updated = [...prev, username];
+        // Update localStorage with new list inside the callback
+        localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updated));
+        return updated;
+      });
       
       toast({
         title: 'Agent Saved',
         description: `${username} has been added to your saved agents.`
       });
     }
-    
-    // Calculate the new list of saved agents
-    const updatedAgents = myAgents.includes(username)
-      ? myAgents.filter(agent => agent !== username)
-      : [...myAgents, username];
-      
-    // Update state with new list
-    setMyAgents(updatedAgents);
-      
-    // Update localStorage with new list
-    localStorage.setItem(MY_AGENTS_KEY, JSON.stringify(updatedAgents));
   };
 
   // Handle agent selection
