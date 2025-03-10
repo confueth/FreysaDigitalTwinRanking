@@ -456,7 +456,7 @@ export default function Home() {
   return (
     <div>
       <div className="bg-gray-900 border-b border-gray-800 py-4 sticky top-0 z-10 w-full">
-        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
+        <div className="app-container px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center mb-3 sm:mb-0">
             <a 
               className="flex items-center gap-3 hover:opacity-90 transition-opacity"
@@ -514,7 +514,7 @@ export default function Home() {
         </div>
       </div>
       
-      <main className="flex flex-col max-w-screen-2xl mx-auto w-full">
+      <main className="flex flex-col app-container w-full">
         {/* Desktop layout */}
         <div className="hidden md:flex flex-row">
           <div className="w-80 flex-shrink-0 max-h-[calc(100vh-70px)] sticky top-[70px] overflow-y-auto">

@@ -313,7 +313,7 @@
   
   /* Layout utilities for responsive design */
   .app-container {
-    @apply w-full max-w-screen-2xl mx-auto;
+    @apply w-full max-w-[95%] lg:max-w-[90%] xl:max-w-[1800px] mx-auto;
   }
   
   .responsive-grid {
