@@ -132,6 +132,7 @@ const TopPerformersByCity: React.FC<TopPerformersByCityProps> = ({
                 >
                   <div className="flex items-center justify-between w-full">
                     <span>{formatCityName(city)}</span>
+                    
                     <span className="text-xs text-emerald-400">
                       {totalAgents} {totalAgents === 1 ? 'Agent' : 'Agents'}
                     </span>
