@@ -227,9 +227,9 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
             }
             
             // Extract Twitter/X data if available
-            let twitterUsername = data.twitterUsername;
-            let xtwitterBio = data.xtwitterBio;
-            let xtwitterProfileImage = data.xtwitterProfileImage;
+            let twitterUsername = null;
+            let xtwitterBio = null;
+            let xtwitterProfileImage = null;
             
             if (externalData) {
               if (externalData.twitterUsername) {
@@ -262,9 +262,9 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
           ...data,
           humanFeedback,
           repliesCount,
-          twitterUsername,
-          xtwitterBio,
-          xtwitterProfileImage
+          twitterUsername: twitterUsername || null,
+          xtwitterBio: xtwitterBio || null,
+          xtwitterProfileImage: xtwitterProfileImage || null
         };
         
         // Store in cache with timestamp
