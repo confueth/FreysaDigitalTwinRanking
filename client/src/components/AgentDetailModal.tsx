@@ -226,6 +226,28 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
               console.log(`Found replies count for ${username}: ${repliesCount}`);
             }
             
+            // Extract Twitter/X data if available
+            let twitterUsername = data.twitterUsername;
+            let xtwitterBio = data.xtwitterBio;
+            let xtwitterProfileImage = data.xtwitterProfileImage;
+            
+            if (externalData) {
+              if (externalData.twitterUsername) {
+                twitterUsername = externalData.twitterUsername;
+                console.log(`Found Twitter username for ${username}: ${twitterUsername}`);
+              }
+              
+              if (externalData.xwitterBio) {
+                xtwitterBio = externalData.xwitterBio;
+                console.log(`Found Twitter bio for ${username}`);
+              }
+              
+              if (externalData.xwitterProfileImage) {
+                xtwitterProfileImage = externalData.xwitterProfileImage;
+                console.log(`Found Twitter profile image for ${username}`);
+              }
+            }
+            
             console.log(`External data fetch complete for ${username}`);
           } else {
             console.log(`External API returned status ${externalResponse.status} for ${username}`);
@@ -239,7 +261,10 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
         const enrichedData = {
           ...data,
           humanFeedback,
-          repliesCount
+          repliesCount,
+          twitterUsername,
+          xtwitterBio,
+          xtwitterProfileImage
         };
         
         // Store in cache with timestamp
