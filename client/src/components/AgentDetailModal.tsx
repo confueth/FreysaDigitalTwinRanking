@@ -54,6 +54,9 @@ interface ExternalAgentData {
   humanFeedback?: string;
   bioUpdatedAt?: string;
   ubiClaimedAt?: string;
+  xtwitterBio?: string;
+  xtwitterProfileImage?: string;
+  twitterUsername?: string;
   tweets?: TweetData[];
 }
 
@@ -200,9 +203,12 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
         
         const data = await response.json();
         
-        // Try to fetch additional data (human feedback and replies count) from the external API
+        // Try to fetch additional data (human feedback, replies count and twitter data) from the external API
         let humanFeedback = data.humanFeedback;
         let repliesCount = data.repliesCount;
+        let twitterUsername = data.twitterUsername;
+        let xtwitterBio = data.xtwitterBio;
+        let xtwitterProfileImage = data.xtwitterProfileImage;
         
         try {
           console.log(`Fetching external data for ${username} from external API`);
@@ -223,6 +229,24 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
               console.log(`Found replies count for ${username}: ${repliesCount}`);
             }
             
+            // Extract Twitter username if available
+            if (externalData && externalData.twitterUsername) {
+              twitterUsername = externalData.twitterUsername;
+              console.log(`Found Twitter username for ${username}: ${twitterUsername}`);
+            }
+            
+            // Extract Twitter bio if available
+            if (externalData && externalData.xtwitterBio) {
+              xtwitterBio = externalData.xtwitterBio;
+              console.log(`Found Twitter bio for ${username}`);
+            }
+            
+            // Extract Twitter profile image if available
+            if (externalData && externalData.xtwitterProfileImage) {
+              xtwitterProfileImage = externalData.xtwitterProfileImage;
+              console.log(`Found Twitter profile image for ${username}`);
+            }
+            
             console.log(`External data fetch complete for ${username}`);
           } else {
             console.log(`External API returned status ${externalResponse.status} for ${username}`);
@@ -236,7 +260,10 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
         const enrichedData = {
           ...data,
           humanFeedback,
-          repliesCount
+          repliesCount,
+          twitterUsername,
+          xtwitterBio,
+          xtwitterProfileImage
         };
         
         // Store in cache with timestamp
@@ -536,8 +563,20 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                     <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span className="text-xs sm:text-sm">Mastadon Profile</span>
                   </Button>
-                  
                 </a>
+                {agent.twitterUsername && (
+                  <a 
+                    href={`https://x.com/${agent.twitterUsername}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto"
+                  >
+                    <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center gap-1 w-full sm:w-auto">
+                      <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-xs sm:text-sm">X Profile</span>
+                    </Button>
+                  </a>
+                )}
               </div>
             </>
           ) : (
