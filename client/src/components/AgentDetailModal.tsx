@@ -537,10 +537,22 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                 >
                   <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center gap-1 w-full sm:w-auto">
                     <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="text-xs sm:text-sm">Mastadon Profile</span>
+                    <span className="text-xs sm:text-sm">Mastodon Profile</span>
                   </Button>
-                  
                 </a>
+                {agent.twitterUsername && 
+                  <a 
+                    href={`https://x.com/${agent.twitterUsername}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto"
+                  >
+                    <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center gap-1 w-full sm:w-auto">
+                      <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="text-xs sm:text-sm">X Profile</span>
+                    </Button>
+                  </a>
+                }
               </div>
             </>
           ) : (
