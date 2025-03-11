@@ -16,7 +16,7 @@ import {
   getScoreChangeClass,
   getChangeValue
 } from '@/utils/formatters';
-import { X, MapPin, ExternalLink, User, MessageSquare } from 'lucide-react';
+import { X, MapPin, ExternalLink, User, MessageSquare, Twitter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -329,6 +329,13 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
     }
   }, [error, toast]);
 
+  // Function to share tweet on Twitter/X
+  const tweetText = (content: string) => {
+    const text = content;
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(tweetUrl, '_blank', 'width=600,height=400');
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -504,17 +511,22 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                           <span className="mb-2 sm:mb-0">{formatDate(tweet.timestamp, 'full', true)}</span>
                           <div className="flex space-x-3 sm:space-x-4">
                             <div className="flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                              </svg>
+                              <span className="mr-1">❤️</span> 
                               <span>{tweet.likesCount}</span>
                             </div>
                             <div className="flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
+                              <span className="mr-1">🔄</span> 
                               <span>{tweet.retweetsCount}</span>
                             </div>
+                            {agent.twitterUsername && (
+                              <button 
+                                onClick={() => tweetText(formatTweetContent(tweet.content))}
+                                className="flex items-center text-blue-400 hover:text-blue-300"
+                              >
+                                <Twitter className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                <span>Share on X</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
