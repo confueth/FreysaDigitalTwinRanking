@@ -54,9 +54,6 @@ interface ExternalAgentData {
   humanFeedback?: string;
   bioUpdatedAt?: string;
   ubiClaimedAt?: string;
-  xtwitterBio?: string;
-  xtwitterProfileImage?: string;
-  twitterUsername?: string;
   tweets?: TweetData[];
 }
 
