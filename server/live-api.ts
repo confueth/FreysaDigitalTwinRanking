@@ -5,7 +5,7 @@ import type { Agent, LeaderboardEntry, AgentDetails } from "@shared/schema";
 
 // API endpoints
 const LEADERBOARD_API = "https://determined-smile-production-e0d1.up.railway.app/digital-clones/leaderboards?full=true";
-const AGENT_DETAILS_API = "https://digital-clone-production.onrender.com/digital-clones/clones/";
+const AGENT_DETAILS_API = "https://determined-smile-production-e0d1.up.railway.app/digital-clones/clones/";
 
 // Turn off strict schema validation for now to fix the app
 const DISABLE_VALIDATION = true;
