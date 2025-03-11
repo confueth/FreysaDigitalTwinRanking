@@ -54,6 +54,9 @@ interface ExternalAgentData {
   humanFeedback?: string;
   bioUpdatedAt?: string;
   ubiClaimedAt?: string;
+  xtwitterBio?: string;
+  xtwitterProfileImage?: string;
+  twitterUsername?: string;
   tweets?: TweetData[];
 }
 
@@ -523,7 +526,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                 >
                   <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center gap-1 w-full sm:w-auto">
                     <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="text-xs sm:text-sm">View API Data</span>
+                    <span className="text-xs sm:text-sm">API Data</span>
                   </Button>
                 </a>
                 <a 
@@ -534,7 +537,7 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                 >
                   <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center gap-1 w-full sm:w-auto">
                     <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="text-xs sm:text-sm">View Mastadon Profile</span>
+                    <span className="text-xs sm:text-sm">Mastadon Profile</span>
                   </Button>
                   
                 </a>
