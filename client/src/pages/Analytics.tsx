@@ -982,6 +982,33 @@ export default function Analytics({}: AnalyticsProps) {
     selectedAgents.forEach(username => {
       const dataMap = agentDataPoints.get(username);
       if (dataMap && dataMap.size > 0) {
+        // For 'score' metric, ensure values never decrease over time
+        if (metric === 'score') {
+          // First, collect all known data points
+          const knownPoints: Array<{timestamp: string, value: number}> = [];
+          sortedTimestamps.forEach(timestamp => {
+            if (dataMap.has(timestamp)) {
+              knownPoints.push({
+                timestamp,
+                value: dataMap.get(timestamp) || 0
+              });
+            }
+          });
+          
+          // Ensure monotonically increasing scores across all known points
+          let maxScore = 0;
+          knownPoints.forEach(point => {
+            if (point.value < maxScore) {
+              // If this score is less than a previous max, adjust it upward
+              console.log(`Correcting decreasing score for ${username}: ${point.value} -> ${maxScore}`);
+              dataMap.set(point.timestamp, maxScore);
+              point.value = maxScore;
+            } else {
+              maxScore = point.value;
+            }
+          });
+        }
+        
         // Find missing timestamps and interpolate values
         let lastKnownValue: number | null = null;
         let lastTimestamp: string | null = null;
