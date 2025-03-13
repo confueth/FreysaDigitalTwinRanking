@@ -249,12 +249,12 @@ export default function Analytics({}: AnalyticsProps) {
           // Only if not showing My Agents only, initialize selectedAgents
           if (!showMyAgentsOnly) {
             // Limit to maximum 7 agents for performance
-            setSelectedAgents(parsed.slice(0, 7));
+            setSelectedAgents(parsed.slice(0, 10));
 
-            if (parsed.length > 7) {
+            if (parsed.length > 10) {
               toast({
                 title: "Note",
-                description: "Only the first 7 saved agents are loaded for comparison.",
+                description: "Only the first 10 saved agents are loaded for comparison.",
               });
             }
           }
@@ -276,8 +276,8 @@ export default function Analytics({}: AnalyticsProps) {
             
             // If we're in "My Agents Only" mode, update the selected agents
             if (showMyAgentsOnly) {
-              // Limit to maximum 7 agents for the chart
-              setSelectedAgents(parsed.slice(0, 7));
+              // Limit to maximum 10 agents for the chart
+              setSelectedAgents(parsed.slice(0, 10));
             }
           }
         } catch (e) {
@@ -466,7 +466,7 @@ export default function Analytics({}: AnalyticsProps) {
     if (selectedAgents.includes(username)) {
       // Deselect agent
       newSelectedAgents = selectedAgents.filter(agent => agent !== username);
-    } else if (selectedAgents.length < 7) {
+    } else if (selectedAgents.length < 10) {
       // Select new agent
       newSelectedAgents = [...selectedAgents, username];
     } else {
