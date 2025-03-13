@@ -248,7 +248,7 @@ export default function Analytics({}: AnalyticsProps) {
           
           // Only if not showing My Agents only, initialize selectedAgents
           if (!showMyAgentsOnly) {
-            // Limit to maximum 7 agents for performance
+            // Limit to maximum 10 agents for performance
             setSelectedAgents(parsed.slice(0, 10));
 
             if (parsed.length > 10) {
@@ -473,7 +473,7 @@ export default function Analytics({}: AnalyticsProps) {
       // Maximum agents reached
       toast({
         title: "Maximum Reached",
-        description: "You can only compare up to 7 agents at once.",
+        description: "You can only compare up to 10 agents at once.",
         variant: "destructive"
       });
       return;
@@ -492,14 +492,14 @@ export default function Analytics({}: AnalyticsProps) {
     
     // If we're turning on My Agents view, update the selected agents to match
     if (newState && myAgents.length > 0) {
-      // Limit to maximum 7 agents for the chart
-      const agentsToShow = myAgents.slice(0, 7);
+      // Limit to maximum 10 agents for the chart
+      const agentsToShow = myAgents.slice(0, 10);
       setSelectedAgents(agentsToShow);
       
-      if (myAgents.length > 7) {
+      if (myAgents.length > 10) {
         toast({
           title: "Note",
-          description: "Only the first 7 saved agents are loaded for comparison.",
+          description: "Only the first 10 saved agents are loaded for comparison.",
         });
       }
     }
@@ -592,10 +592,10 @@ export default function Analytics({}: AnalyticsProps) {
     }
 
     // Check if we've reached the maximum number of agents
-    if (selectedAgents.length >= 7) {
+    if (selectedAgents.length >= 10) {
       toast({
         title: "Maximum Reached",
-        description: "You can only compare up to 7 agents at once.",
+        description: "You can only compare up to 10 agents at once.",
         variant: "destructive"
       });
       return;
@@ -1211,7 +1211,7 @@ export default function Analytics({}: AnalyticsProps) {
               <CardHeader>
                 <CardTitle>Select Agents</CardTitle>
                 <CardDescription>
-                  Choose up to 7 agents to compare {selectedAgents.length > 0 && `(${selectedAgents.length}/7 selected)`}
+                  Choose up to 10 agents to compare {selectedAgents.length > 0 && `(${selectedAgents.length}/10 selected)`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1271,7 +1271,7 @@ export default function Analytics({}: AnalyticsProps) {
                         <Button
                           className="whitespace-nowrap"
                           onClick={handleCustomAgentSelect}
-                          disabled={selectedAgents.length >= 7 || isSearchingAgent}
+                          disabled={selectedAgents.length >= 10 || isSearchingAgent}
                         >
                           Add
                         </Button>
@@ -1324,7 +1324,7 @@ export default function Analytics({}: AnalyticsProps) {
                         ) : (
                           <Button
                             onClick={handleCustomAgentSelect}
-                            disabled={selectedAgents.length >= 7}
+                            disabled={selectedAgents.length >= 10}
                             className="bg-emerald-600 hover:bg-emerald-700"
                           >
                             Add "{searchQuery}" to Compare Anyway
