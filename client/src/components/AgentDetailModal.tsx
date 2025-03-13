@@ -512,18 +512,17 @@ export default function AgentDetailModal({ username, isOpen, onClose }: AgentDet
                           <div className="flex space-x-3 sm:space-x-4">
                             <div className="flex items-center">
                               <span className="mr-1">❤️</span> 
-                              <span>{tweet.likesCount}</span>
+                              <span>{tweet.numberOfLikes}</span>
                             </div>
                             <div className="flex items-center">
                               <span className="mr-1">🔄</span> 
-                              <span>{tweet.retweetsCount}</span>
+                              <span>{tweet.numberOfRetweets}</span>
                             </div>
                             {agent.twitterUsername && (
                               <button 
                                 onClick={() => tweetText(formatTweetContent(tweet.content))}
                                 className="flex items-center text-blue-400 hover:text-blue-300"
                               >
-                                <Twitter className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                 <span>Share on X</span>
                               </button>
                             )}
