@@ -5,7 +5,7 @@ import fs from 'fs';
 import { getLiveLeaderboardData, getLiveAgentDetail, filterAgents, getLiveStats, getAvailableCities } from './live-api';
 import type { MinimalAgent } from './live-api'; // Import the MinimalAgent type
 import { storage } from './storage';
-import { createSnapshot } from './snapshot-service';
+import { createSnapshot, findPreviousDaySnapshot as findPreviousDaySnapshotFromService } from './snapshot-service';
 import { getStartOfDayEST, formatDateEST, convertToEST } from './date-utils';
 
 async function findPreviousDaySnapshot(storage: any) {
@@ -375,8 +375,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Sort snapshots by time (latest first)
           snapshots.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-          // Find previous day snapshot for comparison
-          const previousSnapshot = await findPreviousDaySnapshot(storage);
+          // Find previous day snapshot for comparison using the service implementation
+          const previousSnapshot = await findPreviousDaySnapshotFromService(storage);
 
           // Get agent data from each snapshot to add more historical points
           for (const snapshot of snapshots) {

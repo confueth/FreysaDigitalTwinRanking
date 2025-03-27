@@ -4,6 +4,7 @@ import { createReadStream } from 'fs';
 import csv from 'csv-parser';
 import { LeaderboardEntry, AgentDetails } from '@shared/schema';
 import { IStorage } from './storage';
+import { findPreviousDaySnapshot } from './snapshot-service';
 
 interface CSVLeaderboardEntry {
   mastodonUsername: string;
@@ -72,8 +73,20 @@ export async function importLeaderboardFromCSV(
             rank: row.rank ? parseInt(row.rank, 10) : index + 1
           }));
           
-          // Import the data
-          await storage.importLeaderboardData(entries, snapshot.id);
+          // Find previous day snapshot for historical tracking
+          let prevSnapshotId: number | undefined = undefined;
+          try {
+            const previousDaySnapshot = await findPreviousDaySnapshot(storage);
+            if (previousDaySnapshot) {
+              prevSnapshotId = previousDaySnapshot.id;
+              console.log(`Using previous day snapshot #${prevSnapshotId} for historical comparisons`);
+            }
+          } catch (err) {
+            console.warn("Could not find previous day snapshot:", err);
+          }
+          
+          // Import the data with historical connections
+          await storage.importLeaderboardData(entries, snapshot.id, prevSnapshotId);
           console.log(`Successfully imported ${entries.length} entries from CSV`);
           
           // Process agent details if available
@@ -94,7 +107,7 @@ export async function importLeaderboardFromCSV(
                 ubiClaimedAt: entry.ubiClaimedAt ? new Date(entry.ubiClaimedAt) : null,
               };
               
-              await storage.importAgentDetails(entry.mastodonUsername, details, snapshot.id);
+              await storage.importAgentDetails(entry.mastodonUsername, details, snapshot.id, prevSnapshotId);
             }
           }
           

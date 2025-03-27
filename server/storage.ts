@@ -11,6 +11,7 @@ import { eq, desc, asc, and, like, or, gte, lte, sql, isNull } from 'drizzle-orm
 export interface IStorage {
   // Snapshot operations
   createSnapshot(snapshot: InsertSnapshot): Promise<Snapshot>;
+  updateSnapshot(id: number, description?: string): Promise<Snapshot | undefined>;
   getSnapshots(): Promise<Snapshot[]>;
   getLatestSnapshot(): Promise<Snapshot | undefined>;
   getSnapshot(id: number): Promise<Snapshot | undefined>;
@@ -31,8 +32,8 @@ export interface IStorage {
   getSnapshotStats(snapshotId: number): Promise<SnapshotStats>;
   
   // External data import
-  importLeaderboardData(entries: LeaderboardEntry[], snapshotId: number): Promise<void>;
-  importAgentDetails(username: string, details: AgentDetails, snapshotId: number): Promise<void>;
+  importLeaderboardData(entries: LeaderboardEntry[], snapshotId: number, prevSnapshotId?: number): Promise<void>;
+  importAgentDetails(username: string, details: AgentDetails, snapshotId: number, prevSnapshotId?: number): Promise<void>;
 }
 
 export interface AgentFilters {
@@ -76,9 +77,28 @@ export class MemStorage implements IStorage {
       ...snapshot,
       id,
       timestamp: new Date(),
+      description: snapshot.description || null
     };
     this.snapshotsData.set(id, newSnapshot);
     return newSnapshot;
+  }
+  
+  async updateSnapshot(id: number, description?: string): Promise<Snapshot | undefined> {
+    const snapshot = this.snapshotsData.get(id);
+    if (!snapshot) {
+      return undefined;
+    }
+    
+    if (description) {
+      const updatedSnapshot: Snapshot = {
+        ...snapshot,
+        description
+      };
+      this.snapshotsData.set(id, updatedSnapshot);
+      return updatedSnapshot;
+    }
+    
+    return snapshot;
   }
 
   async getSnapshots(): Promise<Snapshot[]> {
@@ -283,13 +303,23 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async importLeaderboardData(entries: LeaderboardEntry[], snapshotId: number): Promise<void> {
-    // Get existing agents from previous snapshot to calculate rank changes
-    const previousSnapshot = await this.getPreviousSnapshot(snapshotId);
+  async importLeaderboardData(entries: LeaderboardEntry[], snapshotId: number, prevSnapshotId?: number): Promise<void> {
+    // Use explicit prevSnapshotId if provided, otherwise try to find the previous snapshot
     let previousAgents: Agent[] = [];
     
-    if (previousSnapshot) {
-      previousAgents = await this.getAgents(previousSnapshot.id);
+    if (prevSnapshotId) {
+      // If we have a specific previous snapshot ID, use it directly for history
+      console.log(`Using specified prevSnapshotId #${prevSnapshotId} for historical data`);
+      previousAgents = await this.getAgents(prevSnapshotId);
+    } else {
+      // Otherwise try to find the most recent previous snapshot
+      const previousSnapshot = await this.getPreviousSnapshot(snapshotId);
+      if (previousSnapshot) {
+        console.log(`Found previous snapshot #${previousSnapshot.id} for historical data`);
+        previousAgents = await this.getAgents(previousSnapshot.id);
+      } else {
+        console.log('No previous snapshot found for historical data');
+      }
     }
     
     // Sort entries by score in descending order
@@ -305,12 +335,15 @@ export class MemStorage implements IStorage {
         a => a.mastodonUsername === entry.mastodonUsername
       );
       
+      // If we have a previous agent, use its score for the prevScore
+      const prevScore = previousAgent ? previousAgent.score : null;
+      
       // Create agent with previous rank and score
       await this.createAgent({
         snapshotId,
         mastodonUsername: entry.mastodonUsername,
         score: entry.score,
-        prevScore: previousAgent?.score,
+        prevScore: prevScore,
         avatarUrl: entry.avatarURL,
         city: entry.city,
         likesCount: entry.likesCount,
@@ -322,12 +355,23 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async importAgentDetails(username: string, details: AgentDetails, snapshotId: number): Promise<void> {
+  async importAgentDetails(username: string, details: AgentDetails, snapshotId: number, prevSnapshotId?: number): Promise<void> {
     // Find the agent in the current snapshot
     const agent = await this.getAgent(snapshotId, username);
     if (!agent) {
       return;
     }
+    
+    // If we have a specific previous snapshot ID, get the agent from there for accurate history
+    let previousAgent = null;
+    if (prevSnapshotId) {
+      previousAgent = await this.getAgent(prevSnapshotId, username);
+    }
+    
+    // If previous agent score is not set but we found a previous agent, set it
+    const prevScore = agent.prevScore !== undefined && agent.prevScore !== null 
+      ? agent.prevScore 
+      : previousAgent?.score;
     
     // Update agent with additional details
     const updatedAgent: Agent = {
@@ -336,6 +380,7 @@ export class MemStorage implements IStorage {
       walletBalance: details.walletBalance,
       mastodonBio: details.mastodonBio,
       repliesCount: details.repliesCount,
+      prevScore: prevScore,
       bioUpdatedAt: details.bioUpdatedAt ? new Date(details.bioUpdatedAt) : undefined,
       ubiClaimedAt: details.ubiClaimedAt ? new Date(details.ubiClaimedAt) : undefined,
     };
@@ -411,6 +456,25 @@ export class DatabaseStorage implements IStorage {
       .where(eq(snapshots.id, id));
     
     return snapshot;
+  }
+
+  async updateSnapshot(id: number, description?: string): Promise<Snapshot | undefined> {
+    try {
+      if (!description) {
+        return await this.getSnapshot(id);
+      }
+      
+      const [updatedSnapshot] = await db
+        .update(snapshots)
+        .set({ description })
+        .where(eq(snapshots.id, id))
+        .returning();
+      
+      return updatedSnapshot;
+    } catch (error) {
+      console.error("Error updating snapshot:", error);
+      return undefined;
+    }
   }
 
   async deleteSnapshot(id: number): Promise<boolean> {
@@ -635,13 +699,23 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async importLeaderboardData(entries: LeaderboardEntry[], snapshotId: number): Promise<void> {
-    // Get existing agents from previous snapshot to calculate rank changes
-    const previousSnapshot = await this.getPreviousSnapshot(snapshotId);
+  async importLeaderboardData(entries: LeaderboardEntry[], snapshotId: number, prevSnapshotId?: number): Promise<void> {
+    // Use explicit prevSnapshotId if provided, otherwise try to find the previous snapshot
     let previousAgents: Agent[] = [];
     
-    if (previousSnapshot) {
-      previousAgents = await this.getAgents(previousSnapshot.id);
+    if (prevSnapshotId) {
+      // If we have a specific previous snapshot ID, use it directly for history
+      console.log(`Using specified prevSnapshotId #${prevSnapshotId} for historical data`);
+      previousAgents = await this.getAgents(prevSnapshotId);
+    } else {
+      // Otherwise try to find the most recent previous snapshot
+      const previousSnapshot = await this.getPreviousSnapshot(snapshotId);
+      if (previousSnapshot) {
+        console.log(`Found previous snapshot #${previousSnapshot.id} for historical data`);
+        previousAgents = await this.getAgents(previousSnapshot.id);
+      } else {
+        console.log('No previous snapshot found for historical data');
+      }
     }
     
     // Sort entries by score in descending order
@@ -657,12 +731,16 @@ export class DatabaseStorage implements IStorage {
         a => a.mastodonUsername === entry.mastodonUsername
       );
       
+      // If we have a previous agent, use its score for the prevScore
+      // This ensures we're comparing with the actual previous value
+      const prevScore = previousAgent ? previousAgent.score : null;
+      
       // Create agent with previous rank and score
       await this.createAgent({
         snapshotId,
         mastodonUsername: entry.mastodonUsername,
         score: entry.score,
-        prevScore: previousAgent?.prevScore || null,
+        prevScore: prevScore,
         avatarUrl: entry.avatarURL || null,
         city: entry.city || null,
         likesCount: entry.likesCount || null,
@@ -674,11 +752,30 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async importAgentDetails(username: string, details: AgentDetails, snapshotId: number): Promise<void> {
+  async importAgentDetails(username: string, details: AgentDetails, snapshotId: number, prevSnapshotId?: number): Promise<void> {
     // Find the agent in the current snapshot
     const agent = await this.getAgent(snapshotId, username);
     if (!agent) {
       return;
+    }
+    
+    // If we have a specific previous snapshot ID, get the agent from there for accurate history
+    let previousAgent = null;
+    if (prevSnapshotId) {
+      previousAgent = await this.getAgent(prevSnapshotId, username);
+    } else if (agent.prevScore === null) {
+      // If no explicit previous snapshot but we need previous score data, 
+      // try to find the most recent previous snapshot
+      const prevSnapshot = await this.getPreviousSnapshot(snapshotId);
+      if (prevSnapshot) {
+        previousAgent = await this.getAgent(prevSnapshot.id, username);
+      }
+    }
+    
+    // If previous agent score is not set but we found a previous agent, set it
+    let prevScore = agent.prevScore;
+    if ((prevScore === null || prevScore === undefined) && previousAgent) {
+      prevScore = previousAgent.score;
     }
     
     // Helper function to safely parse dates
@@ -705,6 +802,7 @@ export class DatabaseStorage implements IStorage {
         walletBalance: details.walletBalance || null,
         mastodonBio: details.mastodonBio || null,
         repliesCount: details.repliesCount || null,
+        prevScore: prevScore,
         bioUpdatedAt: safeDate(details.bioUpdatedAt),
         ubiClaimedAt: safeDate(details.ubiClaimedAt),
       })

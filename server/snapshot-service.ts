@@ -33,6 +33,10 @@ export async function createSnapshot(
     // Create a new snapshot entry
     const snapshot = await storage.createSnapshot({ description });
     
+    // Find previous day snapshot for historical tracking
+    const previousDaySnapshot = await findPreviousDaySnapshot(storage);
+    const prevSnapshotId = previousDaySnapshot ? previousDaySnapshot.id : undefined;
+    
     // Get live leaderboard data
     const agents = await getLiveLeaderboardData();
     
@@ -42,6 +46,7 @@ export async function createSnapshot(
     }
     
     console.log(`Got ${agents.length} agents for snapshot #${snapshot.id}`);
+    console.log(`Previous day snapshot ID: ${prevSnapshotId || 'None'}`);
     
     // Convert to LeaderboardEntry format
     const entries: LeaderboardEntry[] = agents.map(agent => ({
@@ -54,8 +59,8 @@ export async function createSnapshot(
       retweetsCount: agent.retweetsCount
     }));
     
-    // Import the data
-    await storage.importLeaderboardData(entries, snapshot.id);
+    // Import the data with prevSnapshotId to establish historical connections
+    await storage.importLeaderboardData(entries, snapshot.id, prevSnapshotId);
     
     // Get detailed data for all agents (no limit)
     for (const agent of agents) {
@@ -78,7 +83,13 @@ export async function createSnapshot(
             tweets: details.tweets
           };
           
-          await storage.importAgentDetails(agent.mastodonUsername, agentDetails, snapshot.id);
+          // Pass the previous snapshot ID for accurate history lookup
+          await storage.importAgentDetails(
+            agent.mastodonUsername, 
+            agentDetails, 
+            snapshot.id, 
+            prevSnapshotId
+          );
         }
       } catch (error) {
         console.error(`Error fetching details for ${agent.mastodonUsername}:`, error);
@@ -147,13 +158,86 @@ export function scheduleSnapshots(storage: IStorage): void {
       if (snapshots && snapshots.length > 0) {
         const latestSnapshot = snapshots[0];
         
-        // Delete the existing snapshot
-        await storage.deleteSnapshot(latestSnapshot.id);
-        
-        // Create a new one for today with updated data in EST
+        // Update the existing snapshot
         const estDate = convertToEST(new Date());
         const [month, day, year] = estDate.split(/[\/,\s]+/);
-        await createSnapshot(storage, `End of day snapshot - ${month}/${day}/${year}`);
+        const description = `Updated snapshot - ${month}/${day}/${year}`;
+        
+        console.log(`Updating snapshot #${latestSnapshot.id} with description: ${description}`);
+        const updatedSnapshot = await storage.updateSnapshot(latestSnapshot.id, description);
+        
+        // Use the updated snapshot to import new data
+        if (updatedSnapshot) {
+          console.log(`Updated snapshot #${updatedSnapshot.id}, importing latest agent data`);
+          
+          // Get live leaderboard data
+          const agents = await getLiveLeaderboardData();
+          
+          if (!agents || agents.length === 0) {
+            console.error('Failed to get leaderboard data for snapshot update');
+            return null;
+          }
+          
+          // Find previous day snapshot for historical tracking
+          const previousDaySnapshot = await findPreviousDaySnapshot(storage);
+          const prevSnapshotId = previousDaySnapshot ? previousDaySnapshot.id : undefined;
+          
+          console.log(`Got ${agents.length} agents for updated snapshot #${updatedSnapshot.id}`);
+          console.log(`Previous day snapshot ID: ${prevSnapshotId || 'None'}`);
+          
+          // Convert to LeaderboardEntry format and import the data with prevSnapshot reference
+          const entries: LeaderboardEntry[] = agents.map(agent => ({
+            mastodonUsername: agent.mastodonUsername,
+            score: agent.score,
+            avatarURL: agent.avatarUrl,
+            city: agent.city,
+            likesCount: agent.likesCount,
+            followersCount: agent.followersCount,
+            retweetsCount: agent.retweetsCount
+          }));
+          
+          // Import the data with prevSnapshotId for historical continuity
+          await storage.importLeaderboardData(entries, updatedSnapshot.id, prevSnapshotId);
+          
+          // Get detailed data for all agents (no limit)
+          for (const agent of agents) {
+            try {
+              const details = await getLiveAgentDetail(agent.mastodonUsername);
+              if (details) {
+                const agentDetails: AgentDetails = {
+                  mastodonUsername: details.mastodonUsername,
+                  score: details.score,
+                  mastodonBio: details.mastodonBio,
+                  walletAddress: details.walletAddress,
+                  walletBalance: details.walletBalance,
+                  likesCount: details.likesCount,
+                  followersCount: details.followersCount,
+                  retweetsCount: details.retweetsCount,
+                  repliesCount: details.repliesCount,
+                  city: details.city,
+                  bioUpdatedAt: details.bioUpdatedAt,
+                  ubiClaimedAt: details.ubiClaimedAt,
+                  tweets: details.tweets
+                };
+                
+                await storage.importAgentDetails(
+                  agent.mastodonUsername, 
+                  agentDetails, 
+                  updatedSnapshot.id,
+                  prevSnapshotId
+                );
+              }
+            } catch (error) {
+              console.error(`Error fetching details for ${agent.mastodonUsername}:`, error);
+            }
+            
+            // Add a small delay to avoid hitting API rate limits
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          
+          console.log(`Snapshot #${updatedSnapshot.id} updated successfully with ${entries.length} agents`);
+          return updatedSnapshot.id;
+        }
       }
     }
   });
