@@ -70,7 +70,7 @@ function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
 
 /**
  * Get the live leaderboard data directly from the API
- * This method balances fresh data with reasonable caching to prevent API overload
+ * This method is heavily optimized for performance and memory usage
  */
 export async function getLiveLeaderboardData() {
   const now = Date.now();
@@ -79,9 +79,7 @@ export async function getLiveLeaderboardData() {
   if (!initialLoadComplete) {
     console.log("First load - forcing data refresh");
     initialLoadComplete = true;
-  } 
-  // Use a short cache time of 30 seconds to balance fresh data with performance
-  else if (cachedLeaderboardData && (now - lastFetchTime < 30 * 1000)) {
+  } else if (cachedLeaderboardData && (now - lastFetchTime < CACHE_TTL)) {
     return cachedLeaderboardData;
   }
   
@@ -91,9 +89,25 @@ export async function getLiveLeaderboardData() {
     return cachedLeaderboardData || [];
   }
   
-  // Respect the throttle period to prevent overwhelming the API
+  // Check if we're within throttle period (don't make API calls too close together)
   if (cachedLeaderboardData && now - lastFetchTime < REQUEST_THROTTLE) {
-    console.log("Within API throttle period, using cached data briefly");
+    console.log("Within API throttle period, using cached data");
+    return cachedLeaderboardData;
+  }
+  
+  // Use expired cache if we have it unless the cache is very old
+  if (cachedLeaderboardData && now - lastFetchTime < FORCE_REFRESH_TTL) {
+    // Schedule a background refresh for next request but return current cache immediately
+    setTimeout(() => {
+      if (!fetchInProgress) {
+        fetchInProgress = true;
+        getLiveLeaderboardData()
+          .finally(() => {
+            fetchInProgress = false;
+          });
+      }
+    }, 100);
+    
     return cachedLeaderboardData;
   }
   
