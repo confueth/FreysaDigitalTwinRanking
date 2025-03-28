@@ -668,24 +668,37 @@ export class DatabaseStorage implements IStorage {
     // Get all agents for this snapshot
     const agents = await this.getAgents(snapshotId);
     
-    // Calculate total agents
-    const totalAgents = agents.length;
+    // Deduplicate agents by mastodonUsername to avoid counting duplicates
+    // Keep the entry with more complete data (with wallet address if available)
+    const uniqueAgentsMap = new Map<string, Agent>();
+    for (const agent of agents) {
+      const existing = uniqueAgentsMap.get(agent.mastodonUsername);
+      if (!existing || (agent.walletAddress && !existing.walletAddress)) {
+        uniqueAgentsMap.set(agent.mastodonUsername, agent);
+      }
+    }
+    
+    // Convert back to array
+    const uniqueAgents = Array.from(uniqueAgentsMap.values());
+    
+    // Calculate total agents (unique count)
+    const totalAgents = uniqueAgents.length;
     
     // Calculate average score
-    const totalScore = agents.reduce((sum, agent) => sum + agent.score, 0);
+    const totalScore = uniqueAgents.reduce((sum, agent) => sum + agent.score, 0);
     const avgScore = totalAgents > 0 ? Math.round(totalScore / totalAgents) : 0;
     
     // Calculate total likes
-    const totalLikes = agents.reduce((sum, agent) => sum + (agent.likesCount || 0), 0);
+    const totalLikes = uniqueAgents.reduce((sum, agent) => sum + (agent.likesCount || 0), 0);
     
     // Get top gainers (agents with largest score increase)
-    const gainers = agents
+    const gainers = uniqueAgents
       .filter(agent => agent.prevScore !== null && agent.score > agent.prevScore)
       .sort((a, b) => (b.score - (b.prevScore || 0)) - (a.score - (a.prevScore || 0)))
       .slice(0, 3);
     
     // Get top losers (agents with largest score decrease)
-    const losers = agents
+    const losers = uniqueAgents
       .filter(agent => agent.prevScore !== null && agent.score < agent.prevScore)
       .sort((a, b) => ((a.prevScore || 0) - a.score) - ((b.prevScore || 0) - b.score))
       .slice(0, 3);
