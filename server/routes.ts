@@ -56,6 +56,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all agents with filtering
   app.get("/api/agents", async (req: Request, res: Response) => {
     try {
+      // Check if the client wants to force refresh data
+      const forceRefresh = req.query.force === 'true';
+      
       // Parse query filters
       const filters = {
         search: req.query.search as string | undefined,
@@ -72,8 +75,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let currentSnapshotId: number | null = null;
 
       try {
+        // Set a shorter timeout to ensure faster response
         console.log("Fetching fresh leaderboard data");
-        liveData = await getLiveLeaderboardData();
+        // Indicate to the getLiveLeaderboardData function that we want the freshest possible data
+        if (forceRefresh) {
+          // If we're forcing refresh, we need to clear the server's cache before getting data
+          console.log("Force refresh requested - clearing cache before fetch");
+          liveData = await getLiveLeaderboardData(true); // Pass true to force refresh
+        } else {
+          liveData = await getLiveLeaderboardData(false);
+        }
 
         // If the live API returned an empty array, fall back to snapshot data
         if (!liveData || liveData.length === 0) {
@@ -87,6 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error("No snapshot data available for fallback");
           }
         } else {
+          console.log(`Successfully retrieved ${liveData.length} agents from live API`);
           // For live data, we'll compare with latest snapshot
           const latestSnapshot = await storage.getLatestSnapshot();
           if (latestSnapshot) {
@@ -214,6 +226,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get agent details
   app.get("/api/agents/:username", async (req: Request, res: Response) => {
+    // Check if force refresh is requested
+    const forceRefresh = req.query.force === 'true';
     try {
       const username = req.params.username;
       let agent;

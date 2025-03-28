@@ -44,11 +44,11 @@ let cachedAgentDetails: Map<string, {data: any, timestamp: number}> = new Map();
 let lastFetchTime = 0;
 let fetchInProgress = false;
 let initialLoadComplete = false; // Flag to check if first load has completed
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes cache - reduced to get fresh data more often
-const FORCE_REFRESH_TTL = 60 * 60 * 1000; // Force refresh after 1 hour
-const AGENT_DETAILS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes for individual agent details
-const REQUEST_THROTTLE = 5 * 1000; // Min time between API calls (5 seconds)
-const MAX_AGENT_CACHE_SIZE = 100; // Maximum number of agent details to cache
+const CACHE_TTL = 30 * 1000; // 30 seconds cache for faster updates
+const FORCE_REFRESH_TTL = 5 * 60 * 1000; // Force refresh after 5 minutes
+const AGENT_DETAILS_CACHE_TTL = 2 * 60 * 1000; // 2 minutes for individual agent details
+const REQUEST_THROTTLE = 2 * 1000; // Min time between API calls (2 seconds)
+const MAX_AGENT_CACHE_SIZE = 2000; // Maximum number of agent details to cache
 
 /**
  * Update the cities cache from new agent data
@@ -71,8 +71,15 @@ function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
 /**
  * Get the live leaderboard data directly from the API
  * This method is heavily optimized for performance and memory usage
+ * @param forceRefresh Optional param to force a fresh API request and clear cache
  */
-export async function getLiveLeaderboardData() {
+export async function getLiveLeaderboardData(forceRefresh = false) {
+  // If force refresh is requested, clear the cache before fetching
+  if (forceRefresh) {
+    console.log("Force refresh requested - clearing leaderboard cache");
+    cachedLeaderboardData = null;
+    lastFetchTime = 0;
+  }
   const now = Date.now();
   
   // On first load, always force refresh
@@ -187,11 +194,11 @@ export async function getLiveLeaderboardData() {
     // Update cities cache 
     updateCachedCities(agentData);
     
-    // Reset the cache every hour
+    // Reset the cache every 5 minutes for more frequent fresh data
     setTimeout(() => {
       console.log("Clearing leaderboard cache for fresh data");
       cachedLeaderboardData = null;
-    }, 60 * 60 * 1000);
+    }, 5 * 60 * 1000);
     
     return agentData;
   } catch (apiError: any) {
