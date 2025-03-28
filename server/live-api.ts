@@ -70,44 +70,25 @@ function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
 
 /**
  * Get the live leaderboard data directly from the API
- * This method is heavily optimized for performance and memory usage
+ * This method always fetches fresh data on each request to ensure up-to-date scores
  */
 export async function getLiveLeaderboardData() {
   const now = Date.now();
   
-  // On first load, always force refresh
-  if (!initialLoadComplete) {
-    console.log("First load - forcing data refresh");
-    initialLoadComplete = true;
-  } else if (cachedLeaderboardData && (now - lastFetchTime < CACHE_TTL)) {
-    return cachedLeaderboardData;
-  }
+  // Always log the refresh attempt
+  console.log("Refreshing leaderboard data");
+  initialLoadComplete = true;
   
   // If a fetch is already in progress, wait and return cached data to prevent concurrent API calls
   if (fetchInProgress) {
-    console.log("Another API fetch is already in progress, using cached data");
+    console.log("Another API fetch is already in progress, waiting for it to complete");
+    // We still use cached data here to prevent concurrent API calls
     return cachedLeaderboardData || [];
   }
   
-  // Check if we're within throttle period (don't make API calls too close together)
+  // Just respect the throttle period to prevent overwhelming the API
   if (cachedLeaderboardData && now - lastFetchTime < REQUEST_THROTTLE) {
-    console.log("Within API throttle period, using cached data");
-    return cachedLeaderboardData;
-  }
-  
-  // Use expired cache if we have it unless the cache is very old
-  if (cachedLeaderboardData && now - lastFetchTime < FORCE_REFRESH_TTL) {
-    // Schedule a background refresh for next request but return current cache immediately
-    setTimeout(() => {
-      if (!fetchInProgress) {
-        fetchInProgress = true;
-        getLiveLeaderboardData()
-          .finally(() => {
-            fetchInProgress = false;
-          });
-      }
-    }, 100);
-    
+    console.log("Within API throttle period, using cached data briefly");
     return cachedLeaderboardData;
   }
   

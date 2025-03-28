@@ -69,7 +69,7 @@ export default function Home() {
     description: "Loading snapshot data..."
   };
 
-  // Query agents with filters - use live data by default for regular views with fallback to last snapshot
+  // Query agents with filters - always fetch fresh data to ensure up-to-date scores
   const { 
     data: agents, 
     isLoading: agentsLoading,
@@ -80,26 +80,14 @@ export default function Home() {
       `/api/agents`, 
       { 
         limit: 2000, // Get a larger batch once to reduce API calls
-        sortBy: filters.sortBy // Include current sort in the query key to trigger refetch when sort changes
+        sortBy: filters.sortBy, // Include current sort in the query key to trigger refetch when sort changes
+        // Add a timestamp as part of the query key to force refresh on page load/refresh
+        timestamp: Date.now()
       }
     ],
     queryFn: async ({ queryKey }) => {
       const [baseUrl, params] = queryKey;
       const queryParams = params as { limit: number, sortBy?: string };
-      
-      // Check if we have data in sessionStorage cache
-      const cacheKey = `leaderboard_data_live_${queryParams.sortBy || 'default'}`;
-      const cachedData = sessionStorage.getItem(cacheKey);
-      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
-      
-      // Use cache if it's available and less than 5 minutes old (shorter time for live data)
-      if (cachedData && cacheTime) {
-        const cacheAge = Date.now() - parseInt(cacheTime, 10);
-        if (cacheAge < 5 * 60 * 1000) { // 5 minutes 
-          console.log('Using cached leaderboard data');
-          return JSON.parse(cachedData) as Agent[];
-        }
-      }
       
       try {
         console.log('Fetching fresh leaderboard data');
@@ -109,9 +97,16 @@ export default function Home() {
         if (queryParams.sortBy) {
           url.searchParams.append('sortBy', queryParams.sortBy);
         }
+        // Add cache-busting parameter to prevent browser caching
+        url.searchParams.append('_t', Date.now().toString());
         
         const response = await fetch(url.toString(), {
           credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
         });
         
         if (!response.ok) {
@@ -120,17 +115,8 @@ export default function Home() {
         
         const data = await response.json();
         
-        // Cache the results
-        try {
-          sessionStorage.setItem(cacheKey, JSON.stringify(data));
-          const currentTime = Date.now().toString();
-          sessionStorage.setItem(`${cacheKey}_time`, currentTime);
-          
-          // Update firstLoadTime state with the current time
-          setFirstLoadTime(new Date().toISOString());
-        } catch (e) {
-          console.warn('Failed to cache leaderboard data', e);
-        }
+        // Update firstLoadTime state with the current time
+        setFirstLoadTime(new Date().toISOString());
         
         return data as Agent[];
       } catch (error) {
@@ -139,8 +125,8 @@ export default function Home() {
         throw error;
       }
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes - more frequent updates for live data
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // No stale time - always fetch fresh data
+    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection time
     retry: 1, // Only retry once to quickly fall back to snapshots if live data fails
   });
   
@@ -153,7 +139,9 @@ export default function Home() {
       `/api/snapshots/${selectedSnapshot}/agents`, 
       { 
         limit: 2000,
-        sortBy: filters.sortBy // Pass sort to snapshot API call as well
+        sortBy: filters.sortBy, // Pass sort to snapshot API call as well
+        // Add a timestamp to force refresh on page load/refresh
+        timestamp: Date.now()
       }
     ],
     // Custom query function to include the sort parameter in the API request
@@ -169,9 +157,16 @@ export default function Home() {
       if (queryParams.sortBy) {
         url.searchParams.append('sortBy', queryParams.sortBy);
       }
+      // Add cache busting parameter
+      url.searchParams.append('_t', Date.now().toString());
       
       const response = await fetch(url.toString(), {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
       
       if (!response.ok) {
@@ -188,12 +183,38 @@ export default function Home() {
     gcTime: 20 * 60 * 1000, // 20 minutes
   });
 
-  // Query stats for the selected snapshot - optimized with longer cache time
+  // Query stats for the selected snapshot - always fetch fresh data
   const { data: stats } = useQuery<SnapshotStats | undefined>({
-    queryKey: [`/api/snapshots/${selectedSnapshot}/stats`],
+    queryKey: [
+      `/api/snapshots/${selectedSnapshot}/stats`,
+      { timestamp: Date.now() } // Add timestamp to force refresh on page load
+    ],
+    // Custom fetch function to avoid caching
+    queryFn: async ({ queryKey }) => {
+      if (!selectedSnapshot) return undefined;
+      
+      const [baseUrl] = queryKey;
+      const url = new URL(baseUrl as string, window.location.origin);
+      url.searchParams.append('_t', Date.now().toString());
+      
+      const response = await fetch(url.toString(), {
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch snapshot stats');
+      }
+      
+      return await response.json();
+    },
     // Only run when we have a valid snapshot ID
     enabled: !!selectedSnapshot,
-    staleTime: 5 * 60 * 1000, // 5 minutes - reduce repeated fetches
+    staleTime: 0, // No stale time - always fetch fresh data
     gcTime: 10 * 60 * 1000, // Keep in memory longer
   });
 
