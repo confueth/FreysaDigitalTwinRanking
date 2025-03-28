@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import { LineChart, Earth, Users, RefreshCw } from 'lucide-react';
+import { LineChart, Earth, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/Sidebar';
 import LeaderboardTable from '@/components/LeaderboardTable';
@@ -92,11 +92,11 @@ export default function Home() {
       const cachedData = sessionStorage.getItem(cacheKey);
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
       
-      // Use cache if it's available and less than 30 seconds old (very short time for fresh data)
+      // Use cache if it's available and less than 5 minutes old (shorter time for live data)
       if (cachedData && cacheTime) {
         const cacheAge = Date.now() - parseInt(cacheTime, 10);
-        if (cacheAge < 30 * 1000) { // 30 seconds
-          console.log('Using cached leaderboard data (throttle)');
+        if (cacheAge < 5 * 60 * 1000) { // 5 minutes 
+          console.log('Using cached leaderboard data');
           return JSON.parse(cachedData) as Agent[];
         }
       }
@@ -106,8 +106,6 @@ export default function Home() {
         // Include sortBy in the API request to ensure server-side sorting
         const url = new URL(baseUrl as string, window.location.origin);
         url.searchParams.append('limit', '2000');
-        // Add force=true to ensure we get the freshest data from the server
-        url.searchParams.append('force', 'true');
         if (queryParams.sortBy) {
           url.searchParams.append('sortBy', queryParams.sortBy);
         }
@@ -141,8 +139,8 @@ export default function Home() {
         throw error;
       }
     },
-    staleTime: 10 * 1000, // 10 seconds - much more frequent updates for live data
-    gcTime: 30 * 1000, // 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes - more frequent updates for live data
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 1, // Only retry once to quickly fall back to snapshots if live data fails
   });
   
@@ -300,25 +298,10 @@ export default function Home() {
     
     console.log('Refreshing data');
     
-    // Remove any cached data from sessionStorage to ensure fresh data
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key && key.startsWith('leaderboard_data_')) {
-        console.log(`Clearing cached data for ${key}`);
-        sessionStorage.removeItem(key);
-        if (key + '_time') {
-          sessionStorage.removeItem(key + '_time');
-        }
-      }
-    }
-    
-    // Invalidate the live data endpoints and force a refetch 
+    // Invalidate the live data endpoints 
     queryClient.invalidateQueries({ 
       queryKey: [`/api/agents`] 
     });
-    
-    // Manually trigger a refetch for the live data
-    refetchAgents();
     
     // Also invalidate stats if we have a valid selected snapshot
     if (selectedSnapshot !== null) {
@@ -334,14 +317,7 @@ export default function Home() {
     queryClient.invalidateQueries({ 
       queryKey: [`/api/cities`] 
     });
-    
-    // Show a toast to indicate data is being refreshed
-    toast({
-      title: "Refreshing Data",
-      description: "Fetching the latest leaderboard data...",
-      duration: 2000
-    });
-  }, [selectedSnapshot, queryClient, refetchAgents, toast]);
+  }, [selectedSnapshot, queryClient]);
   
   // Show a toast notification when falling back to snapshot data
   useEffect(() => {
@@ -444,18 +420,23 @@ export default function Home() {
       refreshData();
     }
     
-    // Set up more frequent polling (once every 1 minute) 
-    // to ensure data is refreshed regularly
-    const interval = setInterval(refreshData, 1 * 60 * 1000); // 1 minute
+    // Set up infrequent polling (once every 30 minutes)
+    // This respects our API usage and ensures data is eventually refreshed
+    const interval = setInterval(refreshData, 30 * 60 * 1000); // 30 minutes
     
     // Add event listener to refresh data when user returns to tab
     // This provides fresh data when users are actually using the app
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        // Always refresh when returning to the tab to ensure latest data
-        console.log('User returned to tab - refreshing data immediately');
-        refreshData();
-        localStorage.setItem('lastRefresh', Date.now().toString());
+        // Only refresh if we've been hidden for a while
+        const lastRefresh = parseInt(localStorage.getItem('lastRefresh') || '0', 10);
+        const now = Date.now();
+        const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+        
+        if (now - lastRefresh > REFRESH_THRESHOLD) {
+          refreshData();
+          localStorage.setItem('lastRefresh', now.toString());
+        }
       }
     };
     
@@ -560,21 +541,12 @@ export default function Home() {
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
               <h2 className="text-xl font-bold">{viewTitle}</h2>
-              <div className="flex items-center space-x-2">
+              <div className="flex space-x-2">
                 <span className="text-gray-400 text-sm">
                   {agents ? 
                     `Showing ${displayAgents.length} of ${stats?.totalAgents || totalAgentsCount} Digital Twins` : 
                     'Loading...'}
                 </span>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => refreshData()}
-                  className="ml-2 border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
-                >
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                  <span>Refresh</span>
-                </Button>
               </div>
             </div>
             
@@ -618,21 +590,12 @@ export default function Home() {
           <div className="py-3">
             <div className="flex flex-col justify-between items-start mb-4 gap-1">
               <h2 className="text-lg font-bold">{viewTitle}</h2>
-              <div className="flex items-center">
+              <div>
                 <span className="text-gray-400 text-xs">
                   {agents ? 
                     `Showing ${displayAgents.length} of ${stats?.totalAgents || totalAgentsCount} Digital Twins` : 
                     'Loading...'}
                 </span>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => refreshData()}
-                  className="ml-2 border-emerald-800 hover:bg-emerald-900/30 text-emerald-400 flex items-center gap-1"
-                >
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                  <span className="text-xs">Refresh</span>
-                </Button>
               </div>
             </div>
             
