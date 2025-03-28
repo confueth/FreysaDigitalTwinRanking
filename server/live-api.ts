@@ -47,8 +47,8 @@ let initialLoadComplete = false; // Flag to check if first load has completed
 const CACHE_TTL = 30 * 1000; // 30 seconds cache for faster updates
 const FORCE_REFRESH_TTL = 5 * 60 * 1000; // Force refresh after 5 minutes
 const AGENT_DETAILS_CACHE_TTL = 2 * 60 * 1000; // 2 minutes for individual agent details
-const REQUEST_THROTTLE = 2 * 1000; // Min time between API calls (2 seconds)
-const MAX_AGENT_CACHE_SIZE = 2000; // Maximum number of agent details to cache
+const REQUEST_THROTTLE = 15 * 1000; // Min time between API calls (15 seconds)
+const MAX_AGENT_CACHE_SIZE = 1000; // Maximum number of agent details to cache
 
 /**
  * Update the cities cache from new agent data
