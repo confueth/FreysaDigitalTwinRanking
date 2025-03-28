@@ -69,7 +69,7 @@ export default function Home() {
     description: "Loading snapshot data..."
   };
 
-  // Query agents with filters - always fetch fresh data to ensure up-to-date scores
+  // Query agents with filters - balance between fresh data and performance
   const { 
     data: agents, 
     isLoading: agentsLoading,
@@ -81,13 +81,26 @@ export default function Home() {
       { 
         limit: 2000, // Get a larger batch once to reduce API calls
         sortBy: filters.sortBy, // Include current sort in the query key to trigger refetch when sort changes
-        // Add a timestamp as part of the query key to force refresh on page load/refresh
-        timestamp: Date.now()
+        // We only include page refresh information, not a constantly updating timestamp
+        pageRefresh: window.performance.navigation ? window.performance.navigation.type === 1 : false
       }
     ],
     queryFn: async ({ queryKey }) => {
       const [baseUrl, params] = queryKey;
       const queryParams = params as { limit: number, sortBy?: string };
+      
+      // Check if we have session storage data less than 10 seconds old to prevent refresh loop
+      const cacheKey = `leaderboard_data_live_${queryParams.sortBy || 'default'}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      
+      if (cachedData && cacheTime) {
+        const cacheAge = Date.now() - parseInt(cacheTime, 10);
+        if (cacheAge < 10 * 1000) { // 10 seconds - prevent rapid successive requests
+          console.log('Using cached leaderboard data (throttle)');
+          return JSON.parse(cachedData) as Agent[];
+        }
+      }
       
       try {
         console.log('Fetching fresh leaderboard data');
@@ -97,7 +110,7 @@ export default function Home() {
         if (queryParams.sortBy) {
           url.searchParams.append('sortBy', queryParams.sortBy);
         }
-        // Add cache-busting parameter to prevent browser caching
+        // Add cache-busting parameter for page refreshes only
         url.searchParams.append('_t', Date.now().toString());
         
         const response = await fetch(url.toString(), {
@@ -115,8 +128,16 @@ export default function Home() {
         
         const data = await response.json();
         
-        // Update firstLoadTime state with the current time
-        setFirstLoadTime(new Date().toISOString());
+        // Cache the results with a 10-second minimum lifetime to prevent request flood
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(data));
+          sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+          
+          // Update firstLoadTime state with the current time
+          setFirstLoadTime(new Date().toISOString());
+        } catch (e) {
+          console.warn('Failed to cache leaderboard data', e);
+        }
         
         return data as Agent[];
       } catch (error) {
@@ -125,7 +146,7 @@ export default function Home() {
         throw error;
       }
     },
-    staleTime: 0, // No stale time - always fetch fresh data
+    staleTime: 30 * 1000, // 30 seconds stale time - balance between fresh data and performance
     gcTime: 5 * 60 * 1000, // 5 minutes garbage collection time
     retry: 1, // Only retry once to quickly fall back to snapshots if live data fails
   });
@@ -183,38 +204,56 @@ export default function Home() {
     gcTime: 20 * 60 * 1000, // 20 minutes
   });
 
-  // Query stats for the selected snapshot - always fetch fresh data
+  // Query stats for the selected snapshot - reasonable balance for performance
   const { data: stats } = useQuery<SnapshotStats | undefined>({
     queryKey: [
       `/api/snapshots/${selectedSnapshot}/stats`,
-      { timestamp: Date.now() } // Add timestamp to force refresh on page load
+      { pageRefresh: window.performance.navigation ? window.performance.navigation.type === 1 : false }
     ],
-    // Custom fetch function to avoid caching
+    // Custom fetch function with cache control
     queryFn: async ({ queryKey }) => {
       if (!selectedSnapshot) return undefined;
+      
+      // Check sessionStorage cache to prevent rapid requests
+      const cacheKey = `snapshot_stats_${selectedSnapshot}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      
+      if (cachedData && cacheTime) {
+        const cacheAge = Date.now() - parseInt(cacheTime, 10);
+        if (cacheAge < 10 * 1000) { // 10 seconds - prevent rapid successive requests
+          console.log('Using cached snapshot stats (throttle)');
+          return JSON.parse(cachedData) as SnapshotStats;
+        }
+      }
       
       const [baseUrl] = queryKey;
       const url = new URL(baseUrl as string, window.location.origin);
       url.searchParams.append('_t', Date.now().toString());
       
       const response = await fetch(url.toString(), {
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+        credentials: 'include'
       });
       
       if (!response.ok) {
         throw new Error('Failed to fetch snapshot stats');
       }
       
-      return await response.json();
+      const data = await response.json();
+      
+      // Cache the results with a 10-second minimum lifetime
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+        sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+      } catch (e) {
+        console.warn('Failed to cache snapshot stats', e);
+      }
+      
+      return data;
     },
     // Only run when we have a valid snapshot ID
     enabled: !!selectedSnapshot,
-    staleTime: 0, // No stale time - always fetch fresh data
+    staleTime: 30 * 1000, // 30 seconds - balance between fresh data and performance
     gcTime: 10 * 60 * 1000, // Keep in memory longer
   });
 

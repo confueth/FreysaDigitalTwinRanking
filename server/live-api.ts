@@ -70,23 +70,28 @@ function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
 
 /**
  * Get the live leaderboard data directly from the API
- * This method always fetches fresh data on each request to ensure up-to-date scores
+ * This method balances fresh data with reasonable caching to prevent API overload
  */
 export async function getLiveLeaderboardData() {
   const now = Date.now();
   
-  // Always log the refresh attempt
-  console.log("Refreshing leaderboard data");
-  initialLoadComplete = true;
+  // On first load, always force refresh
+  if (!initialLoadComplete) {
+    console.log("First load - forcing data refresh");
+    initialLoadComplete = true;
+  } 
+  // Use a short cache time of 30 seconds to balance fresh data with performance
+  else if (cachedLeaderboardData && (now - lastFetchTime < 30 * 1000)) {
+    return cachedLeaderboardData;
+  }
   
   // If a fetch is already in progress, wait and return cached data to prevent concurrent API calls
   if (fetchInProgress) {
-    console.log("Another API fetch is already in progress, waiting for it to complete");
-    // We still use cached data here to prevent concurrent API calls
+    console.log("Another API fetch is already in progress, using cached data");
     return cachedLeaderboardData || [];
   }
   
-  // Just respect the throttle period to prevent overwhelming the API
+  // Respect the throttle period to prevent overwhelming the API
   if (cachedLeaderboardData && now - lastFetchTime < REQUEST_THROTTLE) {
     console.log("Within API throttle period, using cached data briefly");
     return cachedLeaderboardData;
