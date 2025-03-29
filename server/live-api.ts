@@ -1,568 +1,463 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 import { z } from "zod";
 import { leaderboardEntrySchema, agentDetailsSchema } from "@shared/schema";
 import type { Agent, LeaderboardEntry, AgentDetails } from "@shared/schema";
 
-// API endpoints
-const LEADERBOARD_API = "https://determined-smile-production-e0d1.up.railway.app/digital-clones/leaderboards?full=true";
-const AGENT_DETAILS_API = "https://determined-smile-production-e0d1.up.railway.app/digital-clones/clones/";
+// --- Configuration ---
+const LEADERBOARD_API_URL = "https://determined-smile-production-e0d1.up.railway.app/digital-clones/leaderboards?full=true";
+const AGENT_DETAILS_API_BASE_URL = "https://determined-smile-production-e0d1.up.railway.app/digital-clones/clones/";
 
-// Turn off strict schema validation for now to fix the app
-const DISABLE_VALIDATION = true;
+// ** Data Validation Control **
+// SET TO `false` (Recommended): Enforces schema validation via Zod. Prevents bad data but
+// requires downstream code to handle potential `null` or filtered results if API data is invalid.
+// SET TO `true` (Use with Caution): Bypasses Zod validation. Faster if schemas are complex,
+// but RISKY if API data format changes unexpectedly. Only use if validation causes issues
+// and you understand the risks.
+const DISABLE_VALIDATION = false; // Defaulting to ENABLED validation
 
-// Memory-optimized cache implementation
-// Instead of storing full agent objects, we only store essential fields for the leaderboard
-// and fetch complete details only when needed
-export interface MinimalAgent {
-  id: string | number;  // Support both string and number IDs
-  mastodonUsername: string;
-  score: number;
-  avatarUrl?: string | null;  // Support null values from database
-  city?: string | null;  // Support null values from database
-  // Additional fields to prevent type errors
-  mastodonBio?: string | null;
-  walletAddress?: string | null;
-  walletBalance?: string | null;
-  bioUpdatedAt?: Date | null;
-  ubiClaimedAt?: Date | null;
-  likesCount?: number | null;
-  followersCount?: number | null;
-  retweetsCount?: number | null;
-  repliesCount?: number | null;
-  snapshotId?: number;
-  prevScore?: number | null;
-  rank?: number;
-  prevRank?: number | null;
-  // Support timestamp for history data
-  timestamp?: string | Date;
+const LEADERBOARD_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const AGENT_DETAILS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+const REQUEST_THROTTLE_MS = 3 * 1000; // Min time between API calls (3 seconds)
+const MAX_AGENT_DETAIL_CACHE_SIZE = 100; // Max number of individual agent details to cache
+const API_TIMEOUT = 30000; // 30 seconds timeout for API calls
+const CONSECUTIVE_FAILURE_THRESHOLD = 3; // Warn loudly after 3 consecutive API failures
+
+// --- Interfaces ---
+
+// Interface for leaderboard data stored in cache. Uses LeaderboardEntry schema fields.
+// Added rank for convenience during processing.
+// Note: This might differ slightly from full Agent or AgentDetails.
+type CachedLeaderboardEntry = LeaderboardEntry & { rank: number };
+
+// Type for agent details cache entries
+interface AgentDetailCacheEntry {
+    // Cache can hold either full details or just leaderboard entry data
+    data: AgentDetails | CachedLeaderboardEntry;
+    timestamp: number;
 }
 
-// Cache control with improved API usage protection and memory optimization
-let cachedLeaderboardData: MinimalAgent[] | null = null;
-let cachedCities: Set<string> | null = null; // Using Set for better performance
-let cachedAgentDetails: Map<string, {data: any, timestamp: number}> = new Map();
-let lastFetchTime = 0;
-let fetchInProgress = false;
-let initialLoadComplete = false; // Flag to check if first load has completed
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes cache - reduced to get fresh data more often
-const FORCE_REFRESH_TTL = 60 * 60 * 1000; // Force refresh after 1 hour
-const AGENT_DETAILS_CACHE_TTL = 15 * 60 * 1000; // 15 minutes for individual agent details
-const REQUEST_THROTTLE = 5 * 1000; // Min time between API calls (5 seconds)
-const MAX_AGENT_CACHE_SIZE = 100; // Maximum number of agent details to cache
+// --- State ---
+let cachedLeaderboardData: CachedLeaderboardEntry[] | null = null;
+let leaderboardLastFetchTime = 0;
+let isLeaderboardFetchInProgress = false;
+let consecutiveApiFailures = 0; // Track consecutive API errors
 
-/**
- * Update the cities cache from new agent data
- */
-function updateCachedCities(agents: MinimalAgent[] | Agent[]) {
-  // Create a new Set for cities
-  cachedCities = new Set<string>();
-  
-  // Add cities to the set
-  for (let i = 0; i < agents.length; i++) {
-    const agent = agents[i];
-    if (agent.city) {
-      cachedCities.add(agent.city);
-    }
-  }
-  
-  console.log(`Updated cities cache with ${cachedCities.size} cities`);
-}
+let cachedAgentDetails: Map<string, AgentDetailCacheEntry> = new Map();
+let citiesCache: Set<string> | null = null;
 
-/**
- * Get the live leaderboard data directly from the API
- * This method is heavily optimized for performance and memory usage
- */
-export async function getLiveLeaderboardData() {
-  const now = Date.now();
-  
-  // On first load, always force refresh
-  if (!initialLoadComplete) {
-    console.log("First load - forcing data refresh");
-    initialLoadComplete = true;
-  } else if (cachedLeaderboardData && (now - lastFetchTime < CACHE_TTL)) {
-    return cachedLeaderboardData;
-  }
-  
-  // If a fetch is already in progress, wait and return cached data to prevent concurrent API calls
-  if (fetchInProgress) {
-    console.log("Another API fetch is already in progress, using cached data");
-    return cachedLeaderboardData || [];
-  }
-  
-  // Check if we're within throttle period (don't make API calls too close together)
-  if (cachedLeaderboardData && now - lastFetchTime < REQUEST_THROTTLE) {
-    console.log("Within API throttle period, using cached data");
-    return cachedLeaderboardData;
-  }
-  
-  // Use expired cache if we have it unless the cache is very old
-  if (cachedLeaderboardData && now - lastFetchTime < FORCE_REFRESH_TTL) {
-    // Schedule a background refresh for next request but return current cache immediately
-    setTimeout(() => {
-      if (!fetchInProgress) {
-        fetchInProgress = true;
-        getLiveLeaderboardData()
-          .finally(() => {
-            fetchInProgress = false;
-          });
-      }
-    }, 100);
-    
-    return cachedLeaderboardData;
-  }
-  
-  // Set fetch in progress flag
-  fetchInProgress = true;
-  
-  try {
-    // Fetch fresh data from API
-    console.log("Fetching fresh leaderboard data");
-    
-    const response = await axios.get(LEADERBOARD_API, {
-      headers: { 
+// --- API Client ---
+const apiClient: AxiosInstance = axios.create({
+    timeout: API_TIMEOUT,
+    headers: {
         'Accept': 'application/json',
-        'User-Agent': 'Freysa-Leaderboard/1.0',
-        'Cache-Control': 'no-cache'
-      },
-      timeout: 60000 // 60 second timeout
-    });
-    
-    // Process different response formats
-    let agentData: MinimalAgent[] = [];
-    
-    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-      // Old format - direct array of leaderboard entries
-      try {
-        // Create minimal agents without validating entire objects to reduce memory
-        agentData = response.data.map((entry: any, index: number) => ({
-          id: String(index + 1), // Use string IDs to save memory (no need for math operations)
-          mastodonUsername: entry.mastodonUsername,
-          score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
-          avatarUrl: entry.avatarURL || entry.avatarUrl,
-          city: entry.city,
-          snapshotId: 1, // Default for live data
-          likesCount: entry.likesCount || 0,
-          followersCount: entry.followersCount || 0,
-          retweetsCount: entry.retweetsCount || 0,
-          rank: index + 1,
-          prevRank: null,
-          prevScore: null
-        }));
-      } catch (parseError) {
-        console.error("Error parsing array format:", parseError);
-      }
-    } 
-    else if (response.data && response.data.agents && Array.isArray(response.data.agents)) {
-      // New format - nested agents array
-      console.log("Found agents array in response, using that instead");
-      
-      // Map minimal data to save memory
-      agentData = response.data.agents.map((entry: any, index: number) => ({
-        id: String(index + 1),
-        mastodonUsername: entry.mastodonUsername,
-        score: typeof entry.score === 'number' ? entry.score : parseInt(entry.score) || 0,
-        avatarUrl: entry.avatarUrl || entry.avatarURL,
-        city: entry.city,
-        snapshotId: 1, // Default for live data
-        likesCount: entry.likesCount || 0,
-        followersCount: entry.followersCount || 0,
-        retweetsCount: entry.retweetsCount || 0,
-        rank: index + 1,
-        prevRank: null,
-        prevScore: null
-      }));
-    }
-    
-    if (agentData.length === 0) {
-      throw new Error("Invalid data format or empty response");
-    }
-    
-    // Update cache with the minimal agent data
-    cachedLeaderboardData = agentData;
-    lastFetchTime = now;
-    
-    // Log for debugging purposes
-    console.log(`Processed ${agentData.length} agents`);
-    
-    // Update cities cache 
-    updateCachedCities(agentData);
-    
-    // Reset the cache every hour
-    setTimeout(() => {
-      console.log("Clearing leaderboard cache for fresh data");
-      cachedLeaderboardData = null;
-    }, 60 * 60 * 1000);
-    
-    return agentData;
-  } catch (apiError: any) {
-    console.error("API error during leaderboard fetch:", apiError.message);
-    
-    // Return cached data if any exists, even if expired
-    if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
-      console.log("Using expired cached data due to API error");
-      return cachedLeaderboardData;
-    }
-    
-    console.error("No cached leaderboard data available despite API error");
-    return []; // Return empty array instead of throwing error - routes.ts will handle fallback
-  } finally {
-    // Always reset the in-progress flag
-    fetchInProgress = false;
-    
-    // Memory cleanup - purge old agent detail cache entries if we have too many
-    if (cachedAgentDetails.size > MAX_AGENT_CACHE_SIZE) {
-      // Find the oldest entries to remove
-      const entries = Array.from(cachedAgentDetails.entries());
-      entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-      
-      // Remove the oldest 20% of entries
-      const removeCount = Math.floor(MAX_AGENT_CACHE_SIZE * 0.2);
-      for (let i = 0; i < removeCount && i < entries.length; i++) {
-        cachedAgentDetails.delete(entries[i][0]);
-      }
-      
-      console.log(`Purged ${removeCount} old agent cache entries to free memory`);
-    }
-  }
-}
+        'User-Agent': 'Freysa-Leaderboard/1.2', // Updated version
+        'Cache-Control': 'no-cache',
+    },
+});
+
+// --- Helper Functions ---
 
 /**
- * Get a specific agent by username
+ * Parses and validates raw API data for the leaderboard.
+ * Filters out entries that fail schema validation.
  */
-export async function getLiveAgentDetail(username: string) {
-  try {
-    const now = Date.now();
-    
-    // Check if we have a cached agent detail
-    const normalizedUsername = username.toLowerCase();
-    const cachedDetail = cachedAgentDetails.get(normalizedUsername);
-    
-    // Return from cache if still valid
-    if (cachedDetail && (now - cachedDetail.timestamp < AGENT_DETAILS_CACHE_TTL)) {
-      console.log(`Using cached agent detail for ${username}`);
-      return cachedDetail.data;
+function parseAndValidateLeaderboardResponse(responseData: any): CachedLeaderboardEntry[] {
+    let rawAgents: any[] = [];
+
+    if (Array.isArray(responseData)) {
+        rawAgents = responseData;
+    } else if (responseData?.agents && Array.isArray(responseData.agents)) {
+        rawAgents = responseData.agents;
+    } else {
+        console.warn("Received unexpected leaderboard data format. Cannot parse.");
+        return [];
     }
-    
-    // Try to get basic agent info from leaderboard cache first
-    if (cachedLeaderboardData) {
-      const cachedAgent = cachedLeaderboardData.find(
-        a => a.mastodonUsername.toLowerCase() === normalizedUsername
-      );
-      
-      if (cachedAgent) {
-        // Try to get additional details from the API
-        try {
-          console.log(`Fetching enriched agent details for ${username}`);
-          const detailsResponse = await axios.get(`${AGENT_DETAILS_API}${username}`, {
-            headers: { 
-              'Accept': 'application/json',
-              'User-Agent': 'Freysa-Leaderboard/1.0',
-              'Cache-Control': 'no-cache'
-            },
-            timeout: 10000 // 10 second timeout
-          });
-          
-          if (detailsResponse.data) {
-            // Parse and validate the data with safety checks
-            const rawData = detailsResponse.data || {};
-            
-            // Skip validation if disabled, otherwise use safeParse to avoid exceptions
-            let agentDetails: any;
-            
-            if (DISABLE_VALIDATION) {
-              agentDetails = rawData;
-            } else {
-              const result = agentDetailsSchema.safeParse(rawData);
-              if (result.success) {
-                agentDetails = result.data;
-              } else {
-                console.warn(`Validation errors for ${username}:`, result.error);
-                // Create a minimal valid object with required fields
-                agentDetails = {
-                  mastodonUsername: rawData.mastodonUsername || username,
-                  score: typeof rawData.score === 'number' ? rawData.score : (cachedAgent.score || 0),
-                  mastodonBio: rawData.mastodonBio || null,
-                  walletAddress: rawData.walletAddress || null,
-                  walletBalance: rawData.walletBalance || null,
-                  city: rawData.city || null,
-                  likesCount: rawData.likesCount || null,
-                  followersCount: rawData.followersCount || null,
-                  retweetsCount: rawData.retweetsCount || null,
-                  repliesCount: rawData.repliesCount || null,
-                  ubiClaimedAt: rawData.ubiClaimedAt || null,
-                  bioUpdatedAt: rawData.bioUpdatedAt || null,
-                  avatarUrl: rawData.avatarURL || rawData.avatarUrl || null
-                };
-              }
-            }
-            
-            // Extract tweets if available
-            const tweets = rawData.tweets || [];
-            
-            // Merge with cached basic data
-            const enrichedAgent = {
-              ...cachedAgent,
-              mastodonBio: agentDetails.mastodonBio || cachedAgent.mastodonBio,
-              walletAddress: agentDetails.walletAddress || cachedAgent.walletAddress,
-              walletBalance: agentDetails.walletBalance || cachedAgent.walletBalance,
-              bioUpdatedAt: agentDetails.bioUpdatedAt ? new Date(agentDetails.bioUpdatedAt) : cachedAgent.bioUpdatedAt,
-              ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : cachedAgent.ubiClaimedAt,
-              avatarUrl: agentDetails.avatarUrl || agentDetails.avatarURL || cachedAgent.avatarUrl,
-              tweets: tweets
+
+    if (rawAgents.length === 0) {
+        console.log("Leaderboard API returned empty agent list.");
+        return [];
+    }
+
+    const validatedAgents: CachedLeaderboardEntry[] = [];
+    rawAgents.forEach((entry: any, index: number) => {
+        // Add rank before validation if needed by schema/downstream cache use
+        entry.rank = index + 1;
+
+        if (DISABLE_VALIDATION) {
+            // ** Bypassing Validation (Risky) **
+            // Basic type coercion for critical fields if validation is off
+             const score = typeof entry.score === 'number' ? entry.score : parseInt(entry.score, 10);
+             const minimalEntry = {
+                mastodonUsername: entry.mastodonUsername ?? 'unknown',
+                score: isNaN(score) ? 0 : score,
+                avatarURL: entry.avatarURL ?? entry.avatarUrl ?? null, // Use schema field name
+                city: entry.city ?? null,
+                likesCount: entry.likesCount ?? 0,
+                followersCount: entry.followersCount ?? 0,
+                retweetsCount: entry.retweetsCount ?? 0,
+                rank: entry.rank, // Keep rank
             };
-            
-            // Cache the enriched agent
-            cachedAgentDetails.set(normalizedUsername, {
-              data: enrichedAgent,
-              timestamp: now
-            });
-            
-            return enrichedAgent;
-          }
-          return cachedAgent;
-        } catch (detailsError) {
-          console.error(`Error fetching details for ${username}:`, detailsError);
-          // Return the cached agent without additional details
-          return cachedAgent;
+            // Only add if username is present
+            if (minimalEntry.mastodonUsername !== 'unknown') {
+                 validatedAgents.push(minimalEntry as CachedLeaderboardEntry); // Assert type if validation off
+            }
+
+        } else {
+             // ** Using Zod Validation **
+            const result = leaderboardEntrySchema.safeParse(entry);
+            if (result.success) {
+                // Add rank to the validated data before caching
+                validatedAgents.push({ ...result.data, rank: entry.rank });
+            } else {
+                console.warn(`Leaderboard entry validation failed for item at index ${index}:`, result.error.flatten().fieldErrors);
+                // Optionally log `entry` itself for debugging, be mindful of sensitive data
+                // console.debug("Failed entry data:", entry);
+                // Skip invalid entries
+            }
         }
-      }
-    }
-    
-    // If not in cache, try to fetch directly from agent detail API
-    console.log(`Fetching full agent details for ${username}`);
-    const response = await axios.get(`${AGENT_DETAILS_API}${username}`, {
-      headers: { 
-        'Accept': 'application/json',
-        'User-Agent': 'Freysa-Leaderboard/1.0',
-        'Cache-Control': 'no-cache'
-      },
-      timeout: 10000 // 10 second timeout
     });
-    
-    if (response.data) {
-      // Parse and validate the data with safety checks
-      const rawData = response.data || {};
-      
-      // Skip validation if disabled, otherwise use safeParse
-      let agentDetails: any;
-      
-      if (DISABLE_VALIDATION) {
-        agentDetails = rawData;
-      } else {
+
+    console.log(`Parsed ${rawAgents.length} raw entries, successfully validated ${validatedAgents.length} leaderboard entries.`);
+    return validatedAgents;
+}
+
+/** Safely converts a value to Date or returns null */
+function safeParseDate(value: any): Date | null {
+    if (!value) return null;
+    try {
+        // Handle potential number timestamps (milliseconds)
+        const date = typeof value === 'number' ? new Date(value) : new Date(String(value));
+        return isNaN(date.getTime()) ? null : date;
+    } catch (e) {
+        return null;
+    }
+}
+
+
+/**
+ * Parses and validates raw API data for a single agent.
+ * Returns validated AgentDetails or null if validation fails.
+ */
+function parseAndValidateAgentDetailResponse(responseData: any, username: string): AgentDetails | null {
+    const rawData = responseData ?? {};
+
+     if (DISABLE_VALIDATION) {
+        // ** Bypassing Validation (Risky) **
+        // Manually construct the object with basic type safety
+        const score = typeof rawData.score === 'number' ? rawData.score : parseInt(rawData.score, 10);
+        const agentDetails: AgentDetails = {
+            mastodonUsername: rawData.mastodonUsername ?? username,
+            score: isNaN(score) ? 0 : score,
+            mastodonBio: rawData.mastodonBio ?? null,
+            walletAddress: rawData.walletAddress ?? null,
+            walletBalance: rawData.walletBalance ?? null,
+            likesCount: rawData.likesCount ?? 0,
+            followersCount: rawData.followersCount ?? 0,
+            retweetsCount: rawData.retweetsCount ?? 0,
+            repliesCount: rawData.repliesCount ?? 0,
+            city: rawData.city ?? null,
+            bioUpdatedAt: safeParseDate(rawData.bioUpdatedAt),
+            ubiClaimedAt: safeParseDate(rawData.ubiClaimedAt),
+            tweets: rawData.tweets ?? [],
+            avatarUrl: rawData.avatarUrl ?? rawData.avatarURL ?? null, // Add avatarUrl
+        };
+        return agentDetails;
+     } else {
+        // ** Using Zod Validation **
         const result = agentDetailsSchema.safeParse(rawData);
         if (result.success) {
-          agentDetails = result.data;
+            // Ensure date fields are Date objects (Zod might allow strings if not preprocessed)
+            result.data.bioUpdatedAt = safeParseDate(result.data.bioUpdatedAt);
+            result.data.ubiClaimedAt = safeParseDate(result.data.ubiClaimedAt);
+            return result.data; // Return validated data
         } else {
-          console.warn(`Validation errors for ${username} (direct fetch):`, result.error);
-          // Create a minimal valid object with required fields
-          agentDetails = {
-            mastodonUsername: rawData.mastodonUsername || username,
-            score: typeof rawData.score === 'number' ? rawData.score : 0,
-            mastodonBio: rawData.mastodonBio || null,
-            walletAddress: rawData.walletAddress || null,
-            walletBalance: rawData.walletBalance || null,
-            city: rawData.city || null,
-            likesCount: rawData.likesCount || null,
-            followersCount: rawData.followersCount || null,
-            retweetsCount: rawData.retweetsCount || null,
-            repliesCount: rawData.repliesCount || null,
-            ubiClaimedAt: rawData.ubiClaimedAt || null,
-            bioUpdatedAt: rawData.bioUpdatedAt || null,
-            avatarUrl: rawData.avatarURL || rawData.avatarUrl || null
-          };
+            console.warn(`Agent details validation failed for ${username}:`, result.error.flatten().fieldErrors);
+            // console.debug("Failed agent data:", rawData);
+            return null; // Indicate validation failure
         }
-      }
-      
-      // Extract tweets if available
-      const tweets = rawData.tweets || [];
-      
-      // Create an agent with the details
-      const fullAgent = {
-        id: 0,
-        snapshotId: 0,
-        mastodonUsername: username,
-        score: agentDetails.score || 0,
-        prevScore: null,
-        avatarUrl: agentDetails.avatarUrl || agentDetails.avatarURL || null,
-        city: agentDetails.city || null,
-        likesCount: agentDetails.likesCount || null,
-        followersCount: agentDetails.followersCount || null,
-        retweetsCount: agentDetails.retweetsCount || null,
-        repliesCount: agentDetails.repliesCount || null,
-        rank: 0,
-        prevRank: null,
-        walletAddress: agentDetails.walletAddress || null,
-        walletBalance: agentDetails.walletBalance || null,
-        mastodonBio: agentDetails.mastodonBio || null,
-        bioUpdatedAt: agentDetails.bioUpdatedAt ? new Date(agentDetails.bioUpdatedAt) : null,
-        ubiClaimedAt: agentDetails.ubiClaimedAt ? new Date(agentDetails.ubiClaimedAt) : null,
-        tweets: tweets
-      } as Agent & { tweets: any[] };
-      
-      // Cache the agent details
-      cachedAgentDetails.set(normalizedUsername, {
-        data: fullAgent,
-        timestamp: Date.now()
-      });
-      
-      return fullAgent;
-    }
-    
-    throw new Error("Agent not found");
-  } catch (error) {
-    console.error(`Error fetching agent ${username}:`, error);
-    throw error;
-  }
+     }
 }
 
+
+/** Updates the city cache Set */
+function updateCitiesCache(agents: CachedLeaderboardEntry[]): void {
+    const newCities = new Set<string>();
+    for (const agent of agents) {
+        if (agent.city) {
+            newCities.add(agent.city);
+        }
+    }
+    citiesCache = newCities;
+    // console.log(`Updated cities cache with ${citiesCache.size} unique cities`);
+}
+
+/** Prunes the agent details cache if it exceeds the maximum size */
+function pruneAgentDetailCache(): void {
+    if (cachedAgentDetails.size > MAX_AGENT_DETAIL_CACHE_SIZE) {
+        const entries = Array.from(cachedAgentDetails.entries());
+        entries.sort((a, b) => a[1].timestamp - b[1].timestamp); // Oldest first
+        const removeCount = Math.max(1, cachedAgentDetails.size - MAX_AGENT_DETAIL_CACHE_SIZE); // Ensure target size
+        for (let i = 0; i < removeCount; i++) {
+            cachedAgentDetails.delete(entries[i][0]);
+        }
+        console.log(`Pruned ${removeCount} old agent detail cache entries. New size: ${cachedAgentDetails.size}`);
+    }
+}
+
+
+// --- Public API Functions ---
+
 /**
- * Filter agents based on provided criteria
+ * Get the live leaderboard data. Uses caching, throttling, and validation.
+ * Returns array of validated LeaderboardEntry objects (with rank added).
  */
-export function filterAgents(agents: Agent[] | MinimalAgent[], filters: {
-  search?: string;
-  minScore?: number;
-  maxScore?: number;
-  city?: string;
-  sortBy?: 'score' | 'score_asc' | 'followers' | 'likes' | 'retweets' | 'score_change';
-  page?: number;
-  limit?: number;
-}) {
-  let filteredAgents = [...agents];
-  
-  // Apply search filter
-  if (filters.search) {
-    const searchLower = filters.search.toLowerCase();
-    filteredAgents = filteredAgents.filter(agent => 
-      agent.mastodonUsername.toLowerCase().includes(searchLower) ||
-      (agent.city && agent.city.toLowerCase().includes(searchLower))
-    );
-  }
-  
-  // Apply score filters
-  if (filters.minScore !== undefined) {
-    filteredAgents = filteredAgents.filter(agent => agent.score >= filters.minScore!);
-  }
-  
-  if (filters.maxScore !== undefined) {
-    filteredAgents = filteredAgents.filter(agent => agent.score <= filters.maxScore!);
-  }
-  
-  // Apply city filter
-  if (filters.city && filters.city !== 'all') {
-    filteredAgents = filteredAgents.filter(agent => 
-      agent.city && agent.city.toUpperCase() === filters.city!.toUpperCase()
-    );
-  }
-  
-  // Apply sorting
-  if (filters.sortBy) {
-    switch (filters.sortBy) {
-      case 'score':
-        filteredAgents.sort((a, b) => b.score - a.score);
-        break;
-      case 'score_asc':
-        filteredAgents.sort((a, b) => a.score - b.score);
-        break;
-      case 'score_change':
-        filteredAgents.sort((a, b) => {
-          const changeA = a.prevScore !== null && a.prevScore !== undefined ? a.score - a.prevScore : 0;
-          const changeB = b.prevScore !== null && b.prevScore !== undefined ? b.score - b.prevScore : 0;
-          return changeB - changeA; // High to low
-        });
-        break;
-      case 'followers':
-        filteredAgents.sort((a, b) => (b.followersCount || 0) - (a.followersCount || 0));
-        break;
-      case 'likes':
-        filteredAgents.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
-        break;
-      case 'retweets':
-        filteredAgents.sort((a, b) => (b.retweetsCount || 0) - (a.retweetsCount || 0));
-        break;
+export async function getLiveLeaderboardData(): Promise<CachedLeaderboardEntry[]> {
+    const now = Date.now();
+
+    // 1. Check Throttle
+    if (now - leaderboardLastFetchTime < REQUEST_THROTTLE_MS && cachedLeaderboardData) {
+        return cachedLeaderboardData;
     }
-  }
-  
-  // Calculate pagination
-  const totalCount = filteredAgents.length;
-  const page = filters.page || 1;
-  const limit = filters.limit || 50;
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  
-  // Apply pagination
-  const pagedAgents = filteredAgents.slice(startIndex, endIndex);
-  
-  return {
-    agents: pagedAgents,
-    totalCount
-  };
+
+    // 2. Check Cache Validity
+    if (cachedLeaderboardData && (now - leaderboardLastFetchTime < LEADERBOARD_CACHE_TTL)) {
+        return cachedLeaderboardData;
+    }
+
+    // 3. Handle Concurrent Fetch
+    if (isLeaderboardFetchInProgress) {
+        console.log("Leaderboard fetch in progress, returning existing cache data (may be stale).");
+        return cachedLeaderboardData ?? [];
+    }
+
+    // 4. Initiate Fetch
+    isLeaderboardFetchInProgress = true;
+    console.log("Fetching fresh leaderboard data from API...");
+
+    try {
+        const response = await apiClient.get<unknown>(LEADERBOARD_API_URL); // Use generic type
+        const agentData = parseAndValidateLeaderboardResponse(response.data);
+
+        // Reset failure count on successful fetch *and* successful parsing
+        consecutiveApiFailures = 0;
+
+        if (agentData.length > 0) {
+            cachedLeaderboardData = agentData;
+            leaderboardLastFetchTime = Date.now();
+            updateCitiesCache(agentData);
+            // console.log(`Successfully fetched and validated ${agentData.length} leaderboard agents.`);
+            return agentData;
+        } else {
+            console.warn("Leaderboard fetch successful but resulted in zero valid agents after parsing/validation.");
+            // Don't update cache time. Return potentially stale cache or empty.
+            return cachedLeaderboardData ?? [];
+        }
+
+    } catch (error: any) {
+        consecutiveApiFailures++;
+        console.error(`API error fetching leaderboard (Failure ${consecutiveApiFailures}):`, error.message);
+        if (consecutiveApiFailures >= CONSECUTIVE_FAILURE_THRESHOLD) {
+             console.error(`*** Potential persistent API issue: Leaderboard fetch failed ${consecutiveApiFailures} consecutive times. ***`);
+        }
+
+        if (cachedLeaderboardData) {
+            console.warn("Returning stale leaderboard data due to API error.");
+            return cachedLeaderboardData;
+        } else {
+            return []; // No cache available, return empty
+        }
+    } finally {
+        isLeaderboardFetchInProgress = false;
+    }
 }
 
 /**
- * Get statistics for the current data
- * Simplified to improve performance and reduce memory usage
+ * Get details for a specific agent by username. Uses caching and validation.
+ * Returns validated AgentDetails or falls back to cached LeaderboardEntry data if fetch fails,
+ * or null if not found / invalid.
  */
-export async function getLiveStats() {
-  try {
-    const agents = await getLiveLeaderboardData();
-    
-    if (!agents || agents.length === 0) {
-      return {
-        totalAgents: 0,
-        avgScore: 0,
-        topGainers: [],
-        topLosers: []
-      };
+export async function getLiveAgentDetail(username: string): Promise<AgentDetails | CachedLeaderboardEntry | null> {
+    const now = Date.now();
+    const normalizedUsername = username.toLowerCase();
+
+    // 1. Check Agent Detail Cache
+    const cachedDetailEntry = cachedAgentDetails.get(normalizedUsername);
+    if (cachedDetailEntry && (now - cachedDetailEntry.timestamp < AGENT_DETAILS_CACHE_TTL)) {
+        return cachedDetailEntry.data;
     }
-    
-    // Calculate statistics
-    const totalAgents = agents.length;
-    const avgScore = Math.round(agents.reduce((sum, agent) => sum + agent.score, 0) / totalAgents);
-    
-    // Sort by score for top agents (we don't have gain/loss data in live mode)
-    const sortedByScore = [...agents].sort((a, b) => b.score - a.score);
-    const topGainers = sortedByScore.slice(0, 5);
-    
-    // Reverse for losers
-    const sortedByScoreAsc = [...agents].sort((a, b) => a.score - b.score);
-    const topLosers = sortedByScoreAsc.slice(0, 5);
-    
-    return {
-      totalAgents,
-      avgScore,
-      topGainers,
-      topLosers
-    };
-  } catch (error) {
-    console.error("Error getting live stats:", error);
-    throw error;
-  }
+
+    // 2. Attempt to Fetch Fresh Data from API
+    console.log(`Fetching agent details for ${username} from API...`);
+    try {
+        const response = await apiClient.get<unknown>(`${AGENT_DETAILS_API_BASE_URL}${username}`);
+        const agentDetails = parseAndValidateAgentDetailResponse(response.data, username);
+
+        if (agentDetails) {
+             // Successfully fetched and validated details
+            cachedAgentDetails.set(normalizedUsername, {
+                data: agentDetails,
+                timestamp: Date.now(),
+            });
+            pruneAgentDetailCache();
+            return agentDetails;
+        } else {
+            // API returned data, but it failed validation
+             console.warn(`Fetched data for ${username} failed validation. Agent details not updated/cached.`);
+             // Return stale cache if available, otherwise null
+             return cachedDetailEntry ? cachedDetailEntry.data : null;
+        }
+
+    } catch (error: any) {
+         if (axios.isAxiosError(error) && error.response?.status === 404) {
+            console.log(`Agent ${username} not found via API (404).`);
+            cachedAgentDetails.delete(normalizedUsername); // Remove if not found
+            return null;
+        } else {
+            // Other API errors
+            console.error(`Error fetching details for ${username}:`, error.message);
+            // Fallback: Return stale cache data if available
+            if (cachedDetailEntry) {
+                console.warn(`Returning stale cached detail for ${username} due to API error.`);
+                return cachedDetailEntry.data;
+            }
+            // If no cache and fetch failed, signal problem (could return null or throw)
+            // Returning null might be safer for consumers than throwing
+            return null;
+             // Or: throw new Error(`Failed to fetch details for ${username}: ${error.message}`);
+        }
+    }
 }
 
+
 /**
- * Get available cities from the data
- * @returns Array of city names
+ * Get available unique city names from the cached leaderboard data.
  */
 export function getAvailableCities(): string[] {
-  // If we have a cities cache, return it
-  if (cachedCities && cachedCities.size > 0) {
-    console.log(`Returning ${cachedCities.size} cities from cache`);
-    // Convert Set to Array for API response
-    return Array.from(cachedCities);
-  }
-  
-  // If we have leaderboard data but no cities cache, rebuild it
-  if (cachedLeaderboardData && cachedLeaderboardData.length > 0) {
-    console.log('Rebuilding cities cache from leaderboard data');
-    updateCachedCities(cachedLeaderboardData);
-    return Array.from(cachedCities || []);
-  }
-  
-  // No cache and no data - trigger a data fetch
-  console.log('No city data available, triggering leaderboard fetch');
-  setTimeout(() => {
-    getLiveLeaderboardData();
-  }, 10);
-  
-  return [];
+    if (citiesCache) {
+        return Array.from(citiesCache);
+    }
+    if (cachedLeaderboardData) {
+        console.log("Cities cache miss, rebuilding from available leaderboard data.");
+        updateCitiesCache(cachedLeaderboardData);
+        return Array.from(citiesCache ?? []);
+    }
+
+    console.log("No city data available, requesting background leaderboard fetch.");
+    getLiveLeaderboardData().catch(err => console.error("Background leaderboard fetch for cities failed:", err));
+    return [];
+}
+
+
+// --- Filtering and Stats Functions (Largely Unchanged Internally) ---
+// Depend on the data structures returned by the fetching functions above.
+// Input type adjusted to reflect cached leaderboard data structure.
+
+/**
+ * Filter agents based on provided criteria. Operates on cached leaderboard data.
+ */
+export function filterAgents(agents: CachedLeaderboardEntry[], filters: {
+    search?: string;
+    minScore?: number;
+    maxScore?: number;
+    city?: string;
+    sortBy?: 'score' | 'score_asc' | 'followers' | 'likes' | 'retweets'; // Removed score_change as prevScore not guaranteed
+    page?: number;
+    limit?: number;
+}) {
+    let filteredAgents = [...agents]; // Work on a copy
+
+    // Apply search filter (Username or City)
+    if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filteredAgents = filteredAgents.filter(agent =>
+            agent.mastodonUsername.toLowerCase().includes(searchLower) ||
+            (agent.city && agent.city.toLowerCase().includes(searchLower))
+        );
+    }
+
+    // Apply score filters
+    if (typeof filters.minScore === 'number') {
+        filteredAgents = filteredAgents.filter(agent => (agent.score ?? 0) >= filters.minScore!);
+    }
+    if (typeof filters.maxScore === 'number') {
+        filteredAgents = filteredAgents.filter(agent => (agent.score ?? 0) <= filters.maxScore!);
+    }
+
+    // Apply city filter
+    if (filters.city && filters.city !== 'all') {
+        const cityUpper = filters.city.toUpperCase();
+        filteredAgents = filteredAgents.filter(agent =>
+            agent.city && agent.city.toUpperCase() === cityUpper
+        );
+    }
+
+    // Apply sorting
+    if (filters.sortBy) {
+        // Add nullish coalescing (?? 0) for safety during sorts
+        filteredAgents.sort((a, b) => {
+            switch (filters.sortBy) {
+                case 'score':
+                    return (b.score ?? 0) - (a.score ?? 0);
+                case 'score_asc':
+                    return (a.score ?? 0) - (b.score ?? 0);
+                 // NOTE: 'score_change' requires historical data not present in live cache
+                 // case 'score_change': ...
+                case 'followers':
+                    return (b.followersCount ?? 0) - (a.followersCount ?? 0);
+                case 'likes':
+                    return (b.likesCount ?? 0) - (a.likesCount ?? 0);
+                case 'retweets':
+                    return (b.retweetsCount ?? 0) - (a.retweetsCount ?? 0);
+                default:
+                    return 0;
+            }
+        });
+    }
+
+    // Apply pagination
+    const totalCount = filteredAgents.length;
+    const page = Math.max(1, filters.page ?? 1);
+    const limit = Math.max(1, filters.limit ?? 50);
+    const startIndex = (page - 1) * limit;
+    const pagedAgents = filteredAgents.slice(startIndex, startIndex + limit);
+
+    return {
+        agents: pagedAgents,
+        totalCount,
+    };
+}
+
+/**
+ * Get basic statistics for the current live leaderboard data.
+ */
+export async function getLiveStats() {
+    const agents = await getLiveLeaderboardData(); // Uses caching
+
+    if (!agents || agents.length === 0) {
+        return {
+            totalAgents: 0,
+            avgScore: 0,
+            topScorers: [], // Renamed for clarity
+            bottomScorers: [], // Renamed for clarity
+        };
+    }
+
+    const totalAgents = agents.length;
+    const totalScore = agents.reduce((sum, agent) => sum + (agent.score ?? 0), 0);
+    const avgScore = totalAgents > 0 ? Math.round(totalScore / totalAgents) : 0;
+
+    // Sort by score (descending) - use ?? 0 for safety
+    const sortedByScoreDesc = [...agents].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    const topScorers = sortedByScoreDesc.slice(0, 5);
+
+    // Get bottom scorers by reversing or sorting ascending
+    const sortedByScoreAsc = sortedByScoreDesc.reverse(); // Efficient way to get ascending sort
+    const bottomScorers = sortedByScoreAsc.slice(0, 5);
+
+    return {
+        totalAgents,
+        avgScore,
+        topScorers, // Use clearer names based on score
+        bottomScorers,
+    };
 }
