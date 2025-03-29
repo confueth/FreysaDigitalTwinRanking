@@ -291,11 +291,9 @@ export default function LeaderboardTable({
           </TableHeader>
           <TableBody className="[&>tr]:border-b [&>tr]:border-gray-700 [&>tr:first-child]:border-t [&>tr:first-child]:border-gray-700">
             {agents.map((agent, index) => (
-              <React.Fragment key={agent.id || index}>
-                {isMobile 
-                  ? renderMobileTableRow(agent, index)
-                  : renderDesktopTableRow(agent, index)}
-              </React.Fragment>
+              isMobile 
+                ? renderMobileTableRow(agent, index)
+                : renderDesktopTableRow(agent, index)
             ))}
           </TableBody>
         </Table>
