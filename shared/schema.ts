@@ -136,7 +136,7 @@ export const agentDetailsSchema = z.object({
       likesCount: z.number().optional(),
       retweetsCount: z.number().optional(),
     })
-  ).optional(),
+  ).optional().nullable().default([]),
 });
 
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
